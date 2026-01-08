@@ -4,21 +4,27 @@ import { Header } from './Header'
 import { useState } from 'react'
 
 export function DashboardLayout() {
-    const [sidebarOpen, setSidebarOpen] = useState(true)
+    const [desktopOpen, setDesktopOpen] = useState(true)
+    const [mobileOpen, setMobileOpen] = useState(false)
 
     return (
         <div className="flex h-screen overflow-hidden bg-background">
             {/* Sidebar */}
-            <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+            <Sidebar
+                mobileOpen={mobileOpen}
+                desktopOpen={desktopOpen}
+                onMobileClose={() => setMobileOpen(false)}
+                onDesktopToggle={() => setDesktopOpen(!desktopOpen)}
+            />
 
             {/* Main Content Area */}
             <div className="flex flex-1 flex-col overflow-hidden">
                 {/* Header */}
-                <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+                <Header onMenuClick={() => setMobileOpen(!mobileOpen)} />
 
                 {/* Page Content */}
                 <main className="flex-1 overflow-y-auto">
-                    <div className="container mx-auto px-6 py-8">
+                    <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
                         <Outlet />
                     </div>
                 </main>

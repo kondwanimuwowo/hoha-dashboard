@@ -59,7 +59,7 @@ const navigation = [
     }
 ]
 
-export function Sidebar({ isOpen, onToggle }) {
+export function Sidebar({ mobileOpen, desktopOpen, onMobileClose, onDesktopToggle }) {
     const { isAdmin } = useAuth()
 
     const fullNavigation = [
@@ -78,7 +78,7 @@ export function Sidebar({ isOpen, onToggle }) {
             <motion.aside
                 initial={false}
                 animate={{
-                    width: isOpen ? 280 : 80
+                    width: desktopOpen ? 280 : 80
                 }}
                 transition={{ duration: 0.3, ease: 'easeInOut' }}
                 className="hidden lg:flex flex-col border-r border-neutral-200 dark:border-border bg-card"
@@ -86,7 +86,7 @@ export function Sidebar({ isOpen, onToggle }) {
                 {/* Logo Section */}
                 <div className="flex h-16 items-center justify-between px-6 border-b border-neutral-200 dark:border-border">
                     <AnimatePresence mode="wait">
-                        {isOpen ? (
+                        {desktopOpen ? (
                             <motion.div
                                 key="logo-full"
                                 initial={{ opacity: 0 }}
@@ -143,7 +143,7 @@ export function Sidebar({ isOpen, onToggle }) {
                                         )}
                                     />
                                     <AnimatePresence mode="wait">
-                                        {isOpen && (
+                                        {desktopOpen && (
                                             <motion.div
                                                 initial={{ opacity: 0, x: -10 }}
                                                 animate={{ opacity: 1, x: 0 }}
@@ -171,11 +171,11 @@ export function Sidebar({ isOpen, onToggle }) {
                 {/* Toggle Button */}
                 <div className="border-t border-neutral-200 dark:border-border p-3">
                     <button
-                        onClick={onToggle}
+                        onClick={onDesktopToggle}
                         className="flex w-full items-center justify-center rounded-lg p-2 text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 transition-colors dark:text-muted-foreground dark:hover:bg-accent dark:hover:text-accent-foreground"
-                        aria-label={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+                        aria-label={desktopOpen ? 'Collapse sidebar' : 'Expand sidebar'}
                     >
-                        {isOpen ? (
+                        {desktopOpen ? (
                             <ChevronLeft className="h-5 w-5" />
                         ) : (
                             <ChevronRight className="h-5 w-5" />
@@ -186,14 +186,14 @@ export function Sidebar({ isOpen, onToggle }) {
 
             {/* Mobile Sidebar - Overlay */}
             <AnimatePresence>
-                {isOpen && (
+                {mobileOpen && (
                     <>
                         {/* Backdrop */}
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            onClick={onToggle}
+                            onClick={onMobileClose}
                             className="fixed inset-0 z-40 bg-neutral-900/50 lg:hidden"
                         />
 
@@ -225,7 +225,7 @@ export function Sidebar({ isOpen, onToggle }) {
                                         key={item.name}
                                         to={item.href}
                                         end={item.exact}
-                                        onClick={onToggle}
+                                        onClick={onMobileClose}
                                         className={({ isActive }) =>
                                             cn(
                                                 'group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
