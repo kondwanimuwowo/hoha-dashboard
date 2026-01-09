@@ -27,10 +27,10 @@ export function useClinicareStats(startDate, endDate) {
             const programVisits = visits.filter(v => v.in_hoha_program).length
             const communityVisits = visits.filter(v => !v.in_hoha_program).length
 
-            const totalCost = visits.reduce((sum, v) => sum + (v.cost_amount || 0), 0)
-            const totalHohaContribution = visits.reduce((sum, v) => sum + (v.hoha_contribution || 0), 0)
-            const totalPatientContribution = visits.reduce((sum, v) => sum + (v.patient_contribution || 0), 0)
-            const totalTransportCost = visits.reduce((sum, v) => sum + (v.transport_cost || 0), 0)
+            const totalCost = visits.reduce((sum, v) => sum + (parseFloat(v.cost_amount) || 0), 0)
+            const totalMedicalFees = visits.reduce((sum, v) => sum + (parseFloat(v.medical_fees) || 0), 0)
+            const totalTransportCosts = visits.reduce((sum, v) => sum + (parseFloat(v.transport_costs) || 0), 0)
+            const totalOtherFees = visits.reduce((sum, v) => sum + (parseFloat(v.other_fees) || 0), 0)
 
             // Visits with transport
             const visitsWithTransport = visits.filter(v => v.transport_provided).length
@@ -73,9 +73,9 @@ export function useClinicareStats(startDate, endDate) {
                 programVisits,
                 communityVisits,
                 totalCost,
-                totalHohaContribution,
-                totalPatientContribution,
-                totalTransportCost,
+                totalMedicalFees,
+                totalOtherFees,
+                totalTransportCosts,
                 visitsWithTransport,
                 averageCostPerVisit: totalVisits > 0 ? totalCost / totalVisits : 0,
                 topFacilities,

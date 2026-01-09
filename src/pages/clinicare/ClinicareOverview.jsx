@@ -274,21 +274,21 @@ export function ClinicareOverview() {
                             </p>
                         </div>
                         <div className="text-center">
-                            <p className="text-sm text-neutral-500">HOHA Paid</p>
-                            <p className="text-2xl font-bold text-green-600">
-                                {formatCurrency(stats?.totalHohaContribution || 0)}
+                            <p className="text-sm text-neutral-500">Medical Fees</p>
+                            <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+                                {formatCurrency(stats?.totalMedicalFees || 0)}
                             </p>
                         </div>
                         <div className="text-center">
-                            <p className="text-sm text-neutral-500">Patient Paid</p>
-                            <p className="text-2xl font-bold text-blue-600">
-                                {formatCurrency(stats?.totalPatientContribution || 0)}
+                            <p className="text-sm text-neutral-500">Other Fees</p>
+                            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                                {formatCurrency(stats?.totalOtherFees || 0)}
                             </p>
                         </div>
                         <div className="text-center">
                             <p className="text-sm text-muted-foreground">Transport</p>
-                            <p className="text-2xl font-bold text-orange-600">
-                                {formatCurrency(stats?.totalTransportCost || 0)}
+                            <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                                {formatCurrency(stats?.totalTransportCosts || 0)}
                             </p>
                         </div>
                     </div>
