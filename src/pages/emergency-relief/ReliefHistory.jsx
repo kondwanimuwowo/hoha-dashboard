@@ -32,7 +32,7 @@ export function ReliefHistory() {
                     *,
                     recipients:emergency_relief_recipients(
                         *,
-                        family_head:people(*)
+                        family_head:people!family_head_id(*)
                     )
                 `)
                 .order('distribution_date', { ascending: false })

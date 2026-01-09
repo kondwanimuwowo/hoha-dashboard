@@ -20,9 +20,14 @@ export function DistributionDetail() {
     const [viewMode, setViewMode] = useState('detail') // 'detail' or 'checkin'
     const [success, setSuccess] = useState('')
 
-    const { data: distribution, isLoading } = useDistribution(id)
+    console.log('Fetching distribution for ID:', id)
+    const { data: distribution, isLoading, error: queryError } = useDistribution(id)
     const markCollected = useMarkCollected()
     const removeRecipient = useRemoveRecipient()
+
+    if (queryError) {
+        console.error('Query error in DistributionDetail:', queryError)
+    }
 
     const handleMarkCollected = async (recipientId) => {
         try {

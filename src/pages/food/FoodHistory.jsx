@@ -36,7 +36,7 @@ export function FoodHistory() {
                     *,
                     recipients:food_recipients(
                         *,
-                        family_head:people(*),
+                        family_head:people!family_head_id(*),
                         family_group:family_groups(
                             people!family_head_id(first_name, last_name)
                         )

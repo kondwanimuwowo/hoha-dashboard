@@ -29,13 +29,20 @@ export function useDistribution(id) {
                 .eq('id', id)
                 .single()
 
-            if (distError) throw distError
+            if (distError) {
+                console.error(`Error fetching distribution ${id}:`, distError)
+                throw distError
+            }
+
+            if (!distribution) {
+                console.warn(`No distribution found with ID: ${id}`)
+            }
 
             const { data: recipients, error: recError } = await supabase
                 .from('food_recipients')
                 .select(`
           *,
-          family_head:people(*)
+          family_head:people!family_head_id(*)
         `)
                 .eq('distribution_id', id)
 
@@ -55,9 +62,14 @@ export function useCreateDistribution() {
 
     return useMutation({
         mutationFn: async (distributionData) => {
+            const dataToInsert = {
+                ...distributionData,
+                distribution_date: distributionData.distribution_date || null
+            }
+
             const { data, error } = await supabase
                 .from('food_distribution')
-                .insert([distributionData])
+                .insert([dataToInsert])
                 .select()
                 .single()
 
@@ -83,7 +95,7 @@ export function useAddRecipient() {
                 // Check by Family Group
                 const { data: existingGroup, error: groupError } = await supabase
                     .from('food_recipients')
-                    .select('id, collected_by, collection_time, family_head:people(first_name, last_name)')
+                    .select('id, collected_by, collection_time, family_head:people!family_head_id(first_name, last_name)')
                     .eq('distribution_id', distribution_id)
                     .eq('family_group_id', family_group_id)
                     .maybeSingle()

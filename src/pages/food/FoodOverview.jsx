@@ -187,10 +187,15 @@ function CreateDistributionDialog({ open, onOpenChange }) {
     const handleSubmit = async (e) => {
         e.preventDefault()
         try {
-            await createDistribution.mutateAsync(formData)
+            const data = await createDistribution.mutateAsync(formData)
+            console.log('Created distribution from Overview:', data)
             onOpenChange(false)
+            if (data?.id) {
+                console.log(`Navigating to /food/distributions/${data.id}`)
+                navigate(`/food/distributions/${data.id}`)
+            }
         } catch (err) {
-            console.error(err)
+            console.error('Failed to create distribution from Overview:', err)
         }
     }
 
