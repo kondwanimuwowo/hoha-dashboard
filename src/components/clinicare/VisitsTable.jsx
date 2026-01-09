@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown, Ambulance, AlertCircle, Edit } from 'lucide-react'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import { motion } from 'framer-motion'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { VisitForm } from './VisitForm'
 
 export function VisitsTable({ data }) {
@@ -84,11 +84,20 @@ export function VisitsTable({ data }) {
                 ),
             },
             {
-                accessorKey: 'hoha_contribution',
-                header: 'HOHA Paid',
+                accessorKey: 'medical_fees',
+                header: 'Medical Fees',
                 cell: ({ row }) => (
-                    <div className="font-medium text-green-600">
-                        {formatCurrency(row.original.hoha_contribution || 0)}
+                    <div className="font-medium text-red-600">
+                        {formatCurrency(row.original.medical_fees || 0)}
+                    </div>
+                ),
+            },
+            {
+                accessorKey: 'transport_costs',
+                header: 'Transport',
+                cell: ({ row }) => (
+                    <div className="font-medium text-orange-600">
+                        {formatCurrency(row.original.transport_costs || 0)}
                     </div>
                 ),
             },

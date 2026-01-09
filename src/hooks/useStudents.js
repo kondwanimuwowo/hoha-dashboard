@@ -74,6 +74,7 @@ export function useCreateStudent() {
                     emergency_contact_phone: studentData.emergency_contact_phone,
                     emergency_contact_relationship: studentData.emergency_contact_relationship,
                     notes: studentData.notes,
+                    date_of_birth: studentData.date_of_birth || null,
                 }])
                 .select()
                 .single()
@@ -87,7 +88,7 @@ export function useCreateStudent() {
                     child_id: person.id,
                     grade_level: studentData.grade_level,
                     government_school_id: studentData.government_school_id,
-                    enrollment_date: studentData.enrollment_date,
+                    enrollment_date: studentData.enrollment_date || null,
                 }])
 
             if (enrollmentError) throw enrollmentError

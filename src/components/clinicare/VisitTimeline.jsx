@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import { formatDate } from '@/lib/utils'
+import { formatDate, formatCurrency } from '@/lib/utils'
 import { Stethoscope, AlertCircle, FileText, Calendar } from 'lucide-react'
 import { motion } from 'framer-motion'
 
@@ -50,7 +50,7 @@ export function VisitTimeline({ visits }) {
                                     {visit.is_emergency ? 'Emergency' : 'Routine'}
                                 </Badge>
                                 <Badge variant="outline">
-                                    ZMW {visit.cost_amount?.toFixed(2)}
+                                    {formatCurrency(visit.cost_amount || 0)}
                                 </Badge>
                                 {visit.follow_up_required && (
                                     <Badge variant="warning" className="bg-orange-100 text-orange-800 border-orange-200">
@@ -64,12 +64,7 @@ export function VisitTimeline({ visits }) {
                                 {visit.treatment_provided || 'No treatment recorded'}
                             </div>
 
-                            {visit.medications_prescribed && (
-                                <div className="text-sm text-neutral-600">
-                                    <span className="font-medium text-neutral-900">Rx: </span>
-                                    {visit.medications_prescribed}
-                                </div>
-                            )}
+
 
                             {visit.notes && (
                                 <div className="mt-2 text-sm text-neutral-500 bg-neutral-50 p-2 rounded border border-neutral-100 italic">

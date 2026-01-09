@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Activity, Calendar, DollarSign, Clock } from 'lucide-react'
+import { formatCurrency } from '@/lib/utils'
 
 export function PatientSummary({ summary }) {
     if (!summary) return null
@@ -15,9 +16,9 @@ export function PatientSummary({ summary }) {
         },
         {
             title: 'Total Cost',
-            value: `ZMW ${summary.totalCost?.toFixed(2)}`,
+            value: formatCurrency(summary.totalCost || 0),
             icon: DollarSign,
-            description: `Patient paid: ZMW ${summary.totalPatientContribution?.toFixed(2)}`,
+            description: `Medical: ${formatCurrency(summary.totalMedicalFees || 0)}`,
             color: 'text-green-600',
             bg: 'bg-green-50',
         },

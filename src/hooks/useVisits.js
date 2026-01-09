@@ -74,17 +74,17 @@ export function usePatientVisits(patientId) {
             if (error) throw error
 
             // Calculate total costs
-            const totalCost = data.reduce((sum, visit) => sum + (visit.cost_amount || 0), 0)
-            const totalHohaContribution = data.reduce((sum, visit) => sum + (visit.hoha_contribution || 0), 0)
-            const totalPatientContribution = data.reduce((sum, visit) => sum + (visit.patient_contribution || 0), 0)
+            const totalCost = data.reduce((sum, visit) => sum + (parseFloat(visit.cost_amount) || 0), 0)
+            const totalMedicalFees = data.reduce((sum, visit) => sum + (parseFloat(visit.medical_fees) || 0), 0)
+            const totalTransportCosts = data.reduce((sum, visit) => sum + (parseFloat(visit.transport_costs) || 0), 0)
 
             return {
                 visits: data,
                 summary: {
                     totalVisits: data.length,
                     totalCost,
-                    totalHohaContribution,
-                    totalPatientContribution,
+                    totalMedicalFees,
+                    totalTransportCosts,
                     emergencyVisits: data.filter(v => v.is_emergency).length,
                     pendingFollowUps: data.filter(v => v.follow_up_required && !v.follow_up_date).length,
                 }
@@ -99,9 +99,15 @@ export function useCreateVisit() {
 
     return useMutation({
         mutationFn: async (visitData) => {
+            const dataToInsert = {
+                ...visitData,
+                follow_up_date: visitData.follow_up_date || null,
+                visit_date: visitData.visit_date || null,
+            }
+
             const { data, error } = await supabase
                 .from('clinicare_visits')
-                .insert([visitData])
+                .insert([dataToInsert])
                 .select()
                 .single()
 
@@ -121,9 +127,15 @@ export function useUpdateVisit() {
 
     return useMutation({
         mutationFn: async ({ id, updates }) => {
+            const dataToUpdate = {
+                ...updates,
+                follow_up_date: updates.follow_up_date || null,
+                visit_date: updates.visit_date || null,
+            }
+
             const { data, error } = await supabase
                 .from('clinicare_visits')
-                .update(updates)
+                .update(dataToUpdate)
                 .eq('id', id)
                 .select()
                 .single()

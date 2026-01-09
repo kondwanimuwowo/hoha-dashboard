@@ -83,7 +83,7 @@ export function useCreateWoman() {
                     .insert([{
                         woman_id: womanData.woman_id,
                         stage: womanData.stage,
-                        enrollment_date: womanData.enrollment_date,
+                        enrollment_date: womanData.enrollment_date || null,
                         status: 'Active',
                         notes: womanData.notes,
                     }])
@@ -100,12 +100,10 @@ export function useCreateWoman() {
                 .insert([{
                     first_name: womanData.first_name,
                     last_name: womanData.last_name,
-                    date_of_birth: womanData.date_of_birth,
-                    gender: 'Female',
-                    phone_number: womanData.phone_number,
                     address: womanData.address,
                     compound_area: womanData.compound_area,
                     notes: womanData.personal_notes,
+                    date_of_birth: womanData.date_of_birth || null,
                 }])
                 .select()
                 .single()
@@ -118,7 +116,7 @@ export function useCreateWoman() {
                 .insert([{
                     woman_id: person.id,
                     stage: womanData.stage,
-                    enrollment_date: womanData.enrollment_date,
+                    enrollment_date: womanData.enrollment_date || null,
                     status: 'Active',
                     notes: womanData.notes,
                 }])
