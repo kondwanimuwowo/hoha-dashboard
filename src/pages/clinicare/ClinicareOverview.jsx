@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { VisitForm } from '@/components/clinicare/VisitForm'
 import { Button } from '@/components/ui/button'
-import { Heart, DollarSign, Ambulance, Users, Plus, AlertCircle } from 'lucide-react'
+import { Heart, DollarSign, Ambulance, Users, Plus, AlertCircle, Building2 } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { motion } from 'framer-motion'
 
@@ -70,7 +70,7 @@ export function ClinicareOverview() {
 
             {/* Quick Actions */}
             {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Button
                     className="w-full"
                     onClick={() => navigate('/clinicare/visits')}
@@ -94,6 +94,14 @@ export function ClinicareOverview() {
                     <AlertCircle className="mr-2 h-4 w-4" />
                     Follow-Ups
                 </Button>
+
+                <Button
+                    className="w-full"
+                    onClick={() => navigate('/clinicare/facilities')}
+                >
+                    <Building2 className="mr-2 h-4 w-4" />
+                    Facilities
+                </Button>
             </div>
 
             {/* Add Visit Dialog */}
@@ -101,6 +109,9 @@ export function ClinicareOverview() {
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Record Medical Visit</DialogTitle>
+                        <DialogDescription>
+                            Enter the details of the medical visit, including patient information, diagnosis, and costs.
+                        </DialogDescription>
                     </DialogHeader>
                     <VisitForm
                         onSuccess={() => setShowAddVisit(false)}

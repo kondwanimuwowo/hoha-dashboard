@@ -88,3 +88,157 @@ export function useMarkAttendance() {
         },
     })
 }
+
+export function useMonthlyAttendanceReport(month, year, gradeLevel) {
+    return useQuery({
+        queryKey: ['monthly-attendance', month, year, gradeLevel],
+        queryFn: async () => {
+            // Calculate date range for the month
+            const startDate = `${year}-${month}-01`
+            const lastDay = new Date(year, parseInt(month), 0).getDate()
+            const endDate = `${year}-${month}-${lastDay.toString().padStart(2, '0')}`
+
+            // Get all students for the grade
+            let studentsQuery = supabase
+                .from('educare_enrollment')
+                .select('*, person:people(id, first_name, last_name)')
+                .eq('current_status', 'Active')
+
+            if (gradeLevel && gradeLevel !== 'all') {
+                studentsQuery = studentsQuery.eq('grade_level', gradeLevel)
+            }
+
+            const { data: students, error: studentsError } = await studentsQuery
+            if (studentsError) throw studentsError
+
+            // Get attendance records for the month
+            const { data: attendance, error: attendanceError } = await supabase
+                .from('tuition_attendance')
+                .select('*')
+                .gte('attendance_date', startDate)
+                .lte('attendance_date', endDate)
+
+            if (attendanceError) throw attendanceError
+
+            // Calculate stats for each student
+            const studentStats = students.map(student => {
+                const studentAttendance = attendance.filter(a => a.child_id === student.person_id)
+                const total = studentAttendance.length
+                const present = studentAttendance.filter(a => a.status === 'Present').length
+                const absent = studentAttendance.filter(a => a.status === 'Absent').length
+                const excused = studentAttendance.filter(a => a.status === 'Excused').length
+                const late = studentAttendance.filter(a => a.status === 'Late').length
+                const rate = total > 0 ? ((present + late) / total * 100).toFixed(1) : 0
+
+                return {
+                    student_id: student.person_id,
+                    name: `${student.person.first_name} ${student.person.last_name}`,
+                    grade: student.grade_level,
+                    total,
+                    present,
+                    absent,
+                    excused,
+                    late,
+                    rate: parseFloat(rate)
+                }
+            })
+
+            // Calculate overall stats
+            const totalRecords = attendance.length
+            const totalPresent = attendance.filter(a => a.status === 'Present').length
+            const totalAbsent = attendance.filter(a => a.status === 'Absent').length
+            const overallRate = totalRecords > 0 ? ((totalPresent / totalRecords) * 100).toFixed(1) : 0
+
+            return {
+                students: studentStats,
+                summary: {
+                    totalStudents: students.length,
+                    totalRecords,
+                    totalPresent,
+                    totalAbsent,
+                    overallRate: parseFloat(overallRate)
+                }
+            }
+        },
+        enabled: !!month && !!year
+    })
+}
+
+export function useTermlyAttendanceReport(term, year, gradeLevel) {
+    return useQuery({
+        queryKey: ['termly-attendance', term, year, gradeLevel],
+        queryFn: async () => {
+            // Define term date ranges
+            const termRanges = {
+                '1': { start: `${year}-01-01`, end: `${year}-04-30` },
+                '2': { start: `${year}-05-01`, end: `${year}-08-31` },
+                '3': { start: `${year}-09-01`, end: `${year}-12-31` }
+            }
+
+            const { start: startDate, end: endDate } = termRanges[term]
+
+            // Get all students for the grade
+            let studentsQuery = supabase
+                .from('educare_enrollment')
+                .select('*, person:people(id, first_name, last_name)')
+                .eq('current_status', 'Active')
+
+            if (gradeLevel && gradeLevel !== 'all') {
+                studentsQuery = studentsQuery.eq('grade_level', gradeLevel)
+            }
+
+            const { data: students, error: studentsError } = await studentsQuery
+            if (studentsError) throw studentsError
+
+            // Get attendance records for the term
+            const { data: attendance, error: attendanceError } = await supabase
+                .from('tuition_attendance')
+                .select('*')
+                .gte('attendance_date', startDate)
+                .lte('attendance_date', endDate)
+
+            if (attendanceError) throw attendanceError
+
+            // Calculate stats for each student
+            const studentStats = students.map(student => {
+                const studentAttendance = attendance.filter(a => a.child_id === student.person_id)
+                const total = studentAttendance.length
+                const present = studentAttendance.filter(a => a.status === 'Present').length
+                const absent = studentAttendance.filter(a => a.status === 'Absent').length
+                const excused = studentAttendance.filter(a => a.status === 'Excused').length
+                const late = studentAttendance.filter(a => a.status === 'Late').length
+                const rate = total > 0 ? ((present + late) / total * 100).toFixed(1) : 0
+
+                return {
+                    student_id: student.person_id,
+                    name: `${student.person.first_name} ${student.person.last_name}`,
+                    grade: student.grade_level,
+                    total,
+                    present,
+                    absent,
+                    excused,
+                    late,
+                    rate: parseFloat(rate)
+                }
+            })
+
+            // Calculate overall stats
+            const totalRecords = attendance.length
+            const totalPresent = attendance.filter(a => a.status === 'Present').length
+            const totalAbsent = attendance.filter(a => a.status === 'Absent').length
+            const overallRate = totalRecords > 0 ? ((totalPresent / totalRecords) * 100).toFixed(1) : 0
+
+            return {
+                students: studentStats,
+                summary: {
+                    totalStudents: students.length,
+                    totalRecords,
+                    totalPresent,
+                    totalAbsent,
+                    overallRate: parseFloat(overallRate)
+                }
+            }
+        },
+        enabled: !!term && !!year
+    })
+}

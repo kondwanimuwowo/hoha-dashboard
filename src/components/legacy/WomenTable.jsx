@@ -7,7 +7,7 @@ import {
     getSortedRowModel,
     flexRender,
 } from '@tanstack/react-table'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { PersonAvatar } from '@/components/shared/PersonAvatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown } from 'lucide-react'
@@ -25,13 +25,12 @@ export function WomenTable({ data, onRowClick }) {
                 header: '',
                 size: 60,
                 cell: ({ row }) => (
-                    <Avatar className="h-10 w-10">
-                        <AvatarImage src={row.original.woman?.photo_url} />
-                        <AvatarFallback className="bg-purple-100 text-purple-700">
-                            {row.original.woman?.first_name?.charAt(0)}
-                            {row.original.woman?.last_name?.charAt(0)}
-                        </AvatarFallback>
-                    </Avatar>
+                    <PersonAvatar
+                        photoUrl={row.original.woman?.photo_url}
+                        gender="Female"
+                        firstName={row.original.woman?.first_name}
+                        lastName={row.original.woman?.last_name}
+                    />
                 ),
             },
             {

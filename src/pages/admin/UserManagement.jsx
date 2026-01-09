@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { PersonAvatar } from '@/components/shared/PersonAvatar'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog' // Added DialogDescription import
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
@@ -178,10 +178,11 @@ export function UserManagement() {
                                         <TableRow key={user.id}>
                                             <TableCell>
                                                 <div className="flex items-center gap-3">
-                                                    <Avatar>
-                                                        <AvatarImage src={user.avatar_url} />
-                                                        <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
-                                                    </Avatar>
+                                                    <PersonAvatar
+                                                        photoUrl={user.avatar_url}
+                                                        firstName={user.full_name || user.email}
+                                                        lastName=""
+                                                    />
                                                     <div className="flex flex-col">
                                                         <span className="font-medium">{user.full_name || 'N/A'}</span>
                                                         <span className="text-xs text-muted-foreground">{user.email}</span>

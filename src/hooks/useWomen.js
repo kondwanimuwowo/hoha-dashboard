@@ -138,20 +138,55 @@ export function useUpdateWoman() {
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: async ({ id, updates }) => {
-            const { data, error } = await supabase
-                .from('legacy_women_enrollment')
-                .update(updates)
-                .eq('id', id)
-                .select()
-                .single()
+        mutationFn: async ({ id, ...updates }) => {
+            const personFields = [
+                'first_name', 'last_name', 'date_of_birth', 'gender', 'phone_number',
+                'address', 'compound_area', 'photo_url', 'notes', 'nrc_number'
+            ]
+            const enrollmentFields = ['stage', 'enrollment_date', 'status', 'notes', 'skills_learned', 'completion_date']
 
-            if (error) throw error
-            return data
+            const personUpdates = {}
+            const enrollmentUpdates = {}
+
+            Object.keys(updates).forEach(key => {
+                if (personFields.includes(key)) personUpdates[key] = updates[key]
+                if (enrollmentFields.includes(key)) enrollmentUpdates[key] = updates[key]
+            })
+
+            // Update person details
+            if (Object.keys(personUpdates).length > 0) {
+                // We need the woman_id from the enrollment
+                const { data: enrollment } = await supabase
+                    .from('legacy_women_enrollment')
+                    .select('woman_id')
+                    .eq('id', id)
+                    .single()
+
+                if (enrollment) {
+                    const { error } = await supabase
+                        .from('people')
+                        .update(personUpdates)
+                        .eq('id', enrollment.woman_id)
+
+                    if (error) throw error
+                }
+            }
+
+            // Update enrollment details
+            if (Object.keys(enrollmentUpdates).length > 0) {
+                const { error } = await supabase
+                    .from('legacy_women_enrollment')
+                    .update(enrollmentUpdates)
+                    .eq('id', id)
+
+                if (error) throw error
+            }
+
+            return { id, ...updates }
         },
-        onSuccess: (_, variables) => {
+        onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['women'] })
-            queryClient.invalidateQueries({ queryKey: ['woman', variables.id] })
+            queryClient.invalidateQueries({ queryKey: ['woman'] })
         },
     })
 }
@@ -174,6 +209,35 @@ export function useCompleteStage() {
 
             if (error) throw error
             return data
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['women'] })
+        },
+    })
+}
+
+export function useDeleteWoman() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (womanId) => {
+            // Soft delete - set deleted_at timestamp on person record
+            const { error: personError } = await supabase
+                .from('people')
+                .update({ deleted_at: new Date().toISOString() })
+                .eq('id', womanId)
+
+            if (personError) throw personError
+
+            // Also soft delete the enrollment
+            const { error: enrollmentError } = await supabase
+                .from('legacy_women_enrollment')
+                .update({ deleted_at: new Date().toISOString() })
+                .eq('woman_id', womanId)
+
+            if (enrollmentError) throw enrollmentError
+
+            return womanId
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['women'] })

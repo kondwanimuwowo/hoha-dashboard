@@ -6,7 +6,7 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { PatientSummary } from '@/components/clinicare/PatientSummary'
 import { VisitTimeline } from '@/components/clinicare/VisitTimeline'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { PersonAvatar } from '@/components/shared/PersonAvatar'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Phone, MapPin, Calendar, User } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
@@ -47,12 +47,13 @@ export function PatientHistory() {
                 </Button>
 
                 <div className="flex flex-col md:flex-row items-start md:items-center gap-6 bg-white p-6 rounded-xl border shadow-sm">
-                    <Avatar className="h-20 w-20 border-4 border-white shadow-md">
-                        <AvatarImage src={patient.photo_url} />
-                        <AvatarFallback className="text-xl bg-blue-100 text-blue-700">
-                            {patient.first_name?.[0]}{patient.last_name?.[0]}
-                        </AvatarFallback>
-                    </Avatar>
+                    <PersonAvatar
+                        photoUrl={patient.photo_url}
+                        gender={patient.gender}
+                        firstName={patient.first_name}
+                        lastName={patient.last_name}
+                        className="h-20 w-20 border-4 border-white shadow-md"
+                    />
 
                     <div className="flex-1 space-y-1">
                         <div className="flex items-center gap-3">

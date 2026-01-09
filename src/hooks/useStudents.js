@@ -162,3 +162,48 @@ export function useUpdateStudent() {
         },
     })
 }
+
+export function useDeleteStudent() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id) => {
+            // Soft delete - set deleted_at timestamp
+            const { error: personError } = await supabase
+                .from('people')
+                .update({ deleted_at: new Date().toISOString() })
+                .eq('id', id)
+
+            if (personError) throw personError
+
+            // Also soft delete the enrollment
+            const { error: enrollmentError } = await supabase
+                .from('educare_enrollment')
+                .update({ deleted_at: new Date().toISOString() })
+                .eq('child_id', id)
+
+            if (enrollmentError) throw enrollmentError
+
+            return id
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['students'] })
+        },
+    })
+}
+
+export function usePromoteStudents() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async () => {
+            const { data, error } = await supabase.rpc('promote_all_students')
+            if (error) throw error
+            return data
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['students'] })
+            queryClient.invalidateQueries({ queryKey: ['educare-stats'] })
+        },
+    })
+}

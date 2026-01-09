@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { PersonAvatar } from '@/components/shared/PersonAvatar'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Check, X, Clock, AlertCircle, Search, Save } from 'lucide-react'
@@ -170,13 +170,13 @@ export function LegacyAttendanceSheet({ women, date, sessionType, stage, existin
                                     >
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center space-x-4 flex-1">
-                                                <Avatar className="h-12 w-12">
-                                                    <AvatarImage src={woman?.photo_url} />
-                                                    <AvatarFallback>
-                                                        {woman?.first_name?.charAt(0)}
-                                                        {woman?.last_name?.charAt(0)}
-                                                    </AvatarFallback>
-                                                </Avatar>
+                                                <PersonAvatar
+                                                    photoUrl={woman?.photo_url}
+                                                    gender="Female"
+                                                    firstName={woman?.first_name}
+                                                    lastName={woman?.last_name}
+                                                    className="h-12 w-12"
+                                                />
 
                                                 <div className="flex-1">
                                                     <div className="font-semibold text-neutral-900">

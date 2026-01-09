@@ -5,7 +5,7 @@ import { StatsCard } from '@/components/shared/StatsCard'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Package, Calendar, Users, Plus } from 'lucide-react'
+import { Package, Calendar, Users, Plus, History } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { motion } from 'framer-motion'
 import { useState } from 'react'
@@ -43,10 +43,16 @@ export function FoodOverview() {
 
     return (
         <div className="space-y-6">
-            <PageHeader
-                title="Food Distribution"
-                description="Quarterly food hamper distribution to families in need"
-            />
+            <div className="flex items-center justify-between">
+                <PageHeader
+                    title="Food Distribution"
+                    description="Quarterly food hamper distribution to families in need"
+                />
+                <Button variant="outline" onClick={() => navigate('/food/history')}>
+                    <History className="mr-2 h-4 w-4" />
+                    View History
+                </Button>
+            </div>
 
             {/* Stats Grid */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">

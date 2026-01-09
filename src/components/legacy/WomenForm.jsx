@@ -2,49 +2,52 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { useCreateWoman } from '@/hooks/useWomen'
+import { useCreateWoman, useUpdateWoman } from '@/hooks/useWomen'
 import { usePeople } from '@/hooks/usePeople'
 import { useCreateRelationship } from '@/hooks/useRelationships'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Search, X } from 'lucide-react'
+import { Loader2, Search, X, Check, Save } from 'lucide-react'
 import { LEGACY_STAGES } from '@/lib/constants'
 import { PhotoUpload } from '@/components/shared/PhotoUpload'
 import { NRCInput } from '@/components/shared/NRCInput'
-import { RichTextEditor } from '@/components/shared/RichTextEditor'
+import { useEffect } from 'react'
 
 const womanSchema = z.object({
     // If existing person
-    woman_id: z.string().optional(),
+    woman_id: z.string().nullable().optional(),
 
     // If new person
-    first_name: z.string().optional(),
-    last_name: z.string().optional(),
-    date_of_birth: z.string().optional(),
-    phone_number: z.string().optional(),
-    address: z.string().optional(),
-    compound_area: z.string().optional(),
-    photo_url: z.string().optional(),
-    nrc_number: z.string().optional(),
-    case_notes: z.string().optional(),
+    first_name: z.string().nullable().optional(),
+    last_name: z.string().nullable().optional(),
+    date_of_birth: z.string().nullable().optional(),
+    phone_number: z.string().nullable().optional(),
+    address: z.string().nullable().optional(),
+    compound_area: z.string().nullable().optional(),
+    photo_url: z.string().nullable().optional(),
+    nrc_number: z.string().nullable().optional(),
+    case_notes: z.string().nullable().optional(),
 
     // Program enrollment
     stage: z.string().min(1, 'Stage is required'),
-    enrollment_date: z.string().optional(),
-    notes: z.string().optional(),
+    enrollment_date: z.string().nullable().optional(),
+    status: z.string().default('Active'),
+    notes: z.string().nullable().optional(),
 })
 
-export function WomenForm({ onSuccess, onCancel }) {
+export function WomenForm({ onSuccess, onCancel, initialData }) {
     const [error, setError] = useState('')
-    const [isNewPerson, setIsNewPerson] = useState(true)
+    const [isNewPerson, setIsNewPerson] = useState(!initialData)
     const [searchQuery, setSearchQuery] = useState('')
     const [linkedChildren, setLinkedChildren] = useState([])
     const [childSearchQuery, setChildSearchQuery] = useState('')
 
     const createWoman = useCreateWoman()
+    const updateWoman = useUpdateWoman()
     const createRelationship = useCreateRelationship()
     const { data: people } = usePeople(searchQuery)
     const { data: students } = usePeople(childSearchQuery)
@@ -57,10 +60,34 @@ export function WomenForm({ onSuccess, onCancel }) {
         formState: { errors },
     } = useForm({
         resolver: zodResolver(womanSchema),
-        defaultValues: {
+        defaultValues: initialData ? {
+            stage: initialData.stage,
+            enrollment_date: initialData.enrollment_date,
+            status: initialData.status,
+            notes: initialData.notes,
+        } : {
             enrollment_date: new Date().toISOString().split('T')[0],
+            status: 'Active',
         },
     })
+
+    useEffect(() => {
+        if (initialData && initialData.woman) {
+            const woman = initialData.woman
+            setValue('first_name', woman.first_name)
+            setValue('last_name', woman.last_name)
+            setValue('date_of_birth', woman.date_of_birth)
+            setValue('phone_number', woman.phone_number)
+            setValue('address', woman.address)
+            setValue('compound_area', woman.compound_area)
+            setValue('photo_url', woman.photo_url)
+            setValue('nrc_number', woman.nrc_number)
+
+            if (initialData.children) {
+                setLinkedChildren(initialData.children.map(rel => rel.child).filter(Boolean))
+            }
+        }
+    }, [initialData, setValue])
 
     const addChild = (child) => {
         if (!linkedChildren.find(c => c.id === child.id)) {
@@ -76,14 +103,24 @@ export function WomenForm({ onSuccess, onCancel }) {
     const onSubmit = async (data) => {
         setError('')
         try {
+            if (initialData) {
+                await updateWoman.mutateAsync({
+                    id: initialData.id,
+                    ...data
+                })
+                onSuccess?.()
+                return
+            }
+
             // Create woman (person + enrollment)
             const woman = await createWoman.mutateAsync(data)
+            const womanId = woman.woman_id
 
             // Link children if any
             for (const child of linkedChildren) {
                 await createRelationship.mutateAsync({
                     person_id: child.id,
-                    related_person_id: woman.woman_id,
+                    related_person_id: womanId,
                     relationship_type: 'Mother',
                     is_primary: true,
                 })
@@ -91,12 +128,15 @@ export function WomenForm({ onSuccess, onCancel }) {
 
             onSuccess?.()
         } catch (err) {
-            setError(err.message || 'Failed to register participant')
+            setError(err.message || 'Failed to save participant')
         }
+    }
+    const onError = (errors) => {
+        console.error('Form Validation Errors:', errors)
     }
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-6">
             {error && (
                 <Alert variant="destructive">
                     <AlertDescription>{error}</AlertDescription>
@@ -363,31 +403,54 @@ export function WomenForm({ onSuccess, onCancel }) {
                             {...register('enrollment_date')}
                         />
                     </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="status">Status</Label>
+                        <Select
+                            onValueChange={(value) => setValue('status', value)}
+                            defaultValue={initialData?.status || 'Active'}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Active">Active</SelectItem>
+                                <SelectItem value="Completed">Completed</SelectItem>
+                                <SelectItem value="Withdrawn">Withdrawn</SelectItem>
+                                <SelectItem value="Inactive">Inactive</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="notes">Program Notes</Label>
-                    <Input
+                    <Label htmlFor="notes">Enrollment Notes</Label>
+                    <Textarea
                         id="notes"
                         {...register('notes')}
-                        placeholder="Goals, interests, special considerations..."
+                        placeholder="Add any specific enrollment notes here..."
                     />
                 </div>
             </div>
 
-            {/* Actions */}
-            <div className="flex justify-end space-x-3">
-                <Button
-                    type="button"
-                    variant="outline"
-                    onClick={onCancel}
-                    disabled={createWoman.isPending}
-                >
-                    Cancel
-                </Button>
-                <Button type="submit" disabled={createWoman.isPending}>
-                    {createWoman.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Register Participant
+            <div className="flex justify-end space-x-3 pt-6 border-t">
+                {onCancel && (
+                    <Button type="button" variant="outline" onClick={onCancel}>
+                        Cancel
+                    </Button>
+                )}
+                <Button type="submit" disabled={createWoman.isPending || updateWoman.isPending}>
+                    {createWoman.isPending || updateWoman.isPending ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Saving...
+                        </>
+                    ) : (
+                        <>
+                            {initialData ? <Save className="mr-2 h-4 w-4" /> : <Check className="mr-2 h-4 w-4" />}
+                            {initialData ? 'Save Changes' : 'Register Participant'}
+                        </>
+                    )}
                 </Button>
             </div>
         </form>

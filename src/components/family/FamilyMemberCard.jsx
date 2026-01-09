@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { PersonAvatar } from '@/components/shared/PersonAvatar'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { User, Phone, GraduationCap, Heart, Briefcase } from 'lucide-react'
@@ -17,12 +17,13 @@ export function FamilyMemberCard({ member, isHead = false }) {
                 </div>
             )}
             <CardContent className="p-4 flex items-start space-x-4">
-                <Avatar className="h-16 w-16 border-2 border-white shadow-sm">
-                    <AvatarImage src={member.photo_url} />
-                    <AvatarFallback className="bg-neutral-100 text-neutral-600 font-semibold">
-                        {member.first_name?.[0]}{member.last_name?.[0]}
-                    </AvatarFallback>
-                </Avatar>
+                <PersonAvatar
+                    photoUrl={member.photo_url}
+                    gender={member.gender}
+                    firstName={member.first_name}
+                    lastName={member.last_name}
+                    className="h-16 w-16 border-2 border-white shadow-sm"
+                />
 
                 <div className="flex-1 space-y-1">
                     <div className="flex items-center justify-between">

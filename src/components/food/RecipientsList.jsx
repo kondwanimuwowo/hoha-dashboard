@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { PersonAvatar } from '@/components/shared/PersonAvatar'
 import { Search, Check, Trash2, Users, Plus } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -142,17 +142,25 @@ function RecipientCard({ recipient, index, onMarkCollected, onRemove, isPending 
         >
             <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4 flex-1">
-                    <Avatar className="h-12 w-12">
-                        <AvatarImage src={familyHead?.photo_url} />
-                        <AvatarFallback>
-                            {familyHead?.first_name?.charAt(0)}
-                            {familyHead?.last_name?.charAt(0)}
-                        </AvatarFallback>
-                    </Avatar>
+                    <PersonAvatar
+                        photoUrl={familyHead?.photo_url}
+                        gender={familyHead?.gender}
+                        firstName={familyHead?.first_name}
+                        lastName={familyHead?.last_name}
+                        className="h-12 w-12"
+                    />
 
                     <div className="flex-1">
-                        <div className="font-semibold text-neutral-900">
-                            {familyHead?.first_name} {familyHead?.last_name}
+                        <div className="flex items-center gap-2">
+                            <div className="font-semibold text-neutral-900">
+                                {familyHead?.first_name} {familyHead?.last_name}
+                            </div>
+                            {recipient.family_group_id && (
+                                <Badge variant="outline" className="text-[10px] h-4 px-1.5 bg-blue-50 text-blue-600 border-blue-200">
+                                    <Users className="w-2 h-2 mr-1" />
+                                    Family Group
+                                </Badge>
+                            )}
                         </div>
                         <div className="text-sm text-neutral-600 flex items-center space-x-2">
                             <span>Family of {recipient.family_size || 'N/A'}</span>

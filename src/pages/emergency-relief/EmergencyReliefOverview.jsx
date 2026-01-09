@@ -1,7 +1,8 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Package, Users, Calendar, Plus } from 'lucide-react'
+import { Package, Users, Calendar, Plus, History } from 'lucide-react'
 import { useEmergencyDistributions } from '@/hooks/useEmergencyRelief'
 import { EmergencyDistributionForm } from '@/components/emergency-relief/EmergencyDistributionForm'
 import {
@@ -12,6 +13,7 @@ import {
 } from '@/components/ui/dialog'
 
 export default function EmergencyReliefOverview() {
+    const navigate = useNavigate()
     const [showCreateDialog, setShowCreateDialog] = useState(false)
     const { data: distributions, isLoading } = useEmergencyDistributions()
 
@@ -28,10 +30,16 @@ export default function EmergencyReliefOverview() {
                         Manage emergency food hamper distributions for vulnerable families
                     </p>
                 </div>
-                <Button onClick={() => setShowCreateDialog(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    New Distribution
-                </Button>
+                <div className="flex items-center space-x-2">
+                    <Button variant="outline" onClick={() => navigate('/emergency-relief/history')}>
+                        <History className="mr-2 h-4 w-4" />
+                        View History
+                    </Button>
+                    <Button onClick={() => setShowCreateDialog(true)}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        New Distribution
+                    </Button>
+                </div>
             </div>
 
             {/* Stats */}

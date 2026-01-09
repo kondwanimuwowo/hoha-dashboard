@@ -76,9 +76,53 @@ export function useAddRecipient() {
 
     return useMutation({
         mutationFn: async (recipientData) => {
+            const { distribution_id, family_group_id, family_head_id } = recipientData
+
+            // 1. Check for duplicates
+            if (family_group_id) {
+                // Check by Family Group
+                const { data: existingGroup, error: groupError } = await supabase
+                    .from('food_recipients')
+                    .select('id, collected_by, collection_time, family_head:people(first_name, last_name)')
+                    .eq('distribution_id', distribution_id)
+                    .eq('family_group_id', family_group_id)
+                    .maybeSingle()
+
+                if (groupError) throw groupError
+                if (existingGroup) {
+                    const collectorName = existingGroup.family_head ? `${existingGroup.family_head.first_name} ${existingGroup.family_head.last_name}` : 'a family member';
+                    throw new Error(`This family has already collected hampers (Collected by ${collectorName})`)
+                }
+            } else {
+                // Check by Individual (Family Head only)
+                // Also check if they are part of a family group that collected? 
+                // Ideally backend logic handles this, but for now we assume input provides correct group ID if they have one.
+                const { data: existingPerson, error: personError } = await supabase
+                    .from('food_recipients')
+                    .select('id')
+                    .eq('distribution_id', distribution_id)
+                    .eq('family_head_id', family_head_id)
+                    .maybeSingle()
+
+                if (personError) throw personError
+                if (existingPerson) {
+                    throw new Error(`This person has already collected a hamper`)
+                }
+            }
+
+            // 2. Insert Recipient
             const { data, error } = await supabase
                 .from('food_recipients')
-                .insert([recipientData])
+                .insert([{
+                    ...recipientData,
+                    collected: true, // Auto-mark as collected when adding to list? Or seperate step? 
+                    // "Record Distribution" implies immediate collection.
+                    // If it's just a "List", then collected=false. 
+                    // Requirement says "Record Collection". So likely true.
+                    // But let's check input. If 'collected' is not passed, default to true or false?
+                    // I will assume this action records the handout.
+                    collection_time: recipientData.collection_time || new Date().toISOString()
+                }])
                 .select()
                 .single()
 

@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { useCreateVisit } from '@/hooks/useVisits'
+import { useCreateVisit, useUpdateVisit } from '@/hooks/useVisits'
 import { usePeople } from '@/hooks/usePeople'
 import { useCreatePerson } from '@/hooks/usePeople'
 import { FacilityDropdown } from '@/components/shared/FacilityDropdown'
@@ -12,35 +12,39 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Search } from 'lucide-react'
+import { Loader2, Search, Save } from 'lucide-react'
 
 const visitSchema = z.object({
     patient_id: z.string().min(1, 'Patient is required'),
     visit_date: z.string().min(1, 'Visit date is required'),
-    facility_id: z.string().optional(),
-    reason_for_visit: z.string().optional(),
-    diagnosis: z.string().optional(),
-    treatment_provided: z.string().optional(),
-    cost_amount: z.string().optional(),
-    medical_fees: z.string().optional(),
-    transport_costs: z.string().optional(),
+    facility_id: z.string().optional().nullable(),
+    reason_for_visit: z.string().optional().nullable(),
+    diagnosis: z.string().optional().nullable(),
+    treatment_provided: z.string().optional().nullable(),
+    cost_amount: z.any().optional(),
+    medical_fees: z.any().optional(),
+    transport_costs: z.any().optional(),
+    other_fees: z.any().optional(),
     is_emergency: z.boolean().default(false),
     transport_provided: z.boolean().default(false),
-    transport_cost: z.string().optional(),
+    transport_cost: z.any().optional(),
     follow_up_required: z.boolean().default(false),
-    follow_up_date: z.string().optional(),
+    follow_up_date: z.string().optional().nullable(),
     in_hoha_program: z.boolean().default(true),
-    notes: z.string().optional(),
+    notes: z.string().optional().nullable(),
 })
 
-export function VisitForm({ onSuccess, onCancel }) {
+export function VisitForm({ initialData, onSuccess, onCancel }) {
     const [error, setError] = useState('')
     const [searchQuery, setSearchQuery] = useState('')
     const [showNewPatient, setShowNewPatient] = useState(false)
 
     const createVisit = useCreateVisit()
+    const updateVisit = useUpdateVisit()
     const createPerson = useCreatePerson()
     const { data: people } = usePeople(searchQuery)
+
+    const isEditing = !!initialData
 
     const {
         register,
@@ -50,7 +54,16 @@ export function VisitForm({ onSuccess, onCancel }) {
         formState: { errors },
     } = useForm({
         resolver: zodResolver(visitSchema),
-        defaultValues: {
+        defaultValues: initialData ? {
+            ...initialData,
+            visit_date: initialData.visit_date?.split('T')[0],
+            follow_up_date: initialData.follow_up_date?.split('T')[0],
+            cost_amount: initialData.cost_amount?.toString(),
+            medical_fees: initialData.medical_fees?.toString(),
+            transport_costs: initialData.transport_costs?.toString(),
+            other_fees: initialData.other_fees?.toString(),
+            transport_cost: initialData.transport_cost?.toString(),
+        } : {
             visit_date: new Date().toISOString().split('T')[0],
             is_emergency: false,
             transport_provided: false,
@@ -59,9 +72,31 @@ export function VisitForm({ onSuccess, onCancel }) {
         },
     })
 
+    // Set initial search query for the patient name
+    useEffect(() => {
+        if (initialData?.patient) {
+            setSearchQuery(`${initialData.patient.first_name} ${initialData.patient.last_name}`)
+        }
+    }, [initialData])
+
     const watchIsEmergency = watch('is_emergency')
     const watchTransport = watch('transport_provided')
     const watchFollowUp = watch('follow_up_required')
+    const watchMedicalFees = watch('medical_fees')
+    const watchTransportCosts = watch('transport_costs')
+    const watchOtherFees = watch('other_fees')
+
+    // Auto-calculate total cost
+    useEffect(() => {
+        const medical = parseFloat(watchMedicalFees) || 0
+        const transport = parseFloat(watchTransportCosts) || 0
+        const other = parseFloat(watchOtherFees) || 0
+        const total = medical + transport + other
+
+        if (total > 0) {
+            setValue('cost_amount', total.toFixed(2))
+        }
+    }, [watchMedicalFees, watchTransportCosts, watchOtherFees, setValue])
 
     const onSubmit = async (data) => {
         setError('')
@@ -72,10 +107,15 @@ export function VisitForm({ onSuccess, onCancel }) {
                 cost_amount: data.cost_amount ? parseFloat(data.cost_amount) : 0,
                 medical_fees: data.medical_fees ? parseFloat(data.medical_fees) : 0,
                 transport_costs: data.transport_costs ? parseFloat(data.transport_costs) : 0,
+                other_fees: data.other_fees ? parseFloat(data.other_fees) : 0,
                 transport_cost: data.transport_cost ? parseFloat(data.transport_cost) : 0,
             }
 
-            await createVisit.mutateAsync(visitData)
+            if (isEditing) {
+                await updateVisit.mutateAsync({ id: initialData.id, updates: visitData })
+            } else {
+                await createVisit.mutateAsync(visitData)
+            }
             onSuccess?.()
         } catch (err) {
             setError(err.message || 'Failed to record visit')
@@ -234,18 +274,7 @@ export function VisitForm({ onSuccess, onCancel }) {
             <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Cost Information</h3>
 
-                <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="cost_amount">Total Cost (ZMW)</Label>
-                        <Input
-                            id="cost_amount"
-                            type="number"
-                            step="0.01"
-                            {...register('cost_amount')}
-                            placeholder="0.00"
-                        />
-                    </div>
-
+                <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="medical_fees">Medical Fees (ZMW)</Label>
                         <Input
@@ -266,6 +295,33 @@ export function VisitForm({ onSuccess, onCancel }) {
                             {...register('transport_costs')}
                             placeholder="0.00"
                         />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="other_fees">Other Fees (ZMW)</Label>
+                        <Input
+                            id="other_fees"
+                            type="number"
+                            step="0.01"
+                            {...register('other_fees')}
+                            placeholder="0.00"
+                        />
+                        <p className="text-xs text-muted-foreground">Lab tests, X-rays, etc.</p>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="cost_amount">Total Cost (ZMW)</Label>
+                        <Input
+                            id="cost_amount"
+                            type="number"
+                            step="0.01"
+                            {...register('cost_amount')}
+                            placeholder="0.00"
+                            className="font-semibold"
+                        />
+                        <p className="text-xs text-muted-foreground">Auto-calculated from above fees</p>
                     </div>
                 </div>
             </div>
@@ -365,9 +421,9 @@ export function VisitForm({ onSuccess, onCancel }) {
                 >
                     Cancel
                 </Button>
-                <Button type="submit" disabled={createVisit.isPending}>
-                    {createVisit.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Record Visit
+                <Button type="submit" disabled={createVisit.isPending || updateVisit.isPending}>
+                    {(createVisit.isPending || updateVisit.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isEditing ? 'Save Changes' : 'Record Visit'}
                 </Button>
             </div>
         </form>

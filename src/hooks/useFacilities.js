@@ -24,12 +24,52 @@ export function useCreateFacility() {
         mutationFn: async (facilityData) => {
             const { data, error } = await supabase
                 .from('medical_facilities')
-                .insert([facilityData])
+                .insert([{ ...facilityData, is_active: true }])
                 .select()
                 .single()
 
             if (error) throw error
             return data
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['facilities'] })
+        },
+    })
+}
+
+export function useUpdateFacility() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, updates }) => {
+            const { data, error } = await supabase
+                .from('medical_facilities')
+                .update(updates)
+                .eq('id', id)
+                .select()
+                .single()
+
+            if (error) throw error
+            return data
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['facilities'] })
+        },
+    })
+}
+
+export function useDeleteFacility() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id) => {
+            // Soft delete
+            const { error } = await supabase
+                .from('medical_facilities')
+                .update({ is_active: false })
+                .eq('id', id)
+
+            if (error) throw error
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['facilities'] })

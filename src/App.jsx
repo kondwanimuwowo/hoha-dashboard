@@ -26,14 +26,17 @@ import { LegacyAttendance } from '@/pages/legacy/LegacyAttendance'
 import { ClinicareOverview } from '@/pages/clinicare/ClinicareOverview'
 import { Visits } from '@/pages/clinicare/Visits'
 import { PatientHistory } from '@/pages/clinicare/PatientHistory'
+import { Facilities } from '@/pages/clinicare/Facilities'
 
 // Food Distribution pages
 import { FoodOverview } from '@/pages/food/FoodOverview'
 import { Distributions } from '@/pages/food/Distributions'
 import { DistributionDetail } from '@/pages/food/DistributionDetail'
+import { FoodHistory } from '@/pages/food/FoodHistory'
 
 // Emergency Relief pages
 import EmergencyReliefOverview from '@/pages/emergency-relief/EmergencyReliefOverview'
+import { ReliefHistory } from '@/pages/emergency-relief/ReliefHistory'
 
 // Family pages
 import { FamilyProfile } from '@/pages/families/FamilyProfile'
@@ -42,6 +45,9 @@ import { Settings } from '@/pages/Settings'
 
 // Admin pages
 import { UserManagement } from '@/pages/admin/UserManagement'
+
+// Reports
+import { Reports } from '@/pages/reports/Reports'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -96,11 +102,14 @@ function App() {
             <Route path="attendance" element={<LegacyAttendance />} />
           </Route>
 
+
+
           {/* Clinicare Africa Routes */}
           <Route path="clinicare">
             <Route index element={<ClinicareOverview />} />
             <Route path="visits" element={<Visits />} />
             <Route path="patients/:id" element={<PatientHistory />} />
+            <Route path="facilities" element={<Facilities />} />
           </Route>
 
           {/* Food Distribution Routes */}
@@ -108,11 +117,13 @@ function App() {
             <Route index element={<FoodOverview />} />
             <Route path="distributions" element={<Distributions />} />
             <Route path="distributions/:id" element={<DistributionDetail />} />
+            <Route path="history" element={<FoodHistory />} />
           </Route>
 
           {/* Emergency Relief Routes */}
           <Route path="emergency-relief">
             <Route index element={<EmergencyReliefOverview />} />
+            <Route path="history" element={<ReliefHistory />} />
           </Route>
 
           {/* Family Routes */}
@@ -125,6 +136,9 @@ function App() {
           <Route path="admin">
             <Route path="users" element={<UserManagement />} />
           </Route>
+
+          {/* Reports */}
+          <Route path="reports" element={<Reports />} />
         </Route>
 
         {/* 404 */}

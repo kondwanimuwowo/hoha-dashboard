@@ -4,6 +4,7 @@ import * as z from 'zod'
 import { useCreateStudent, useUpdateStudent } from '@/hooks/useStudents'
 import { useCreatePerson, usePeople } from '@/hooks/usePeople'
 import { useCreateRelationship } from '@/hooks/useRelationships'
+import { useParentEmergencyContact, useSaveParentEmergencyContact } from '@/hooks/useRecords'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,28 +12,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Plus, X, Search, Check } from 'lucide-react'
+import { Loader2, Plus, X, Search, Check, Phone, MapPin, Calendar, School, Users as UsersIcon, Trash2, ShieldQuestion } from 'lucide-react'
 import { GRADE_LEVELS, RELATIONSHIP_TYPES } from '@/lib/constants'
 import { PhotoUpload } from '@/components/shared/PhotoUpload'
 import { SchoolDropdown } from '@/components/shared/SchoolDropdown'
 import { useState, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabase'
 
 const studentSchema = z.object({
     first_name: z.string().min(2, 'First name is required'),
     last_name: z.string().min(2, 'Last name is required'),
     date_of_birth: z.string().min(1, 'Date of birth is required'),
-    gender: z.string().min(1, 'Gender is required'),
-    phone_number: z.string().optional(),
-    address: z.string().optional(),
-    compound_area: z.string().optional(),
-    photo_url: z.string().optional(),
+    gender: z.enum(['Male', 'Female']),
+    address: z.string().nullable().optional(),
+    photo_url: z.string().nullable().optional(),
     grade_level: z.string().min(1, 'Grade level is required'),
-    government_school_id: z.string().optional(),
-    enrollment_date: z.string().optional(),
-    emergency_contact_name: z.string().optional(),
-    emergency_contact_phone: z.string().optional(),
-    emergency_contact_relationship: z.string().optional(),
-    notes: z.string().optional(),
+    government_school_id: z.string().nullable().optional(),
+    enrollment_date: z.string().nullable().optional(),
+    emergency_contact_name: z.string().nullable().optional(),
+    emergency_contact_phone: z.string().nullable().optional(),
+    emergency_contact_relationship: z.string().nullable().optional(),
+    current_status: z.string().default('Active'),
+    notes: z.string().nullable().optional(),
 })
 
 export function StudentForm({ onSuccess, onCancel, initialData }) {
@@ -47,7 +49,12 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
     const updateStudent = useUpdateStudent()
     const createPerson = useCreatePerson()
     const createRelationship = useCreateRelationship()
+    const saveParentEmergencyContact = useSaveParentEmergencyContact()
     const { data: searchResults } = usePeople(searchTerm)
+
+    // Primary parent's ID for emergency contact lookup
+    const primaryParentId = guardians[0]?.linked_person_id
+    const { data: savedParentContact } = useParentEmergencyContact(primaryParentId)
 
     const {
         register,
@@ -58,9 +65,18 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
     } = useForm({
         resolver: zodResolver(studentSchema),
         defaultValues: {
-            enrollment_date: new Date().toISOString().split('T')[0],
+            // No default enrollment_date - can be left blank if unknown
         },
     })
+
+    // Auto-populate emergency contact if found for parent
+    useEffect(() => {
+        if (savedParentContact && sameAsParent) {
+            setValue('emergency_contact_name', savedParentContact.emergency_contact_name)
+            setValue('emergency_contact_phone', savedParentContact.emergency_contact_phone)
+            setValue('emergency_contact_relationship', savedParentContact.emergency_contact_relationship)
+        }
+    }, [savedParentContact, sameAsParent, setValue])
 
     useEffect(() => {
         if (initialData) {
@@ -82,6 +98,7 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                 setValue('grade_level', enrollment.grade_level)
                 setValue('government_school_id', enrollment.government_school_id)
                 setValue('enrollment_date', enrollment.enrollment_date)
+                setValue('current_status', enrollment.current_status || 'Active')
             }
         }
     }, [initialData, setValue])
@@ -149,9 +166,11 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
         setError('')
         try {
             if (initialData) {
+                // Ensure current_status is included in updates
                 await updateStudent.mutateAsync({
                     id: initialData.id,
-                    ...data
+                    ...data,
+                    current_status: data.current_status || initialData.educare_enrollment?.[0]?.current_status
                 })
                 onSuccess?.()
                 return
@@ -159,6 +178,7 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
 
             // Create student (person + enrollment)
             const student = await createStudent.mutateAsync(data)
+            const studentId = student.child_id || student.id
 
             // Create guardians and relationships
             for (const guardian of guardians) {
@@ -176,11 +196,22 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
 
                     // Create relationship
                     await createRelationship.mutateAsync({
-                        person_id: student.child_id || student.id, // Handle different return structures
+                        person_id: studentId,
                         related_person_id: guardianId,
                         relationship_type: guardian.relationship,
                         is_primary: guardians.indexOf(guardian) === 0,
                     })
+
+                    // If this is the primary guardian and "same as parent" is checked, 
+                    // save their emergency contact preferences
+                    if (guardians.indexOf(guardian) === 0 && sameAsParent) {
+                        await saveParentEmergencyContact.mutateAsync({
+                            parent_id: guardianId,
+                            emergency_contact_name: data.emergency_contact_name,
+                            emergency_contact_phone: data.emergency_contact_phone,
+                            emergency_contact_relationship: data.emergency_contact_relationship,
+                        })
+                    }
                 }
             }
 
@@ -189,9 +220,12 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
             setError(err.message || 'Failed to save student')
         }
     }
+    const onError = (errors) => {
+        console.error('Form Validation Errors:', errors)
+    }
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-6">
             {error && (
                 <Alert variant="destructive">
                     <AlertDescription>{error}</AlertDescription>
@@ -266,26 +300,6 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                         {errors.gender && (
                             <p className="text-sm text-red-600">{errors.gender.message}</p>
                         )}
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="phone_number">Phone Number</Label>
-                        <Input
-                            id="phone_number"
-                            {...register('phone_number')}
-                            placeholder="+260 XXX XXXX"
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="compound_area">Compound Area</Label>
-                        <Input
-                            id="compound_area"
-                            {...register('compound_area')}
-                            placeholder="e.g., Kanyama"
-                        />
                     </div>
                 </div>
 
@@ -462,7 +476,29 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                             id="enrollment_date"
                             type="date"
                             {...register('enrollment_date')}
+                            placeholder="Leave blank if unknown"
                         />
+                        <p className="text-xs text-muted-foreground">Leave blank if enrollment date is unknown</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="current_status">Status</Label>
+                        <Select
+                            onValueChange={(value) => setValue('current_status', value)}
+                            defaultValue={initialData?.educare_enrollment?.[0]?.current_status || 'Active'}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Active">Active</SelectItem>
+                                <SelectItem value="Graduated">Graduated</SelectItem>
+                                <SelectItem value="Withdrawn">Withdrawn</SelectItem>
+                                <SelectItem value="Transferred">Transferred</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
 

@@ -8,7 +8,7 @@ export function usePeople(search = '') {
             let query = supabase
                 .from('people')
                 .select('*')
-                .eq('is_active', true)
+                .is('deleted_at', null) // Only show non-deleted people
                 .order('first_name')
 
             if (search) {
@@ -29,10 +29,7 @@ export function usePerson(id) {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('people')
-                .select(`
-                    *,
-                    family_members:people!family_head_id(*)
-                `)
+                .select('*')
                 .eq('id', id)
                 .single()
 
@@ -59,6 +56,21 @@ export function useCreatePerson() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['people'] })
+        },
+    })
+}
+
+export function useFamilyGroups() {
+    return useQuery({
+        queryKey: ['family-groups'],
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from('family_groups')
+                .select('*')
+                .order('recipient_name')
+
+            if (error) throw error
+            return data
         },
     })
 }

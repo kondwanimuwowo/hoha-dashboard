@@ -7,6 +7,7 @@ import {
     Heart,
     UtensilsCrossed,
     Package,
+    BarChart3,
     Settings,
     ChevronLeft,
     ChevronRight
@@ -50,6 +51,12 @@ const navigation = [
         href: '/emergency-relief',
         icon: Package,
         description: 'Crisis support'
+    },
+    {
+        name: 'Reports',
+        href: '/reports',
+        icon: BarChart3,
+        description: 'Analytics & insights'
     },
     {
         name: 'Settings',

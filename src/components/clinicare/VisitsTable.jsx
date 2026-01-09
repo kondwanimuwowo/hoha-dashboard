@@ -9,13 +9,16 @@ import {
 } from '@tanstack/react-table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown, Ambulance, AlertCircle } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown, Ambulance, AlertCircle, Edit } from 'lucide-react'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import { motion } from 'framer-motion'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { VisitForm } from './VisitForm'
 
 export function VisitsTable({ data }) {
     const [sorting, setSorting] = useState([])
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 })
+    const [editingVisit, setEditingVisit] = useState(null)
 
     const columns = useMemo(
         () => [
@@ -105,6 +108,18 @@ export function VisitsTable({ data }) {
                             <AlertCircle className="h-4 w-4 text-orange-500" title="Follow-up required" />
                         )}
                     </div>
+                ),
+            },
+            {
+                id: 'actions',
+                cell: ({ row }) => (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setEditingVisit(row.original)}
+                    >
+                        <Edit className="h-4 w-4" />
+                    </Button>
                 ),
             },
         ],
@@ -209,6 +224,24 @@ export function VisitsTable({ data }) {
                     </Button>
                 </div>
             </div>
+
+            <Dialog open={!!editingVisit} onOpenChange={() => setEditingVisit(null)}>
+                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Edit Medical Visit</DialogTitle>
+                        <DialogDescription>
+                            Update the details of the medical visit. Changes will be reflected in the patient history.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {editingVisit && (
+                        <VisitForm
+                            initialData={editingVisit}
+                            onSuccess={() => setEditingVisit(null)}
+                            onCancel={() => setEditingVisit(null)}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

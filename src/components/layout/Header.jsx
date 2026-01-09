@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Menu, Bell, Search, LogOut, User as UserIcon } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { PersonAvatar } from '@/components/shared/PersonAvatar'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -90,12 +90,12 @@ export function Header({ onMenuClick }) {
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <button className="flex items-center space-x-3 rounded-lg px-3 py-2 hover:bg-neutral-100 dark:hover:bg-accent transition-colors">
-                            <Avatar className="h-8 w-8">
-                                <AvatarImage src={profile?.avatar_url} />
-                                <AvatarFallback className="bg-gradient-to-br from-primary-600 to-primary-700 text-white text-sm font-semibold">
-                                    {getInitials(profile?.full_name || user?.email)}
-                                </AvatarFallback>
-                            </Avatar>
+                            <PersonAvatar
+                                photoUrl={profile?.avatar_url}
+                                firstName={profile?.full_name || user?.email}
+                                lastName=""
+                                className="h-8 w-8"
+                            />
                             <div className="hidden md:block text-left">
                                 <p className="text-sm font-medium text-neutral-900 dark:text-foreground">
                                     {profile?.full_name || user?.email?.split('@')[0] || 'User'}

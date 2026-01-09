@@ -2,6 +2,14 @@ import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge"
 import { format, differenceInYears } from "date-fns"
 
+// Profile image placeholders
+export const MALE_PLACEHOLDER = 'https://uxewirvydfvkpmlucyos.supabase.co/storage/v1/object/public/photos/placeholders/male-placeholder.png'
+export const FEMALE_PLACEHOLDER = 'https://uxewirvydfvkpmlucyos.supabase.co/storage/v1/object/public/photos/placeholders/female-placeholder.png'
+
+export function getProfilePlaceholder(gender) {
+    return gender === 'Male' ? MALE_PLACEHOLDER : FEMALE_PLACEHOLDER
+}
+
 export function cn(...inputs) {
     return twMerge(clsx(inputs));
 }
@@ -26,10 +34,10 @@ export function calculateAge(birthDate) {
     }
 }
 
-export function formatCurrency(amount, currency = 'MWK') {
+export function formatCurrency(amount, currency = 'ZMW') {
     if (amount === null || amount === undefined) return ''
     try {
-        return new Intl.NumberFormat('en-MW', {
+        return new Intl.NumberFormat('en-ZM', {
             style: 'currency',
             currency: currency,
             minimumFractionDigits: 0,

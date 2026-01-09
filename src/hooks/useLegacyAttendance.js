@@ -105,3 +105,153 @@ export function useMarkLegacyAttendance() {
         },
     })
 }
+
+export function useMonthlyLegacyAttendanceReport(month, year, stage) {
+    return useQuery({
+        queryKey: ['monthly-legacy-attendance', month, year, stage],
+        queryFn: async () => {
+            // Calculate date range for the month
+            const startDate = `${year}-${month}-01`
+            const lastDay = new Date(year, parseInt(month), 0).getDate()
+            const endDate = `${year}-${month}-${lastDay.toString().padStart(2, '0')}`
+
+            // Get all women for the stage
+            let womenQuery = supabase
+                .from('legacy_women_enrollment')
+                .select('*, person:people(id, first_name, last_name)')
+                .eq('status', 'Active')
+
+            if (stage && stage !== 'all') {
+                womenQuery = womenQuery.eq('stage', stage)
+            }
+
+            const { data: women, error: womenError } = await womenQuery
+            if (womenError) throw womenError
+
+            // Get attendance records for the month
+            const { data: attendance, error: attendanceError } = await supabase
+                .from('legacy_program_attendance')
+                .select('*')
+                .gte('session_date', startDate)
+                .lte('session_date', endDate)
+
+            if (attendanceError) throw attendanceError
+
+            // Calculate stats for each woman
+            const womenStats = women.map(woman => {
+                const womanAttendance = attendance.filter(a => a.woman_id === woman.person_id)
+                const total = womanAttendance.length
+                const present = womanAttendance.filter(a => a.status === 'Present').length
+                const absent = womanAttendance.filter(a => a.status === 'Absent').length
+                const excused = womanAttendance.filter(a => a.status === 'Excused').length
+                const rate = total > 0 ? ((present / total) * 100).toFixed(1) : 0
+
+                return {
+                    woman_id: woman.person_id,
+                    name: `${woman.person.first_name} ${woman.person.last_name}`,
+                    stage: woman.stage,
+                    total,
+                    present,
+                    absent,
+                    excused,
+                    rate: parseFloat(rate)
+                }
+            })
+
+            // Calculate overall stats
+            const totalRecords = attendance.length
+            const totalPresent = attendance.filter(a => a.status === 'Present').length
+            const totalAbsent = attendance.filter(a => a.status === 'Absent').length
+            const overallRate = totalRecords > 0 ? ((totalPresent / totalRecords) * 100).toFixed(1) : 0
+
+            return {
+                women: womenStats,
+                summary: {
+                    totalWomen: women.length,
+                    totalRecords,
+                    totalPresent,
+                    totalAbsent,
+                    overallRate: parseFloat(overallRate)
+                }
+            }
+        },
+        enabled: !!month && !!year
+    })
+}
+
+export function useTermlyLegacyAttendanceReport(term, year, stage) {
+    return useQuery({
+        queryKey: ['termly-legacy-attendance', term, year, stage],
+        queryFn: async () => {
+            // Define term date ranges
+            const termRanges = {
+                '1': { start: `${year}-01-01`, end: `${year}-04-30` },
+                '2': { start: `${year}-05-01`, end: `${year}-08-31` },
+                '3': { start: `${year}-09-01`, end: `${year}-12-31` }
+            }
+
+            const { start: startDate, end: endDate } = termRanges[term]
+
+            // Get all women for the stage
+            let womenQuery = supabase
+                .from('legacy_women_enrollment')
+                .select('*, person:people(id, first_name, last_name)')
+                .eq('status', 'Active')
+
+            if (stage && stage !== 'all') {
+                womenQuery = womenQuery.eq('stage', stage)
+            }
+
+            const { data: women, error: womenError } = await womenQuery
+            if (womenError) throw womenError
+
+            // Get attendance records for the term
+            const { data: attendance, error: attendanceError } = await supabase
+                .from('legacy_program_attendance')
+                .select('*')
+                .gte('session_date', startDate)
+                .lte('session_date', endDate)
+
+            if (attendanceError) throw attendanceError
+
+            // Calculate stats for each woman
+            const womenStats = women.map(woman => {
+                const womanAttendance = attendance.filter(a => a.woman_id === woman.person_id)
+                const total = womanAttendance.length
+                const present = womanAttendance.filter(a => a.status === 'Present').length
+                const absent = womanAttendance.filter(a => a.status === 'Absent').length
+                const excused = womanAttendance.filter(a => a.status === 'Excused').length
+                const rate = total > 0 ? ((present / total) * 100).toFixed(1) : 0
+
+                return {
+                    woman_id: woman.person_id,
+                    name: `${woman.person.first_name} ${woman.person.last_name}`,
+                    stage: woman.stage,
+                    total,
+                    present,
+                    absent,
+                    excused,
+                    rate: parseFloat(rate)
+                }
+            })
+
+            // Calculate overall stats
+            const totalRecords = attendance.length
+            const totalPresent = attendance.filter(a => a.status === 'Present').length
+            const totalAbsent = attendance.filter(a => a.status === 'Absent').length
+            const overallRate = totalRecords > 0 ? ((totalPresent / totalRecords) * 100).toFixed(1) : 0
+
+            return {
+                women: womenStats,
+                summary: {
+                    totalWomen: women.length,
+                    totalRecords,
+                    totalPresent,
+                    totalAbsent,
+                    overallRate: parseFloat(overallRate)
+                }
+            }
+        },
+        enabled: !!term && !!year
+    })
+}
