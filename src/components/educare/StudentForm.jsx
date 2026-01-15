@@ -17,8 +17,7 @@ import { GRADE_LEVELS, RELATIONSHIP_TYPES } from '@/lib/constants'
 import { PhotoUpload } from '@/components/shared/PhotoUpload'
 import { SchoolDropdown } from '@/components/shared/SchoolDropdown'
 import { useState, useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { supabase } from '@/lib/supabase'
+
 
 const studentSchema = z.object({
     first_name: z.string().min(2, 'First name is required'),
@@ -84,9 +83,7 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
             setValue('last_name', initialData.last_name)
             setValue('date_of_birth', initialData.date_of_birth)
             setValue('gender', initialData.gender)
-            setValue('phone_number', initialData.phone_number)
             setValue('address', initialData.address)
-            setValue('compound_area', initialData.compound_area)
             setValue('photo_url', initialData.photo_url)
             setValue('notes', initialData.notes)
             setValue('emergency_contact_name', initialData.emergency_contact_name)
@@ -99,6 +96,33 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                 setValue('government_school_id', enrollment.government_school_id)
                 setValue('enrollment_date', enrollment.enrollment_date)
                 setValue('current_status', enrollment.current_status || 'Active')
+            }
+
+            if (initialData.relationships) {
+                const existingGuardians = initialData.relationships.map(rel => ({
+                    first_name: rel.related_person?.first_name || '',
+                    last_name: rel.related_person?.last_name || '',
+                    phone_number: rel.related_person?.phone_number || '',
+                    relationship: rel.relationship_type,
+                    linked_person_id: rel.related_person_id,
+                    relationship_id: rel.id
+                }))
+                if (existingGuardians.length > 0) {
+                    setGuardians(existingGuardians)
+                }
+            } else if (initialData['relationships!relationships_related_person_id_fkey']) {
+                const rels = initialData['relationships!relationships_related_person_id_fkey']
+                const existingGuardians = rels.map(rel => ({
+                    first_name: rel.person?.first_name || '',
+                    last_name: rel.person?.last_name || '',
+                    phone_number: rel.person?.phone_number || '',
+                    relationship: rel.relationship_type,
+                    linked_person_id: rel.person_id,
+                    relationship_id: rel.id
+                }))
+                if (existingGuardians.length > 0) {
+                    setGuardians(existingGuardians)
+                }
             }
         }
     }, [initialData, setValue])
@@ -172,6 +196,36 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                     ...data,
                     current_status: data.current_status || initialData.educare_enrollment?.[0]?.current_status
                 })
+
+                // Handle relationship updates in edit mode
+                const studentId = initialData.id
+                for (const guardian of guardians) {
+                    if (guardian.first_name && guardian.last_name) {
+                        let guardianId = guardian.linked_person_id
+
+                        if (!guardianId) {
+                            const guardianPerson = await createPerson.mutateAsync({
+                                first_name: guardian.first_name,
+                                last_name: guardian.last_name,
+                                phone_number: guardian.phone_number,
+                            })
+                            guardianId = guardianPerson.id
+                        }
+
+                        // Check if this relationship already exists
+                        if (!guardian.relationship_id) {
+                            await createRelationship.mutateAsync({
+                                person_id: guardianId,
+                                related_person_id: studentId,
+                                relationship_type: guardian.relationship,
+                                is_primary: guardians.indexOf(guardian) === 0,
+                            })
+                        }
+                        // Note: Currently we don't handle updating relationship types or deleting relationships here
+                        // to keep it simple and safe.
+                    }
+                }
+
                 onSuccess?.()
                 return
             }
@@ -196,8 +250,8 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
 
                     // Create relationship
                     await createRelationship.mutateAsync({
-                        person_id: studentId,
-                        related_person_id: guardianId,
+                        person_id: guardianId,
+                        related_person_id: studentId,
                         relationship_type: guardian.relationship,
                         is_primary: guardians.indexOf(guardian) === 0,
                     })
@@ -316,132 +370,128 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
 
 
 
-            {/* Parent/Guardian Information - Only show in create mode */}
-            {
-                !initialData && (
-                    <div className="space-y-4">
+            {/* Parent/Guardian Information */}
+            <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">Parent/Guardian Information</h3>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={addGuardian}
+                    >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Another Guardian
+                    </Button>
+                </div>
+
+                {guardians.map((guardian, index) => (
+                    <div key={index} className="border rounded-lg p-4 space-y-3 bg-muted/30">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-semibold">Parent/Guardian Information</h3>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={addGuardian}
-                            >
-                                <Plus className="mr-2 h-4 w-4" />
-                                Add Another Guardian
-                            </Button>
+                            <Label className="text-sm font-medium">Guardian {index + 1}</Label>
+                            {guardians.length > 1 && (
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => removeGuardian(index)}
+                                >
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            )}
                         </div>
 
-                        {guardians.map((guardian, index) => (
-                            <div key={index} className="border rounded-lg p-4 space-y-3 bg-muted/30">
-                                <div className="flex items-center justify-between">
-                                    <Label className="text-sm font-medium">Guardian {index + 1}</Label>
-                                    {guardians.length > 1 && (
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => removeGuardian(index)}
-                                        >
-                                            <X className="h-4 w-4" />
-                                        </Button>
-                                    )}
-                                </div>
-
-                                {/* Search for existing parent */}
-                                <div className="relative mb-2">
-                                    <div className="relative">
-                                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                                        <Input
-                                            placeholder="Search existing parent..."
-                                            className="pl-8"
-                                            onChange={(e) => {
-                                                setSearchTerm(e.target.value)
-                                                setActiveGuardianIndex(index)
-                                                setShowSuggestions(true)
-                                            }}
-                                            onFocus={() => {
-                                                setActiveGuardianIndex(index)
-                                                setShowSuggestions(true)
-                                            }}
-                                        />
-                                    </div>
-                                    {showSuggestions && activeGuardianIndex === index && searchTerm.length > 1 && searchResults && (
-                                        <div className="absolute z-10 w-full mt-1 bg-popover border text-popover-foreground rounded-md shadow-md max-h-48 overflow-y-auto">
-                                            {searchResults.length > 0 ? (
-                                                searchResults.map((person) => (
-                                                    <div
-                                                        key={person.id}
-                                                        className="flex items-center justify-between p-2 cursor-pointer hover:bg-muted"
-                                                        onClick={() => linkGuardian(person)}
-                                                    >
-                                                        <div>
-                                                            <p className="font-medium">{person.first_name} {person.last_name}</p>
-                                                            <p className="text-xs text-muted-foreground">{person.phone_number}</p>
-                                                        </div>
-                                                        <Check className="h-4 w-4 opacity-50" />
-                                                    </div>
-                                                ))
-                                            ) : (
-                                                <div className="p-2 text-sm text-muted-foreground">No matches found. Create new below.</div>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {guardian.linked_person_id && (
-                                    <Alert className="mb-2 bg-green-500/10 border-green-500/20">
-                                        <Check className="h-4 w-4 text-green-500" />
-                                        <AlertDescription className="text-green-700 dark:text-green-400">
-                                            Linked to existing record
-                                        </AlertDescription>
-                                    </Alert>
-                                )}
-
-                                <div className="grid grid-cols-2 gap-3">
-                                    <Input
-                                        placeholder="First Name"
-                                        value={guardian.first_name}
-                                        onChange={(e) => updateGuardian(index, 'first_name', e.target.value)}
-                                        disabled={!!guardian.linked_person_id}
-                                    />
-                                    <Input
-                                        placeholder="Last Name"
-                                        value={guardian.last_name}
-                                        onChange={(e) => updateGuardian(index, 'last_name', e.target.value)}
-                                        disabled={!!guardian.linked_person_id}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-3">
-                                    <Input
-                                        placeholder="Phone Number"
-                                        value={guardian.phone_number}
-                                        onChange={(e) => updateGuardian(index, 'phone_number', e.target.value)}
-                                        disabled={!!guardian.linked_person_id}
-                                    />
-                                    <Select
-                                        value={guardian.relationship}
-                                        onValueChange={(value) => updateGuardian(index, 'relationship', value)}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Relationship" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {RELATIONSHIP_TYPES.map((type) => (
-                                                <SelectItem key={type} value={type}>
-                                                    {type}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                        {/* Search for existing parent */}
+                        <div className="relative mb-2">
+                            <div className="relative">
+                                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    placeholder="Search existing parent..."
+                                    className="pl-8"
+                                    onChange={(e) => {
+                                        setSearchTerm(e.target.value)
+                                        setActiveGuardianIndex(index)
+                                        setShowSuggestions(true)
+                                    }}
+                                    onFocus={() => {
+                                        setActiveGuardianIndex(index)
+                                        setShowSuggestions(true)
+                                    }}
+                                />
                             </div>
-                        ))}
+                            {showSuggestions && activeGuardianIndex === index && searchTerm.length > 1 && searchResults && (
+                                <div className="absolute z-10 w-full mt-1 bg-popover border text-popover-foreground rounded-md shadow-md max-h-48 overflow-y-auto">
+                                    {searchResults.length > 0 ? (
+                                        searchResults.map((person) => (
+                                            <div
+                                                key={person.id}
+                                                className="flex items-center justify-between p-2 cursor-pointer hover:bg-muted"
+                                                onClick={() => linkGuardian(person)}
+                                            >
+                                                <div>
+                                                    <p className="font-medium">{person.first_name} {person.last_name}</p>
+                                                    <p className="text-xs text-muted-foreground">{person.phone_number}</p>
+                                                </div>
+                                                <Check className="h-4 w-4 opacity-50" />
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="p-2 text-sm text-muted-foreground">No matches found. Create new below.</div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {guardian.linked_person_id && (
+                            <Alert className="mb-2 bg-green-500/10 border-green-500/20">
+                                <Check className="h-4 w-4 text-green-500" />
+                                <AlertDescription className="text-green-700 dark:text-green-400">
+                                    Linked to existing record
+                                </AlertDescription>
+                            </Alert>
+                        )}
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <Input
+                                placeholder="First Name"
+                                value={guardian.first_name}
+                                onChange={(e) => updateGuardian(index, 'first_name', e.target.value)}
+                                disabled={!!guardian.linked_person_id}
+                            />
+                            <Input
+                                placeholder="Last Name"
+                                value={guardian.last_name}
+                                onChange={(e) => updateGuardian(index, 'last_name', e.target.value)}
+                                disabled={!!guardian.linked_person_id}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <Input
+                                placeholder="Phone Number"
+                                value={guardian.phone_number}
+                                onChange={(e) => updateGuardian(index, 'phone_number', e.target.value)}
+                                disabled={!!guardian.linked_person_id}
+                            />
+                            <Select
+                                value={guardian.relationship}
+                                onValueChange={(value) => updateGuardian(index, 'relationship', value)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Relationship" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {RELATIONSHIP_TYPES.map((type) => (
+                                        <SelectItem key={type} value={type}>
+                                            {type}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
-                )
-            }
+                ))}
+            </div>
 
             {/* Education Information */}
             <div className="space-y-4">

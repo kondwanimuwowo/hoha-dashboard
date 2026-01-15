@@ -108,12 +108,22 @@ export function StudentTable({ data, onRowClick }) {
                 ),
             },
             {
-                accessorKey: 'phone_number',
+                accessorKey: 'emergency_contact_phone',
                 header: 'Phone',
                 size: 140,
                 cell: ({ row }) => (
                     <div className="text-sm text-neutral-600">
-                        {row.original.phone_number || '-'}
+                        {row.original.emergency_contact_phone || '-'}
+                    </div>
+                ),
+            },
+            {
+                accessorKey: 'parent_name',
+                header: 'Parent/Guardian',
+                size: 180,
+                cell: ({ row }) => (
+                    <div className="text-sm text-neutral-600">
+                        {row.original.parent_name || '-'}
                     </div>
                 ),
             },

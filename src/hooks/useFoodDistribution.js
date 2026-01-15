@@ -143,6 +143,23 @@ export function useAddRecipient() {
         },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['distribution', variables.distribution_id] })
+        },
+    })
+}
+
+export function useDeleteDistribution() {
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationFn: async (id) => {
+            const { error } = await supabase
+                .from('food_distribution')
+                .delete()
+                .eq('id', id)
+
+            if (error) throw error
+            return id
+        },
+        onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['distributions'] })
         },
     })
@@ -150,9 +167,8 @@ export function useAddRecipient() {
 
 export function useUpdateDistribution() {
     const queryClient = useQueryClient()
-
     return useMutation({
-        mutationFn: async ({ id, updates }) => {
+        mutationFn: async ({ id, ...updates }) => {
             const { data, error } = await supabase
                 .from('food_distribution')
                 .update(updates)
@@ -163,9 +179,9 @@ export function useUpdateDistribution() {
             if (error) throw error
             return data
         },
-        onSuccess: (_, variables) => {
+        onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['distributions'] })
-            queryClient.invalidateQueries({ queryKey: ['distribution', variables.id] })
+            queryClient.invalidateQueries({ queryKey: ['distribution', data.id] })
         },
     })
 }

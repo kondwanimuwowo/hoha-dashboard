@@ -74,7 +74,6 @@ export function useCreateStudent() {
                     emergency_contact_phone: studentData.emergency_contact_phone,
                     emergency_contact_relationship: studentData.emergency_contact_relationship,
                     notes: studentData.notes,
-                    date_of_birth: studentData.date_of_birth || null,
                 }])
                 .select()
                 .single()

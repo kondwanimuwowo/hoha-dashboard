@@ -131,6 +131,7 @@ export function RecipientsList({ recipients, viewMode, onMarkCollected, onRemove
 
 function RecipientCard({ recipient, index, onMarkCollected, onRemove, isPending }) {
     const familyHead = recipient.family_head
+    const familyMembers = recipient.family_member_names || []
 
     return (
         <motion.div
@@ -162,8 +163,8 @@ function RecipientCard({ recipient, index, onMarkCollected, onRemove, isPending 
                                 </Badge>
                             )}
                         </div>
-                        <div className="text-sm text-neutral-600 flex items-center space-x-2">
-                            <span>Family of {recipient.family_size || 'N/A'}</span>
+                        <div className="text-sm text-neutral-600 flex flex-wrap items-center gap-x-2">
+                            <span className="font-medium">Family of {recipient.family_size || 'N/A'}</span>
                             {familyHead?.phone_number && (
                                 <>
                                     <span>•</span>
@@ -179,8 +180,20 @@ function RecipientCard({ recipient, index, onMarkCollected, onRemove, isPending 
                                 </>
                             )}
                         </div>
+
+                        {/* Family Members List */}
+                        {familyMembers.length > 0 && (
+                            <div className="mt-1 flex flex-wrap gap-1">
+                                {familyMembers.map((name, i) => (
+                                    <span key={i} className="text-[10px] bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded leading-none">
+                                        {name}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
+
                         {recipient.special_needs && (
-                            <div className="text-sm text-neutral-500 mt-1">
+                            <div className="text-sm text-neutral-500 mt-1 italic">
                                 Note: {recipient.special_needs}
                             </div>
                         )}
@@ -254,15 +267,28 @@ function CheckInView({ pending, collected, searchQuery, setSearchQuery, onMarkCo
                     <div className="divide-y divide-neutral-100">
                         {pending.map((recipient) => {
                             const familyHead = recipient.family_head
+                            const familyMembers = recipient.family_member_names || []
+
                             return (
                                 <div key={recipient.id} className="p-4">
                                     <div className="mb-3">
                                         <div className="font-semibold text-lg text-neutral-900">
                                             {familyHead?.first_name} {familyHead?.last_name}
                                         </div>
-                                        <div className="text-neutral-600">
-                                            Family of {recipient.family_size} • {familyHead?.phone_number}
+                                        <div className="text-neutral-600 flex items-center gap-2">
+                                            <span>Family of {recipient.family_size}</span>
+                                            {familyHead?.phone_number && <span>• {familyHead.phone_number}</span>}
                                         </div>
+                                        {/* Family Members Small List */}
+                                        {familyMembers.length > 0 && (
+                                            <div className="mt-1 flex flex-wrap gap-1">
+                                                {familyMembers.map((name, i) => (
+                                                    <span key={i} className="text-[10px] bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded">
+                                                        {name}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                     <Button
                                         onClick={() => onMarkCollected(recipient.id)}
