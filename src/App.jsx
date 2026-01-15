@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { ThemeProvider } from '@/components/shared/ThemeProvider'
+import { Toaster } from 'sonner'
 
 // Auth pages
 import { Login } from '@/pages/auth/Login'
@@ -70,6 +71,7 @@ function ProtectedRoute({ children }) {
 function App() {
   return (
     <ThemeProvider>
+      <Toaster position="top-right" richColors />
       <Routes>
         {/* Public routes */}
         <Route path="/login" element={<Login />} />

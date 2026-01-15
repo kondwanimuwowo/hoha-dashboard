@@ -26,7 +26,13 @@ SELECT
     JOIN people p2 ON r.person_id = p2.id
     WHERE r.related_person_id = p.id AND r.is_primary = true
     LIMIT 1
-  ) as parent_name
+  ) as parent_name,
+  (
+    SELECT r.person_id
+    FROM relationships r
+    WHERE r.related_person_id = p.id AND r.is_primary = true
+    LIMIT 1
+  ) as parent_id
 FROM people p
 JOIN educare_enrollment ee ON p.id = ee.child_id
 LEFT JOIN government_schools gs ON ee.government_school_id = gs.id

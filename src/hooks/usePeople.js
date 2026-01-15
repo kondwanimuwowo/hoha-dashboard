@@ -74,3 +74,25 @@ export function useFamilyGroups() {
         },
     })
 }
+
+export function useUpdatePerson() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, ...updates }) => {
+            const { data, error } = await supabase
+                .from('people')
+                .update(updates)
+                .eq('id', id)
+                .select()
+                .single()
+
+            if (error) throw error
+            return data
+        },
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['people'] })
+            queryClient.invalidateQueries({ queryKey: ['person', variables.id] })
+        },
+    })
+}
