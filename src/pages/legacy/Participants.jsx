@@ -20,11 +20,14 @@ export function Participants() {
     const [stageFilter, setStageFilter] = useState('all')
     const [statusFilter, setStatusFilter] = useState('Active')
     const [showAddWoman, setShowAddWoman] = useState(false)
+    const [sorting, setSorting] = useState([{ id: 'enrollment_date', desc: true }])
 
     const { data: women, isLoading } = useWomen({
         search,
         stage: stageFilter === 'all' ? undefined : stageFilter,
         status: statusFilter === 'all' ? undefined : statusFilter,
+        sortBy: sorting[0]?.id,
+        sortOrder: sorting[0]?.desc ? 'desc' : 'asc'
     })
 
     if (isLoading) return <LoadingSpinner />
@@ -90,6 +93,8 @@ export function Participants() {
                 <WomenTable
                     data={women}
                     onRowClick={(woman) => navigate(`/legacy/participants/${woman.woman_id}`)}
+                    sorting={sorting}
+                    onSortingChange={setSorting}
                 />
             ) : (
                 <EmptyState

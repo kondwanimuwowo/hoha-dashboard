@@ -98,7 +98,6 @@ export function UserManagement() {
         try {
             await updateUser.mutateAsync({
                 id: editingUser.id,
-                id: editingUser.id,
                 updates: {
                     role: selectedRole,
                     is_active: selectedStatus,

@@ -8,8 +8,8 @@ export function useStudents(filters = {}) {
             let query = supabase
                 .from('student_details')
                 .select('*')
-                .order('first_name')
 
+            // Apply Filters
             if (filters.gradeLevel) {
                 query = query.eq('grade_level', filters.gradeLevel)
             }
@@ -18,8 +18,23 @@ export function useStudents(filters = {}) {
                 query = query.eq('current_status', filters.status)
             }
 
+            if (filters.school) {
+                if (filters.school === 'HOHA Only') {
+                    query = query.is('government_school', null)
+                } else {
+                    query = query.eq('government_school', filters.school)
+                }
+            }
+
             if (filters.search) {
-                query = query.or(`first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%`)
+                query = query.or(`first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%,phone_number.ilike.%${filters.search}%`)
+            }
+
+            // Apply Sorting
+            if (filters.sortBy) {
+                query = query.order(filters.sortBy, { ascending: filters.sortOrder !== 'desc' })
+            } else {
+                query = query.order('first_name')
             }
 
             const { data, error } = await query

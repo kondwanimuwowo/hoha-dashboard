@@ -10,30 +10,40 @@ import {
 import { PersonAvatar } from '@/components/shared/PersonAvatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown } from 'lucide-react'
-import { calculateAge, formatDate } from '@/lib/utils'
+import { Input } from '@/components/ui/input'
+import {
+    ChevronLeft,
+    ChevronRight,
+    ChevronsLeft,
+    ChevronsRight,
+    ArrowUpDown,
+    Eye,
+    Phone,
+    Users
+} from 'lucide-react'
 import { motion } from 'framer-motion'
+import { cn } from '@/lib/utils'
 
-export function WomenTable({ data, onRowClick, sorting, onSortingChange }) {
+export function ParentTable({ data, onRowClick, sorting, onSortingChange }) {
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 })
 
     const columns = useMemo(
         () => [
             {
-                accessorKey: 'woman.photo_url',
+                accessorKey: 'photo_url',
                 header: '',
                 size: 60,
                 cell: ({ row }) => (
                     <PersonAvatar
-                        photoUrl={row.original.woman?.photo_url}
-                        gender="Female"
-                        firstName={row.original.woman?.first_name}
-                        lastName={row.original.woman?.last_name}
+                        photoUrl={row.original.photo_url}
+                        gender={row.original.gender}
+                        firstName={row.original.first_name}
+                        lastName={row.original.last_name}
                     />
                 ),
             },
             {
-                accessorKey: 'woman.first_name',
+                accessorKey: 'first_name',
                 header: ({ column }) => (
                     <button
                         onClick={() => column.toggleSorting()}
@@ -44,11 +54,11 @@ export function WomenTable({ data, onRowClick, sorting, onSortingChange }) {
                     </button>
                 ),
                 cell: ({ row }) => (
-                    <div className="font-medium text-neutral-900">{row.original.woman?.first_name}</div>
+                    <div className="font-medium text-neutral-900">{row.original.first_name}</div>
                 ),
             },
             {
-                accessorKey: 'woman.last_name',
+                accessorKey: 'last_name',
                 header: ({ column }) => (
                     <button
                         onClick={() => column.toggleSorting()}
@@ -59,85 +69,55 @@ export function WomenTable({ data, onRowClick, sorting, onSortingChange }) {
                     </button>
                 ),
                 cell: ({ row }) => (
-                    <div className="font-medium text-neutral-900">{row.original.woman?.last_name}</div>
+                    <div className="text-neutral-600">{row.original.last_name}</div>
                 ),
             },
             {
-                accessorKey: 'woman.date_of_birth',
-                header: 'Age',
-                size: 80,
-                cell: ({ row }) => {
-                    const age = calculateAge(row.original.woman?.date_of_birth)
-                    return <div className="text-neutral-600">{age ? `${age} yrs` : '-'}</div>
-                },
-            },
-            {
-                accessorKey: 'stage',
-                header: ({ column }) => (
-                    <button
-                        onClick={() => column.toggleSorting()}
-                        className="flex items-center space-x-1 hover:text-primary-600"
-                    >
-                        <span>Stage</span>
-                        <ArrowUpDown className="h-4 w-4" />
-                    </button>
-                ),
+                accessorKey: 'phone_number',
+                header: 'Phone Number',
+                size: 150,
                 cell: ({ row }) => (
-                    <Badge variant="secondary" className="font-medium bg-purple-50 text-purple-700">
-                        {row.original.stage}
-                    </Badge>
-                ),
-            },
-            {
-                accessorKey: 'enrollment_date',
-                header: ({ column }) => (
-                    <button
-                        onClick={() => column.toggleSorting()}
-                        className="flex items-center space-x-1 hover:text-primary-600"
-                    >
-                        <span>Enrolled</span>
-                        <ArrowUpDown className="h-4 w-4" />
-                    </button>
-                ),
-                size: 120,
-                cell: ({ row }) => (
-                    <div className="text-sm text-neutral-600">
-                        {formatDate(row.original.enrollment_date)}
+                    <div className="flex items-center text-sm text-neutral-600">
+                        <Phone className="h-3 w-3 mr-2 opacity-50" />
+                        {row.original.phone_number || '-'}
                     </div>
                 ),
             },
             {
-                accessorKey: 'woman.phone_number',
-                header: 'Phone',
-                size: 140,
+                accessorKey: 'children_count',
+                header: 'Children in Educare',
+                size: 180,
                 cell: ({ row }) => (
-                    <div className="text-sm text-neutral-600">
-                        {row.original.woman?.phone_number || '-'}
-                    </div>
-                ),
-            },
-            {
-                accessorKey: 'status',
-                header: 'Status',
-                size: 100,
-                cell: ({ row }) => {
-                    const status = row.original.status
-                    return (
-                        <Badge
-                            variant={
-                                status === 'Active' ? 'success' :
-                                    status === 'Completed' ? 'default' :
-                                        'secondary'
-                            }
-                            className="font-medium"
-                        >
-                            {status}
+                    <div className="flex items-center space-x-2">
+                        <Badge variant="secondary" className="flex items-center gap-1">
+                            <Users className="h-3 w-3" />
+                            {row.original.children_count}
                         </Badge>
-                    )
-                },
+                        <div className="text-xs text-neutral-400 truncate max-w-[120px]">
+                            {row.original.educare_children?.map(c => c.first_name).join(', ')}
+                        </div>
+                    </div>
+                ),
+            },
+            {
+                id: 'actions',
+                size: 80,
+                cell: ({ row }) => (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            onRowClick?.(row.original)
+                        }}
+                    >
+                        <Eye className="h-4 w-4 mr-2" />
+                        View
+                    </Button>
+                ),
             },
         ],
-        []
+        [onRowClick]
     )
 
     const table = useReactTable({
@@ -153,13 +133,11 @@ export function WomenTable({ data, onRowClick, sorting, onSortingChange }) {
             sorting,
             pagination,
         },
-        manualSorting: true,
     })
 
     return (
         <div className="space-y-4">
-            {/* Table Container */}
-            <div className="rounded-lg border border-neutral-200 bg-white overflow-hidden">
+            <div className="rounded-lg border bg-white overflow-hidden shadow-sm border-neutral-200">
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead className="bg-neutral-50 border-b border-neutral-200">
@@ -204,7 +182,7 @@ export function WomenTable({ data, onRowClick, sorting, onSortingChange }) {
             {/* Pagination */}
             <div className="flex items-center justify-between">
                 <div className="text-sm text-neutral-600">
-                    Showing {table.getRowModel().rows.length} of {data?.length || 0} participants
+                    Showing {table.getRowModel().rows.length} of {data?.length || 0} parents
                 </div>
                 <div className="flex items-center space-x-2">
                     <Button
@@ -224,7 +202,7 @@ export function WomenTable({ data, onRowClick, sorting, onSortingChange }) {
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
                     <span className="text-sm text-neutral-600">
-                        Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+                        Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount() || 1}
                     </span>
                     <Button
                         variant="outline"

@@ -12,7 +12,14 @@ export function useWomen(filters = {}) {
           woman:people!legacy_women_enrollment_woman_id_fkey(*),
           mentor:people!legacy_women_enrollment_mentor_id_fkey(*)
         `)
-                .order('enrollment_date', { ascending: false })
+
+            // Server-side sorting for base table fields
+            const serverSortFields = ['enrollment_date', 'stage', 'status']
+            if (filters.sortBy && serverSortFields.includes(filters.sortBy)) {
+                query = query.order(filters.sortBy, { ascending: filters.sortOrder !== 'desc' })
+            } else if (!filters.sortBy || !filters.sortBy.startsWith('woman.')) {
+                query = query.order('enrollment_date', { ascending: false })
+            }
 
             if (filters.status) {
                 query = query.eq('status', filters.status)
@@ -22,19 +29,35 @@ export function useWomen(filters = {}) {
                 query = query.eq('stage', filters.stage)
             }
 
+            const { data, error } = await query
+            if (error) throw error
+
+            let results = data || []
+
+            // Client-side filtering for search
             if (filters.search) {
-                // This is a workaround since we can't directly search on joined tables
-                const { data: allData } = await query
-                return allData?.filter(item => {
+                const searchLower = filters.search.toLowerCase()
+                results = results.filter(item => {
                     const fullName = `${item.woman?.first_name} ${item.woman?.last_name}`.toLowerCase()
-                    return fullName.includes(filters.search.toLowerCase())
+                    const phone = (item.woman?.phone_number || '').toLowerCase()
+                    return fullName.includes(searchLower) || phone.includes(searchLower)
                 })
             }
 
-            const { data, error } = await query
+            // Client-side sorting for joined fields (woman.first_name, etc)
+            if (filters.sortBy && filters.sortBy.startsWith('woman.')) {
+                const field = filters.sortBy.split('.')[1]
+                const isAsc = filters.sortOrder !== 'desc'
+                results.sort((a, b) => {
+                    const valA = (a.woman?.[field] || '').toLowerCase()
+                    const valB = (b.woman?.[field] || '').toLowerCase()
+                    if (valA < valB) return isAsc ? -1 : 1
+                    if (valA > valB) return isAsc ? 1 : -1
+                    return 0
+                })
+            }
 
-            if (error) throw error
-            return data
+            return results
         },
     })
 }

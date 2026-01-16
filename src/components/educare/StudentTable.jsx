@@ -178,8 +178,7 @@ function EditableRow({ row, onSave, onValuesChange, isSaving }) {
     )
 }
 
-export function StudentTable({ data, onRowClick }) {
-    const [sorting, setSorting] = useState([])
+export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 })
     const [isQuickEdit, setIsQuickEdit] = useState(false)
     const [savingRowId, setSavingRowId] = useState(null)
@@ -374,7 +373,15 @@ export function StudentTable({ data, onRowClick }) {
             },
             {
                 accessorKey: 'government_school',
-                header: 'School',
+                header: ({ column }) => (
+                    <button
+                        onClick={() => column.toggleSorting()}
+                        className="flex items-center space-x-1 hover:text-primary-600"
+                    >
+                        <span>School</span>
+                        <ArrowUpDown className="h-4 w-4" />
+                    </button>
+                ),
                 cell: ({ row }) => (
                     <div className="text-sm text-neutral-600 max-w-[200px] truncate">
                         {row.original.government_school || 'HOHA Only'}
@@ -428,12 +435,13 @@ export function StudentTable({ data, onRowClick }) {
         getFilteredRowModel: getFilteredRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
         getSortedRowModel: getSortedRowModel(),
-        onSortingChange: setSorting,
+        onSortingChange: onSortingChange,
         onPaginationChange: setPagination,
         state: {
             sorting,
             pagination,
         },
+        manualSorting: true, // Let the backend handle sorting
     })
 
     return (
