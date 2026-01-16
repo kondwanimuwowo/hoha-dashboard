@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/shared/EmptyState'
 import { StudentTable } from '@/components/educare/StudentTable'
 import { StudentForm } from '@/components/educare/StudentForm'
 import { ParentTable } from '@/components/educare/ParentTable'
+import { ParentForm } from '@/components/educare/ParentForm'
 import { ParentDetailCard } from '@/components/educare/ParentDetailCard'
 import { UserPlus, Users, GraduationCap, Home } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -27,6 +28,7 @@ export function Students() {
     const [statusFilter, setStatusFilter] = useState('Active')
     const [schoolFilter, setSchoolFilter] = useState('all')
     const [showAddStudent, setShowAddStudent] = useState(false)
+    const [showAddParent, setShowAddParent] = useState(false)
     const [sorting, setSorting] = useState([{ id: 'first_name', desc: false }])
     const [activeTab, setActiveTab] = useState('students')
     const [selectedParent, setSelectedParent] = useState(null)
@@ -47,6 +49,14 @@ export function Students() {
 
     if (isLoading && !students && !parents) return <LoadingSpinner />
 
+    const handleHeaderAction = () => {
+        if (activeTab === 'students') {
+            setShowAddStudent(true)
+        } else {
+            setShowAddParent(true)
+        }
+    }
+
     return (
         <div className="space-y-6">
             <PageHeader
@@ -56,8 +66,8 @@ export function Students() {
                         ? `${students?.length || 0} students enrolled in Educare Africa`
                         : `${parents?.length || 0} parent records with children in Educare`
                 }
-                action={() => setShowAddStudent(true)}
-                actionLabel="Register Student"
+                action={handleHeaderAction}
+                actionLabel={activeTab === 'students' ? "Register Student" : "Register Parent"}
                 actionIcon={UserPlus}
             />
 
@@ -169,8 +179,8 @@ export function Students() {
                             icon={Home}
                             title="No parent records found"
                             description="Register students with their parents to see them here"
-                            action={() => setShowAddStudent(true)}
-                            actionLabel="Register Student"
+                            action={() => setShowAddParent(true)}
+                            actionLabel="Register Parent"
                         />
                     )}
                 </TabsContent>
@@ -187,6 +197,21 @@ export function Students() {
                             setShowAddStudent(false)
                         }}
                         onCancel={() => setShowAddStudent(false)}
+                    />
+                </DialogContent>
+            </Dialog>
+
+            {/* Add Parent Dialog */}
+            <Dialog open={showAddParent} onOpenChange={setShowAddParent}>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Register New Parent</DialogTitle>
+                    </DialogHeader>
+                    <ParentForm
+                        onSuccess={() => {
+                            setShowAddParent(false)
+                        }}
+                        onCancel={() => setShowAddParent(false)}
                     />
                 </DialogContent>
             </Dialog>

@@ -56,6 +56,7 @@ export function useCreatePerson() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['people'] })
+            queryClient.invalidateQueries({ queryKey: ['parents'] })
         },
     })
 }
