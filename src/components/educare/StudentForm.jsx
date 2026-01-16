@@ -4,7 +4,6 @@ import * as z from 'zod'
 import { useCreateStudent, useUpdateStudent } from '@/hooks/useStudents'
 import { useCreatePerson, usePeople } from '@/hooks/usePeople'
 import { useCreateRelationship } from '@/hooks/useRelationships'
-import { useParentEmergencyContact, useSaveParentEmergencyContact } from '@/hooks/useRecords'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -48,12 +47,7 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
     const updateStudent = useUpdateStudent()
     const createPerson = useCreatePerson()
     const createRelationship = useCreateRelationship()
-    const saveParentEmergencyContact = useSaveParentEmergencyContact()
     const { data: searchResults } = usePeople(searchTerm)
-
-    // Primary parent's ID for emergency contact lookup
-    const primaryParentId = guardians[0]?.linked_person_id
-    const { data: savedParentContact } = useParentEmergencyContact(primaryParentId)
 
     const {
         register,
@@ -68,14 +62,6 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
         },
     })
 
-    // Auto-populate emergency contact if found for parent
-    useEffect(() => {
-        if (savedParentContact && sameAsParent) {
-            setValue('emergency_contact_name', savedParentContact.emergency_contact_name)
-            setValue('emergency_contact_phone', savedParentContact.emergency_contact_phone)
-            setValue('emergency_contact_relationship', savedParentContact.emergency_contact_relationship)
-        }
-    }, [savedParentContact, sameAsParent, setValue])
 
     useEffect(() => {
         if (initialData) {
@@ -173,13 +159,22 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
         }
     }
 
-    const handleSameAsParentChange = (checked) => {
-        setSameAsParent(checked)
-        if (checked && guardians[0]) {
-            setValue('emergency_contact_name', `${guardians[0].first_name} ${guardians[0].last_name}`.trim())
-            setValue('emergency_contact_phone', guardians[0].phone_number)
-            setValue('emergency_contact_relationship', guardians[0].relationship)
-        } else if (!checked) {
+    const handleEmergencyContactSelection = (index, isChecked) => {
+        const updated = guardians.map((g, i) => ({
+            ...g,
+            is_emergency_contact: i === index ? isChecked : false // Only one primary emergency contact from guardians
+        }))
+        setGuardians(updated)
+
+        if (isChecked) {
+            const guardian = updated[index]
+            // If they have emergency contact info on their record, we could show it
+            // but the user wants to "avoid instances of me entering a parent and then their emergency"
+            // So if they ARE the emergency contact, the fields should actually represent THEIR info
+            setValue('emergency_contact_name', `${guardian.first_name} ${guardian.last_name}`.trim())
+            setValue('emergency_contact_phone', guardian.phone_number)
+            setValue('emergency_contact_relationship', guardian.relationship)
+        } else {
             setValue('emergency_contact_name', '')
             setValue('emergency_contact_phone', '')
             setValue('emergency_contact_relationship', '')
@@ -190,14 +185,12 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
         setError('')
         try {
             if (initialData) {
-                // Ensure current_status is included in updates
                 await updateStudent.mutateAsync({
                     id: initialData.id,
                     ...data,
                     current_status: data.current_status || initialData.educare_enrollment?.[0]?.current_status
                 })
 
-                // Handle relationship updates in edit mode
                 const studentId = initialData.id
                 for (const guardian of guardians) {
                     if (guardian.first_name && guardian.last_name) {
@@ -212,17 +205,15 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                             guardianId = guardianPerson.id
                         }
 
-                        // Check if this relationship already exists
                         if (!guardian.relationship_id) {
                             await createRelationship.mutateAsync({
                                 person_id: guardianId,
                                 related_person_id: studentId,
                                 relationship_type: guardian.relationship,
                                 is_primary: guardians.indexOf(guardian) === 0,
+                                is_emergency_contact: guardian.is_emergency_contact || false
                             })
                         }
-                        // Note: Currently we don't handle updating relationship types or deleting relationships here
-                        // to keep it simple and safe.
                     }
                 }
 
@@ -230,7 +221,7 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                 return
             }
 
-            // Create student (person + enrollment)
+            // Create student
             const student = await createStudent.mutateAsync(data)
             const studentId = student.child_id || student.id
 
@@ -248,24 +239,13 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                         guardianId = guardianPerson.id
                     }
 
-                    // Create relationship
                     await createRelationship.mutateAsync({
                         person_id: guardianId,
                         related_person_id: studentId,
                         relationship_type: guardian.relationship,
                         is_primary: guardians.indexOf(guardian) === 0,
+                        is_emergency_contact: guardian.is_emergency_contact || false
                     })
-
-                    // If this is the primary guardian and "same as parent" is checked, 
-                    // save their emergency contact preferences
-                    if (guardians.indexOf(guardian) === 0 && sameAsParent) {
-                        await saveParentEmergencyContact.mutateAsync({
-                            parent_id: guardianId,
-                            emergency_contact_name: data.emergency_contact_name,
-                            emergency_contact_phone: data.emergency_contact_phone,
-                            emergency_contact_relationship: data.emergency_contact_relationship,
-                        })
-                    }
                 }
             }
 
@@ -473,6 +453,20 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                                 onChange={(e) => updateGuardian(index, 'phone_number', e.target.value)}
                                 disabled={!!guardian.linked_person_id}
                             />
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id={`is_emergency_${index}`}
+                                    checked={!!guardian.is_emergency_contact}
+                                    onCheckedChange={(checked) => handleEmergencyContactSelection(index, checked)}
+                                />
+                                <Label htmlFor={`is_emergency_${index}`} className="text-xs cursor-pointer">
+                                    Emergency Contact
+                                </Label>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label className="text-xs">Relationship</Label>
                             <Select
                                 value={guardian.relationship}
                                 onValueChange={(value) => updateGuardian(index, 'relationship', value)}
@@ -570,57 +564,71 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold">Emergency Contact</h3>
-                    <div className="flex items-center space-x-2">
-                        <Checkbox
-                            id="same_as_parent"
-                            checked={sameAsParent}
-                            onCheckedChange={handleSameAsParentChange}
-                        />
-                        <Label htmlFor="same_as_parent" className="cursor-pointer text-sm">
-                            Same as Parent/Guardian
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-4">
+                        <Label className="text-sm text-muted-foreground italic">
+                            Select a parent/guardian above to mark as the emergency contact, or enter manual details below.
                         </Label>
-                    </div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="emergency_contact_name">Contact Name</Label>
-                        <Input
-                            id="emergency_contact_name"
-                            {...register('emergency_contact_name')}
-                            placeholder="Full name"
-                            disabled={sameAsParent}
-                        />
+                        <div className="space-y-2">
+                            <Label htmlFor="emergency_contact_name">Contact Name</Label>
+                            <Input
+                                id="emergency_contact_name"
+                                {...register('emergency_contact_name')}
+                                placeholder="Full name"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="emergency_contact_phone">Contact Phone</Label>
+                            <Input
+                                id="emergency_contact_phone"
+                                {...register('emergency_contact_phone')}
+                                placeholder="+260 XXX XXXX"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="emergency_contact_relationship">Relationship</Label>
+                            <Select
+                                onValueChange={(value) => setValue('emergency_contact_relationship', value)}
+                                value={watch('emergency_contact_relationship')}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select relationship" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {RELATIONSHIP_TYPES.map((type) => (
+                                        <SelectItem key={type} value={type}>
+                                            {type}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="emergency_contact_phone">Contact Phone</Label>
-                        <Input
-                            id="emergency_contact_phone"
-                            {...register('emergency_contact_phone')}
-                            placeholder="+260 XXX XXXX"
-                            disabled={sameAsParent}
-                        />
-                    </div>
-                </div>
+                    <div className="bg-muted/20 border rounded-lg p-4 space-y-3">
+                        <h4 className="text-sm font-medium flex items-center gap-2">
+                            <ShieldQuestion className="h-4 w-4" />
+                            Linked Parent Info
+                        </h4>
 
-                <div className="space-y-2">
-                    <Label htmlFor="emergency_contact_relationship">Relationship</Label>
-                    <Select
-                        onValueChange={(value) => setValue('emergency_contact_relationship', value)}
-                        disabled={sameAsParent}
-                    >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select relationship" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {RELATIONSHIP_TYPES.map((type) => (
-                                <SelectItem key={type} value={type}>
-                                    {type}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                        {guardians.some(g => g.is_emergency_contact) ? (
+                            <div className="space-y-2 text-sm">
+                                {guardians.filter(g => g.is_emergency_contact).map((g, i) => (
+                                    <div key={i} className="p-2 bg-primary/10 rounded border border-primary/20">
+                                        <p className="font-semibold text-primary">{g.first_name} {g.last_name}</p>
+                                        <p className="text-xs text-muted-foreground">Will be marked as primary emergency contact</p>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-xs text-muted-foreground">No parent linked as emergency contact yet.</p>
+                        )}
+                    </div>
                 </div>
             </div>
 

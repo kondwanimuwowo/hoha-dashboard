@@ -32,6 +32,7 @@ import { useCreateRelationship } from '@/hooks/useRelationships'
 import { toast } from 'sonner'
 import { RELATIONSHIP_TYPES } from '@/lib/constants'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { cn } from '@/lib/utils'
 
 export function ParentDetailCard({ parent, isOpen, onClose }) {
     const [isEditing, setIsEditing] = useState(false)
@@ -40,13 +41,17 @@ export function ParentDetailCard({ parent, isOpen, onClose }) {
     const [searchTerm, setSearchTerm] = useState('')
     const [selectedStudent, setSelectedStudent] = useState(null)
     const [relationshipType, setRelationshipType] = useState('Mother')
+    const [isEmergencyContact, setIsEmergencyContact] = useState(true)
 
     // Form state for editing
     const [editForm, setEditForm] = useState({
         first_name: parent?.first_name || '',
         last_name: parent?.last_name || '',
         phone_number: parent?.phone_number || '',
-        address: parent?.address || ''
+        address: parent?.address || '',
+        emergency_contact_name: parent?.emergency_contact_name || '',
+        emergency_contact_phone: parent?.emergency_contact_phone || '',
+        emergency_contact_relationship: parent?.emergency_contact_relationship || ''
     })
 
     const updatePerson = useUpdatePerson()
@@ -86,7 +91,8 @@ export function ParentDetailCard({ parent, isOpen, onClose }) {
                 person_id: parent.id,
                 related_person_id: selectedStudent.id,
                 relationship_type: relationshipType,
-                is_primary: false
+                is_primary: false,
+                is_emergency_contact: isEmergencyContact
             })
             toast.success(`Linked ${selectedStudent.first_name} to ${parent.first_name}`)
             setIsLinking(false)
@@ -187,11 +193,53 @@ export function ParentDetailCard({ parent, isOpen, onClose }) {
                                             onChange={e => setEditForm({ ...editForm, address: e.target.value })}
                                         />
                                     ) : (
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 text-sm">
                                             <MapPin className="h-4 w-4 text-muted-foreground" />
                                             <span>{parent.address || 'Not provided'}</span>
                                         </div>
                                     )}
+                                </div>
+
+                                <div className="pt-2 border-t mt-2">
+                                    <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-2">Emergency Contact for this Parent</Label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <Label className="text-xs text-muted-foreground uppercase">Name</Label>
+                                            {isEditing ? (
+                                                <Input
+                                                    value={editForm.emergency_contact_name}
+                                                    onChange={e => setEditForm({ ...editForm, emergency_contact_name: e.target.value })}
+                                                    placeholder="Who to call..."
+                                                />
+                                            ) : (
+                                                <p className="text-sm font-medium">{parent.emergency_contact_name || 'Not provided'}</p>
+                                            )}
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-xs text-muted-foreground uppercase">Phone</Label>
+                                            {isEditing ? (
+                                                <Input
+                                                    value={editForm.emergency_contact_phone}
+                                                    onChange={e => setEditForm({ ...editForm, emergency_contact_phone: e.target.value })}
+                                                    placeholder="Phone number"
+                                                />
+                                            ) : (
+                                                <p className="text-sm font-medium">{parent.emergency_contact_phone || 'Not provided'}</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1 mt-2">
+                                        <Label className="text-xs text-muted-foreground uppercase">Relationship</Label>
+                                        {isEditing ? (
+                                            <Input
+                                                value={editForm.emergency_contact_relationship}
+                                                onChange={e => setEditForm({ ...editForm, emergency_contact_relationship: e.target.value })}
+                                                placeholder="e.g. Spouse"
+                                            />
+                                        ) : (
+                                            <p className="text-sm font-medium">{parent.emergency_contact_relationship || 'Not provided'}</p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
@@ -308,18 +356,33 @@ export function ParentDetailCard({ parent, isOpen, onClose }) {
                         )}
 
                         {selectedStudent && (
-                            <div className="space-y-2 pt-2 border-t">
-                                <Label>Select Relationship</Label>
-                                <Select value={relationshipType} onValueChange={setRelationshipType}>
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {RELATIONSHIP_TYPES.map(type => (
-                                            <SelectItem key={type} value={type}>{type}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                            <div className="space-y-4 pt-2 border-t">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                        <Label className="text-xs">Relationship</Label>
+                                        <Select value={relationshipType} onValueChange={setRelationshipType}>
+                                            <SelectTrigger className="h-8">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {RELATIONSHIP_TYPES.map(type => (
+                                                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="flex items-end pb-1.5">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                                checked={isEmergencyContact}
+                                                onChange={(e) => setIsEmergencyContact(e.target.checked)}
+                                            />
+                                            <span className="text-xs font-medium">Emergency Contact</span>
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>

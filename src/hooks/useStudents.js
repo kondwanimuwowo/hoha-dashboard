@@ -116,6 +116,7 @@ export function useCreateStudent() {
                         related_person_id: person.id,
                         relationship_type: studentData.relationship_type || 'Parent',
                         is_primary: true,
+                        is_emergency_contact: studentData.is_emergency_contact || false,
                     }])
 
                 if (relationshipError) throw relationshipError

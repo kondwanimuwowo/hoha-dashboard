@@ -23,12 +23,15 @@ const parentSchema = z.object({
     gender: z.enum(['Male', 'Female', 'Other']),
     address: z.string().nullable().optional(),
     notes: z.string().nullable().optional(),
+    emergency_contact_name: z.string().nullable().optional(),
+    emergency_contact_phone: z.string().nullable().optional(),
+    emergency_contact_relationship: z.string().nullable().optional(),
 })
 
 export function ParentForm({ onSuccess, onCancel }) {
     const [error, setError] = useState('')
     const [searchTerm, setSearchTerm] = useState('')
-    const [linkedStudents, setLinkedStudents] = useState([]) // Array of { id, first_name, last_name, relationship_type }
+    const [linkedStudents, setLinkedStudents] = useState([]) // Array of { id, first_name, last_name, relationship_type, is_emergency }
 
     const createPerson = useCreatePerson()
     const createRelationship = useCreateRelationship()
@@ -48,7 +51,7 @@ export function ParentForm({ onSuccess, onCancel }) {
 
     const addStudentLink = (student) => {
         if (linkedStudents.find(s => s.id === student.id)) return
-        setLinkedStudents([...linkedStudents, { ...student, relationship_type: 'Mother' }])
+        setLinkedStudents([...linkedStudents, { ...student, relationship_type: 'Mother', is_emergency: true }])
         setSearchTerm('')
     }
 
@@ -56,9 +59,9 @@ export function ParentForm({ onSuccess, onCancel }) {
         setLinkedStudents(linkedStudents.filter(s => s.id !== id))
     }
 
-    const updateRelationship = (id, type) => {
+    const updateRelationship = (id, updates) => {
         setLinkedStudents(linkedStudents.map(s =>
-            s.id === id ? { ...s, relationship_type: type } : s
+            s.id === id ? { ...s, ...updates } : s
         ))
     }
 
@@ -75,7 +78,8 @@ export function ParentForm({ onSuccess, onCancel }) {
                         person_id: parent.id,
                         related_person_id: student.id,
                         relationship_type: student.relationship_type,
-                        is_primary: linkedStudents.indexOf(student) === 0 // Mark first as primary by default
+                        is_primary: linkedStudents.indexOf(student) === 0, // Mark first as primary by default
+                        is_emergency_contact: student.is_emergency
                     })
                 }
             }
@@ -94,65 +98,91 @@ export function ParentForm({ onSuccess, onCancel }) {
                 </Alert>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Basic Information */}
-                <div className="space-y-4">
-                    <h3 className="text-lg font-semibold flex items-center gap-2">
-                        <UserPlus className="h-5 w-5 text-primary" />
-                        Parent Information
-                    </h3>
+                <div className="space-y-6">
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-semibold flex items-center gap-2">
+                            <UserPlus className="h-5 w-5 text-primary" />
+                            Parent Information
+                        </h3>
 
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-2">
-                            <Label htmlFor="first_name">First Name *</Label>
-                            <Input id="first_name" {...register('first_name')} placeholder="First name" />
-                            {errors.first_name && <p className="text-xs text-red-600">{errors.first_name.message}</p>}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                                <Label htmlFor="first_name">First Name *</Label>
+                                <Input id="first_name" {...register('first_name')} placeholder="First name" />
+                                {errors.first_name && <p className="text-xs text-red-600">{errors.first_name.message}</p>}
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="last_name">Last Name *</Label>
+                                <Input id="last_name" {...register('last_name')} placeholder="Last name" />
+                                {errors.last_name && <p className="text-xs text-red-600">{errors.last_name.message}</p>}
+                            </div>
                         </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                                <Label htmlFor="phone_number">Phone Number *</Label>
+                                <Input id="phone_number" {...register('phone_number')} placeholder="+260..." />
+                                {errors.phone_number && <p className="text-xs text-red-600">{errors.phone_number.message}</p>}
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="gender">Gender *</Label>
+                                <Select onValueChange={(v) => setValue('gender', v)} defaultValue="Female">
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select gender" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Female">Female</SelectItem>
+                                        <SelectItem value="Male">Male</SelectItem>
+                                        <SelectItem value="Other">Other</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
                         <div className="space-y-2">
-                            <Label htmlFor="last_name">Last Name *</Label>
-                            <Input id="last_name" {...register('last_name')} placeholder="Last name" />
-                            {errors.last_name && <p className="text-xs text-red-600">{errors.last_name.message}</p>}
+                            <Label htmlFor="address">Address</Label>
+                            <Input id="address" {...register('address')} placeholder="Full address" />
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-2">
-                            <Label htmlFor="phone_number">Phone Number *</Label>
-                            <Input id="phone_number" {...register('phone_number')} placeholder="+260..." />
-                            {errors.phone_number && <p className="text-xs text-red-600">{errors.phone_number.message}</p>}
+                    <div className="space-y-4 pt-4 border-t">
+                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                            Emergency Contact for this Parent
+                        </h3>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                                <Label htmlFor="emergency_contact_name">Name</Label>
+                                <Input id="emergency_contact_name" {...register('emergency_contact_name')} placeholder="Who to call..." />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="emergency_contact_phone">Phone</Label>
+                                <Input id="emergency_contact_phone" {...register('emergency_contact_phone')} placeholder="Phone number" />
+                            </div>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="gender">Gender *</Label>
-                            <Select onValueChange={(v) => setValue('gender', v)} defaultValue="Female">
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select gender" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Female">Female</SelectItem>
-                                    <SelectItem value="Male">Male</SelectItem>
-                                    <SelectItem value="Other">Other</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <Label htmlFor="emergency_contact_relationship">Relationship to Parent</Label>
+                            <Input id="emergency_contact_relationship" {...register('emergency_contact_relationship')} placeholder="e.g. Spouse, Brother" />
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="address">Address</Label>
-                        <Input id="address" {...register('address')} placeholder="Full address" />
-                    </div>
-
-                    <div className="space-y-2">
+                    <div className="space-y-2 pt-4 border-t">
                         <Label htmlFor="notes">Notes</Label>
-                        <Textarea id="notes" {...register('notes')} placeholder="Any additional notes..." rows={3} />
+                        <Textarea id="notes" {...register('notes')} placeholder="Any additional notes..." rows={2} />
                     </div>
                 </div>
 
                 {/* Linking Students */}
-                <div className="space-y-4 border-l pl-4 md:border-l md:pl-6">
+                <div className="space-y-4 border-l pl-4 md:border-l md:pl-8">
                     <h3 className="text-lg font-semibold flex items-center gap-2">
                         <Users className="h-5 w-5 text-primary" />
                         Link Children (Educare)
                     </h3>
+
+                    <p className="text-xs text-muted-foreground">
+                        Select children to link to this parent. You can also designate this parent as their primary emergency contact.
+                    </p>
 
                     <div className="relative">
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -186,10 +216,10 @@ export function ParentForm({ onSuccess, onCancel }) {
                         )}
                     </div>
 
-                    <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
+                    <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
                         {linkedStudents.length > 0 ? (
                             linkedStudents.map((student) => (
-                                <div key={student.id} className="p-3 border rounded-lg space-y-2 bg-muted/30">
+                                <div key={student.id} className="p-4 border rounded-lg space-y-3 bg-muted/30">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             <PersonAvatar firstName={student.first_name} lastName={student.last_name} className="h-8 w-8" />
@@ -205,26 +235,40 @@ export function ParentForm({ onSuccess, onCancel }) {
                                             <X className="h-4 w-4" />
                                         </Button>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <Label className="text-[10px] uppercase text-muted-foreground">Relationship:</Label>
-                                        <Select
-                                            value={student.relationship_type}
-                                            onValueChange={(v) => updateRelationship(student.id, v)}
-                                        >
-                                            <SelectTrigger className="h-7 text-xs">
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {RELATIONSHIP_TYPES.map(type => (
-                                                    <SelectItem key={type} value={type} className="text-xs">{type}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div className="space-y-1">
+                                            <Label className="text-[10px] uppercase text-muted-foreground">Relationship</Label>
+                                            <Select
+                                                value={student.relationship_type}
+                                                onValueChange={(v) => updateRelationship(student.id, { relationship_type: v })}
+                                            >
+                                                <SelectTrigger className="h-8 text-xs">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {RELATIONSHIP_TYPES.map(type => (
+                                                        <SelectItem key={type} value={type} className="text-xs">{type}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="flex items-end pb-1.5">
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                                    checked={student.is_emergency}
+                                                    onChange={(e) => updateRelationship(student.id, { is_emergency: e.target.checked })}
+                                                />
+                                                <span className="text-xs font-medium">Emergency Contact</span>
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                             ))
                         ) : (
-                            <div className="text-sm text-center py-8 text-muted-foreground border border-dashed rounded-lg">
+                            <div className="text-sm text-center py-12 text-muted-foreground border border-dashed rounded-lg">
                                 No children linked. Search above to link students.
                             </div>
                         )}
@@ -232,7 +276,7 @@ export function ParentForm({ onSuccess, onCancel }) {
                 </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t">
+            <div className="flex justify-end gap-3 pt-6 border-t">
                 <Button type="button" variant="outline" onClick={onCancel} disabled={createPerson.isPending}>
                     Cancel
                 </Button>

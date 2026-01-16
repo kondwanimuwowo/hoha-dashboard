@@ -329,21 +329,50 @@ export function StudentProfile() {
                         >
                             <Card>
                                 <CardHeader>
-                                    <CardTitle className="text-lg">Emergency Contact</CardTitle>
+                                    <div className="flex items-center justify-between">
+                                        <CardTitle className="text-lg">Emergency Contact</CardTitle>
+                                        {student.relationships?.some(r => r.is_emergency_contact) && (
+                                            <Badge variant="success" className="gap-1">
+                                                <UsersIcon className="h-3 w-3" />
+                                                Linked Parent
+                                            </Badge>
+                                        )}
+                                    </div>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Contact Name</p>
-                                        <p className="font-medium text-foreground">{student.emergency_contact_name || 'Not provided'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Phone Number</p>
-                                        <p className="font-medium text-foreground">{student.emergency_contact_phone || 'Not provided'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Relationship</p>
-                                        <p className="font-medium text-foreground">{student.emergency_contact_relationship || 'Not provided'}</p>
-                                    </div>
+                                    {(() => {
+                                        const linkedEmergency = student.relationships?.find(r => r.is_emergency_contact)
+                                        const contactName = linkedEmergency
+                                            ? `${linkedEmergency.person?.first_name} ${linkedEmergency.person?.last_name}`
+                                            : student.emergency_contact_name
+                                        const contactPhone = linkedEmergency
+                                            ? linkedEmergency.person?.phone_number
+                                            : student.emergency_contact_phone
+                                        const contactRel = linkedEmergency
+                                            ? linkedEmergency.relationship_type
+                                            : student.emergency_contact_relationship
+
+                                        if (!contactName && !contactPhone) {
+                                            return <p className="text-sm text-muted-foreground italic">No emergency contact provided</p>
+                                        }
+
+                                        return (
+                                            <>
+                                                <div>
+                                                    <p className="text-sm text-muted-foreground">Contact Name</p>
+                                                    <p className="font-medium text-foreground">{contactName}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm text-muted-foreground">Phone Number</p>
+                                                    <p className="font-medium text-foreground">{contactPhone || 'Not provided'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm text-muted-foreground">Relationship</p>
+                                                    <p className="font-medium text-foreground">{contactRel || 'Not provided'}</p>
+                                                </div>
+                                            </>
+                                        )
+                                    })()}
                                 </CardContent>
                             </Card>
                         </motion.div>
