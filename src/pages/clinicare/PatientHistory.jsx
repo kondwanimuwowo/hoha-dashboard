@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button'
 import { PersonAvatar } from '@/components/shared/PersonAvatar'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Phone, MapPin, Calendar, User } from 'lucide-react'
-import { formatDate } from '@/lib/utils'
 
 export function PatientHistory() {
     const { id } = useParams()

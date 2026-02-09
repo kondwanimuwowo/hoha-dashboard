@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { useCreatePerson, usePeople } from '@/hooks/usePeople'
+import { useCreatePerson } from '@/hooks/usePeople'
 import { useCreateRelationship } from '@/hooks/useRelationships'
 import { useStudents } from '@/hooks/useStudents'
 import { Button } from '@/components/ui/button'
@@ -11,10 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, Search, Check, X, Users, UserPlus } from 'lucide-react'
-import { RELATIONSHIP_TYPES, GENDER_OPTIONS } from '@/lib/constants'
+import { RELATIONSHIP_TYPES } from '@/lib/constants'
 import { useState } from 'react'
 import { PersonAvatar } from '@/components/shared/PersonAvatar'
-import { cn } from '@/lib/utils'
 
 const parentSchema = z.object({
     first_name: z.string().min(2, 'First name is required'),

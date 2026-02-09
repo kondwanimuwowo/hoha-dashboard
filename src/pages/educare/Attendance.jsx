@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import { useState } from 'react'
 import { useStudents } from '@/hooks/useStudents'
 import { useMarkAttendance, useAttendance, useMonthlyAttendanceReport, useTermlyAttendanceReport } from '@/hooks/useAttendance'
@@ -345,3 +346,4 @@ export function Attendance() {
         </div>
     )
 }
+

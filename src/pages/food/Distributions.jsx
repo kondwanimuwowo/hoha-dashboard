@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDistributions, useCreateDistribution } from '@/hooks/useFoodDistribution'
@@ -198,3 +199,4 @@ function CreateDistributionDialog({ open, onOpenChange }) {
         </Dialog>
     )
 }
+

@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useWoman, useDeleteWoman } from '@/hooks/useWomen'
 import { useLegacyAttendanceSummary } from '@/hooks/useLegacyAttendance'
@@ -365,3 +366,4 @@ export function WomanProfile() {
         </div>
     )
 }
+

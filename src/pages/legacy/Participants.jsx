@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useWomen } from '@/hooks/useWomen'
@@ -120,3 +121,4 @@ export function Participants() {
         </div>
     )
 }
+

@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import { useState } from 'react'
 import { useWomen } from '@/hooks/useWomen'
 import { useMarkLegacyAttendance, useLegacyAttendance, useMonthlyLegacyAttendanceReport, useTermlyLegacyAttendanceReport } from '@/hooks/useLegacyAttendance'
@@ -361,3 +362,4 @@ export function LegacyAttendance() {
         </div>
     )
 }
+

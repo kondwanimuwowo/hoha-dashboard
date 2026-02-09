@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import { useMemo, useState } from 'react'
 import {
     useReactTable,
@@ -21,7 +22,6 @@ import {
     Phone,
     Users
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
 
 export function ParentTable({ data, onRowClick, sorting, onSortingChange }) {
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 })
@@ -224,3 +224,4 @@ export function ParentTable({ data, onRowClick, sorting, onSortingChange }) {
         </div>
     )
 }
+

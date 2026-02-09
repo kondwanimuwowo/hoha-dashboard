@@ -23,7 +23,7 @@ export default defineConfig([
       },
     },
     rules: {
-      'no-unused-vars': ['warn', { varsIgnorePattern: '^[A-Z_]' }],
+      'no-unused-vars': ['warn', { varsIgnorePattern: '^(?:[A-Z_]|motion$|Icon$)', argsIgnorePattern: '^(?:_|Icon$)', caughtErrorsIgnorePattern: '^_' }],
       'react-refresh/only-export-components': 'warn',
       'react-hooks/set-state-in-effect': 'warn',
       'react-hooks/incompatible-library': 'warn',

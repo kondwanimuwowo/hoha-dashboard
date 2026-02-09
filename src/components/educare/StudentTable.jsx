@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import { useMemo, useState } from 'react'
 import {
     useReactTable,
@@ -656,3 +657,4 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
         </div>
     )
 }
+

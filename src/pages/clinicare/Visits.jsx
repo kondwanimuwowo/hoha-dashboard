@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import { useState } from 'react'
 import { useVisits } from '@/hooks/useVisits'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -136,3 +137,4 @@ export function Visits() {
         </div>
     )
 }
+

@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useDistribution, useMarkCollected, useRemoveRecipient, useDeleteDistribution, useUpdateDistribution } from '@/hooks/useFoodDistribution'
@@ -334,3 +335,4 @@ export function DistributionDetail() {
         </div>
     )
 }
+

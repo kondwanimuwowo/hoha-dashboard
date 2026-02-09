@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useStudent, useDeleteStudent } from '@/hooks/useStudents'
 import { useAttendanceSummary } from '@/hooks/useAttendance'
@@ -401,3 +402,4 @@ export function StudentProfile() {
         </div>
     )
 }
+

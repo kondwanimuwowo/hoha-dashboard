@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import { usePeople, useCreatePerson, useFamilyGroups } from '@/hooks/usePeople'
 import { useAddRecipient } from '@/hooks/useFoodDistribution'
@@ -519,3 +520,4 @@ function NewPersonForm({ distributionId, onSuccess }) {
         </form>
     )
 }
+

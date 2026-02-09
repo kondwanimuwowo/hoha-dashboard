@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useDistributions } from '@/hooks/useFoodDistribution'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -275,3 +276,4 @@ function CreateDistributionDialog({ open, onOpenChange }) {
         </Dialog>
     )
 }
+

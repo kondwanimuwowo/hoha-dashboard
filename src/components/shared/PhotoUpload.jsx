@@ -38,7 +38,7 @@ export function PhotoUpload({ value, onChange, className }) {
             const filePath = `photos/${fileName}`
 
             // Upload to Supabase Storage
-            const { data, error: uploadError } = await supabase.storage
+            const { error: uploadError } = await supabase.storage
                 .from('photos')
                 .upload(filePath, file)
 

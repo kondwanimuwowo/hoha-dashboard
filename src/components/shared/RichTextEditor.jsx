@@ -4,7 +4,7 @@ import { Bold, Italic, List, ListOrdered } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
-export function RichTextEditor({ value, onChange, className, placeholder = 'Enter case notes...' }) {
+export function RichTextEditor({ value, onChange, className }) {
     const editor = useEditor({
         extensions: [StarterKit],
         content: value || '',

@@ -128,7 +128,7 @@ export function VisitForm({ initialData, onSuccess, onCancel }) {
             setValue('patient_id', newPerson.id)
             setSearchQuery(`${patientData.first_name} ${patientData.last_name}`)
             setShowNewPatient(false)
-        } catch (err) {
+        } catch (_error) {
             setError('Failed to create patient')
         }
     }

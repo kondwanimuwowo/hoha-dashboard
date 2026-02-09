@@ -205,7 +205,7 @@ export function useUpdateWoman() {
 
             return { id, ...updates }
         },
-        onSuccess: (data) => {
+        onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['women'] })
             queryClient.invalidateQueries({ queryKey: ['woman'] })
         },

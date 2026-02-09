@@ -7,7 +7,6 @@ import { PersonAvatar } from '@/components/shared/PersonAvatar'
 import { Search, Check, Trash2, Users, Plus } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
-import { cn } from '@/lib/utils'
 
 export function RecipientsList({ recipients, viewMode, onMarkCollected, onRemoveRecipient, onAddRecipient }) {
     const [searchQuery, setSearchQuery] = useState('')

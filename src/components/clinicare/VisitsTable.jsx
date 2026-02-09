@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -253,3 +254,4 @@ export function VisitsTable({ data }) {
         </div>
     )
 }
+

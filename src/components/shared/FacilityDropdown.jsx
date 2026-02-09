@@ -37,7 +37,7 @@ export function FacilityDropdown({ value, onChange, className }) {
         contact_phone: '',
     })
 
-    const { data: facilities, isLoading } = useFacilities()
+    const { data: facilities } = useFacilities()
     const createFacility = useCreateFacility()
 
     const selectedFacility = facilities?.find(f => f.id === value)

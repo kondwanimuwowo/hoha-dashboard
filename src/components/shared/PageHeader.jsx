@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 
 export function PageHeader({ title, description, action, actionLabel, actionIcon: ActionIcon }) {
@@ -25,3 +26,4 @@ export function PageHeader({ title, description, action, actionLabel, actionIcon
         </motion.div>
     )
 }
+

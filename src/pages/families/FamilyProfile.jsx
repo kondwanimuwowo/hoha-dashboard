@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import { useParams, useNavigate } from 'react-router-dom'
 import { usePerson } from '@/hooks/usePeople'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -113,3 +114,4 @@ export function FamilyProfile() {
         </div>
     )
 }
+

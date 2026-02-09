@@ -36,7 +36,7 @@ export function StudentDocuments({ studentId }) {
             const fileName = `${studentId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
             const filePath = `${fileName}`
 
-            const { data: uploadData, error: uploadError } = await supabase.storage
+            const { error: uploadError } = await supabase.storage
                 .from('student-documents')
                 .upload(filePath, file)
 

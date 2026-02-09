@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import { useMemo, useState } from 'react'
 import {
     useReactTable,
@@ -246,3 +247,4 @@ export function WomenTable({ data, onRowClick, sorting, onSortingChange }) {
         </div>
     )
 }
+

@@ -46,7 +46,7 @@ export function AttendanceSheet({ students, date, gradeLevel, existingAttendance
 
         // Convert to array format expected by the API
         const attendanceData = Object.entries(attendanceRecords)
-            .filter(([_, status]) => status) // Only include students with a status
+            .filter(([, status]) => status) // Only include students with a status
             .map(([studentId, status]) => ({
                 child_id: studentId,
                 attendance_date: date,

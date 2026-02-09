@@ -38,7 +38,7 @@ const studentSchema = z.object({
 export function StudentForm({ onSuccess, onCancel, initialData }) {
     const [error, setError] = useState('')
     const [guardians, setGuardians] = useState([{ first_name: '', last_name: '', phone_number: '', relationship: 'Mother', linked_person_id: null }])
-    const [sameAsParent, setSameAsParent] = useState(false)
+    const [sameAsParent] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [showSuggestions, setShowSuggestions] = useState(false)
     const [activeGuardianIndex, setActiveGuardianIndex] = useState(0)

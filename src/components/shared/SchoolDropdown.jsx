@@ -37,7 +37,7 @@ export function SchoolDropdown({ value, onChange, className }) {
         contact_phone: '',
     })
 
-    const { data: schools, isLoading } = useSchools()
+    const { data: schools } = useSchools()
     const createSchool = useCreateSchool()
 
     const selectedSchool = schools?.find(s => s.id === value)

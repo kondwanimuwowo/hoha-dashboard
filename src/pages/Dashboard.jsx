@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import { useDashboardStats } from '@/hooks/useStats'
 import { StatsCard } from '@/components/shared/StatsCard'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
@@ -274,3 +275,4 @@ function CreateDistributionDialog({ open, onOpenChange }) {
         </Dialog>
     )
 }
+
