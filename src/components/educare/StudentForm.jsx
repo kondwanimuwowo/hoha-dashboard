@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { useCreateStudent, useUpdateStudent } from '@/hooks/useStudents'
@@ -52,7 +52,7 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
     const {
         register,
         handleSubmit,
-        watch,
+        control,
         setValue,
         formState: { errors },
     } = useForm({
@@ -113,7 +113,10 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
         }
     }, [initialData, setValue])
 
-    const selectedGrade = watch('grade_level')
+    const selectedGrade = useWatch({ control, name: 'grade_level' })
+    const photoUrl = useWatch({ control, name: 'photo_url' })
+    const governmentSchoolId = useWatch({ control, name: 'government_school_id' })
+    const emergencyRelationship = useWatch({ control, name: 'emergency_contact_relationship' })
     const showSchoolSelect = selectedGrade &&
         selectedGrade !== 'Early Childhood Program' &&
         selectedGrade !== 'Preparatory Program'
@@ -273,7 +276,7 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                 <div className="space-y-2">
                     <Label>Photo</Label>
                     <PhotoUpload
-                        value={watch('photo_url')}
+                        value={photoUrl}
                         onChange={(url) => setValue('photo_url', url)}
                     />
                 </div>
@@ -550,7 +553,7 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                     <div className="space-y-2">
                         <Label htmlFor="government_school_id">Government School</Label>
                         <SchoolDropdown
-                            value={watch('government_school_id')}
+                            value={governmentSchoolId}
                             onChange={(value) => setValue('government_school_id', value)}
                         />
                         <p className="text-xs text-muted-foreground">
@@ -594,7 +597,7 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                             <Label htmlFor="emergency_contact_relationship">Relationship</Label>
                             <Select
                                 onValueChange={(value) => setValue('emergency_contact_relationship', value)}
-                                value={watch('emergency_contact_relationship')}
+                                value={emergencyRelationship}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select relationship" />

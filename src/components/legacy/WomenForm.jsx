@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { useCreateWoman, useUpdateWoman } from '@/hooks/useWomen'
@@ -15,6 +15,7 @@ import { Loader2, Search, X, Check, Save } from 'lucide-react'
 import { LEGACY_STAGES } from '@/lib/constants'
 import { PhotoUpload } from '@/components/shared/PhotoUpload'
 import { NRCInput } from '@/components/shared/NRCInput'
+import { RichTextEditor } from '@/components/shared/RichTextEditor'
 import { useEffect } from 'react'
 
 const womanSchema = z.object({
@@ -55,7 +56,7 @@ export function WomenForm({ onSuccess, onCancel, initialData }) {
     const {
         register,
         handleSubmit,
-        watch,
+        control,
         setValue,
         formState: { errors },
     } = useForm({
@@ -209,7 +210,7 @@ export function WomenForm({ onSuccess, onCancel, initialData }) {
                     <div className="space-y-2">
                         <Label>Photo</Label>
                         <PhotoUpload
-                            value={watch('photo_url')}
+                            value={photoUrl}
                             onChange={(url) => setValue('photo_url', url)}
                         />
                     </div>
@@ -265,7 +266,7 @@ export function WomenForm({ onSuccess, onCancel, initialData }) {
                             <Label htmlFor="nrc_number">NRC Number</Label>
                             <NRCInput
                                 id="nrc_number"
-                                value={watch('nrc_number')}
+                                value={nrcNumber}
                                 onChange={(value) => setValue('nrc_number', value)}
                             />
                             <p className="text-xs text-muted-foreground">Format: XXXXXX/XX/X</p>
@@ -293,7 +294,7 @@ export function WomenForm({ onSuccess, onCancel, initialData }) {
                     <div className="space-y-2">
                         <Label htmlFor="case_notes">Case Notes</Label>
                         <RichTextEditor
-                            value={watch('case_notes')}
+                            value={caseNotes}
                             onChange={(value) => setValue('case_notes', value)}
                             placeholder="Document case history, interventions, progress..."
                         />
@@ -456,3 +457,6 @@ export function WomenForm({ onSuccess, onCancel, initialData }) {
         </form>
     )
 }
+    const photoUrl = useWatch({ control, name: 'photo_url' })
+    const nrcNumber = useWatch({ control, name: 'nrc_number' })
+    const caseNotes = useWatch({ control, name: 'case_notes' })

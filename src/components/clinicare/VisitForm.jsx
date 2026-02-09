@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { useCreateVisit, useUpdateVisit } from '@/hooks/useVisits'
@@ -49,7 +49,7 @@ export function VisitForm({ initialData, onSuccess, onCancel }) {
     const {
         register,
         handleSubmit,
-        watch,
+        control,
         setValue,
         formState: { errors },
     } = useForm({
@@ -79,12 +79,13 @@ export function VisitForm({ initialData, onSuccess, onCancel }) {
         }
     }, [initialData])
 
-    const watchIsEmergency = watch('is_emergency')
-    const watchTransport = watch('transport_provided')
-    const watchFollowUp = watch('follow_up_required')
-    const watchMedicalFees = watch('medical_fees')
-    const watchTransportCosts = watch('transport_costs')
-    const watchOtherFees = watch('other_fees')
+    const watchIsEmergency = useWatch({ control, name: 'is_emergency' })
+    const watchTransport = useWatch({ control, name: 'transport_provided' })
+    const watchFollowUp = useWatch({ control, name: 'follow_up_required' })
+    const watchMedicalFees = useWatch({ control, name: 'medical_fees' })
+    const watchTransportCosts = useWatch({ control, name: 'transport_costs' })
+    const watchOtherFees = useWatch({ control, name: 'other_fees' })
+    const facilityId = useWatch({ control, name: 'facility_id' })
 
     // Auto-calculate total cost
     useEffect(() => {
@@ -233,7 +234,7 @@ export function VisitForm({ initialData, onSuccess, onCancel }) {
                     <div className="space-y-2">
                         <Label htmlFor="facility_id">Facility/Hospital</Label>
                         <FacilityDropdown
-                            value={watch('facility_id')}
+                            value={facilityId}
                             onChange={(value) => setValue('facility_id', value)}
                         />
                     </div>

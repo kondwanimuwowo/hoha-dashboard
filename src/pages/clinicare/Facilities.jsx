@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -172,6 +172,7 @@ export function Facilities() {
             </Card>
 
             <FacilityDialog
+                key={`${selectedFacility?.id || 'new'}-${isDialogOpen ? 'open' : 'closed'}`}
                 open={isDialogOpen}
                 onOpenChange={setIsDialogOpen}
                 facility={selectedFacility}
@@ -199,33 +200,15 @@ export function Facilities() {
 }
 
 function FacilityDialog({ open, onOpenChange, facility }) {
-    const [formData, setFormData] = useState({
-        facility_name: '',
-        location: '',
-        contact_person: '',
-        contact_phone: '',
-    })
+    const [formData, setFormData] = useState(() => ({
+        facility_name: facility?.facility_name || '',
+        location: facility?.location || '',
+        contact_person: facility?.contact_person || '',
+        contact_phone: facility?.contact_phone || '',
+    }))
 
     const createFacility = useCreateFacility()
     const updateFacility = useUpdateFacility()
-
-    useEffect(() => {
-        if (facility) {
-            setFormData({
-                facility_name: facility.facility_name,
-                location: facility.location || '',
-                contact_person: facility.contact_person || '',
-                contact_phone: facility.contact_phone || '',
-            })
-        } else {
-            setFormData({
-                facility_name: '',
-                location: '',
-                contact_person: '',
-                contact_phone: '',
-            })
-        }
-    }, [facility, open])
 
     const handleSubmit = async (e) => {
         e.preventDefault()

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { usePeople, useCreatePerson, useFamilyGroups } from '@/hooks/usePeople'
 import { useAddRecipient } from '@/hooks/useFoodDistribution'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
@@ -38,49 +38,46 @@ export function AddRecipientDialog({ open, onOpenChange, distributionId }) {
         return name.includes(searchQuery.toLowerCase())
     })
 
-    useEffect(() => {
-        if (!selectedPerson) {
-            if (!selectedGroup) setFamilyInfo(null)
+    const resolveFamilyInfo = async (personId) => {
+        if (!personId) {
+            setFamilyInfo(null)
             return
         }
 
-        async function checkFamily() {
-            // Check if Head
-            const { data: headData } = await supabase
-                .from('family_groups')
-                .select('id, recipient_name')
-                .eq('recipient_id', selectedPerson.id)
-                .maybeSingle()
+        // Check if Head
+        const { data: headData } = await supabase
+            .from('family_groups')
+            .select('id, recipient_name')
+            .eq('recipient_id', personId)
+            .maybeSingle()
 
-            if (headData) {
-                setFamilyInfo({
-                    id: headData.id,
-                    role: 'Head',
-                    name: headData.recipient_name
-                })
-                return
-            }
-
-            // Check if Member (in family_member_ids array)
-            const { data: memberData } = await supabase
-                .from('family_groups')
-                .select('recipient_id, recipient_name, family_member_ids')
-                .contains('family_member_ids', [selectedPerson.id])
-                .maybeSingle()
-
-            if (memberData) {
-                setFamilyInfo({
-                    id: memberData.recipient_id,
-                    role: 'Member',
-                    name: memberData.recipient_name
-                })
-                return
-            }
-
-            setFamilyInfo(null)
+        if (headData) {
+            setFamilyInfo({
+                id: headData.id,
+                role: 'Head',
+                name: headData.recipient_name
+            })
+            return
         }
-        checkFamily()
-    }, [selectedPerson])
+
+        // Check if Member (in family_member_ids array)
+        const { data: memberData } = await supabase
+            .from('family_groups')
+            .select('recipient_id, recipient_name, family_member_ids')
+            .contains('family_member_ids', [personId])
+            .maybeSingle()
+
+        if (memberData) {
+            setFamilyInfo({
+                id: memberData.recipient_id,
+                role: 'Member',
+                name: memberData.recipient_name
+            })
+            return
+        }
+
+        setFamilyInfo(null)
+    }
 
     const handleAddExisting = async (e) => {
         e.preventDefault()
@@ -158,6 +155,7 @@ export function AddRecipientDialog({ open, onOpenChange, distributionId }) {
                                             onClick={() => {
                                                 setSelectedGroup(family)
                                                 setSelectedPerson(null)
+                                                setFamilyInfo(null)
                                                 setFamilySize(family.family_size.toString())
                                             }}
                                         >
@@ -247,7 +245,11 @@ export function AddRecipientDialog({ open, onOpenChange, distributionId }) {
                                             whileHover={{ backgroundColor: 'rgb(250, 250, 250)' }}
                                             className={`p-3 cursor-pointer transition-colors ${selectedPerson?.id === person.id ? 'bg-green-50 border-l-4 border-green-600' : ''
                                                 }`}
-                                            onClick={() => setSelectedPerson(person)}
+                                            onClick={async () => {
+                                                setSelectedPerson(person)
+                                                setSelectedGroup(null)
+                                                await resolveFamilyInfo(person.id)
+                                            }}
                                         >
                                             <div className="flex items-center space-x-3">
                                                 <PersonAvatar
