@@ -13,7 +13,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Calendar, CheckCircle, AlertCircle, BarChart3 } from 'lucide-react'
 import { GRADE_LEVELS } from '@/lib/constants'
-import { motion } from 'framer-motion'
 import { AttendanceReportTable } from '@/components/shared/AttendanceReportTable'
 
 const MONTHS = [
@@ -47,18 +46,20 @@ export function Attendance() {
     const [selectedMonth, setSelectedMonth] = useState(currentMonth.toString().padStart(2, '0'))
     const [selectedYear, setSelectedYear] = useState(currentYear.toString())
     const [selectedTerm, setSelectedTerm] = useState('1')
-    const [selectedGrade, setSelectedGrade] = useState('')
+    const [selectedGrade, setSelectedGrade] = useState('all')
     const [success, setSuccess] = useState('')
     const [error, setError] = useState('')
 
+    const normalizedGrade = selectedGrade && selectedGrade !== 'all' ? selectedGrade : undefined
+
     const { data: students, isLoading: studentsLoading } = useStudents({
-        gradeLevel: selectedGrade || undefined,
+        gradeLevel: normalizedGrade,
         status: 'Active',
     })
 
     const { data: existingAttendance, isLoading: attendanceLoading } = useAttendance(
         selectedDate,
-        selectedGrade
+        normalizedGrade
     )
 
     const { data: monthlyReport, isLoading: monthlyLoading } = useMonthlyAttendanceReport(
@@ -169,7 +170,7 @@ export function Attendance() {
                                     <Button
                                         onClick={() => {
                                             setSelectedDate(today)
-                                            setSelectedGrade('')
+                                            setSelectedGrade('all')
                                         }}
                                         variant="outline"
                                         className="w-full"
@@ -197,7 +198,9 @@ export function Attendance() {
                             <CardContent className="p-12 text-center">
                                 <div className="text-neutral-500">
                                     {selectedGrade
-                                        ? `No active students found in ${selectedGrade}`
+                                        ? normalizedGrade
+                                            ? `No active students found in ${normalizedGrade}`
+                                            : 'No active students found'
                                         : 'Select a grade level to mark attendance'}
                                 </div>
                             </CardContent>

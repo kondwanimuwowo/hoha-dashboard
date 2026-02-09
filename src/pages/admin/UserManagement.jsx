@@ -6,17 +6,18 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { PersonAvatar } from '@/components/shared/PersonAvatar'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog' // Added DialogDescription import
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { Search, Filter, Edit, Shield, CheckCircle, XCircle, Plus, Loader2 } from 'lucide-react'
 import { useUsers, useUpdateUser, useCreateUser } from '@/hooks/useUsers'
 import { useAuth } from '@/hooks/useAuth'
 import { formatDate } from '@/lib/utils'
+import { toast } from 'sonner'
 
 const USER_ROLES = ['Admin', 'Program Manager', 'Data Entry', 'Read-Only']
-
 
 export function UserManagement() {
     const { isAdmin, user: currentUser } = useAuth()
@@ -27,11 +28,11 @@ export function UserManagement() {
     const [searchTerm, setSearchTerm] = useState('')
     const [roleFilter, setRoleFilter] = useState('All')
     const [editingUser, setEditingUser] = useState(null)
+    const [deactivateTarget, setDeactivateTarget] = useState(null)
     const [selectedRole, setSelectedRole] = useState('')
     const [selectedStatus, setSelectedStatus] = useState(true)
     const [selectedName, setSelectedName] = useState('')
 
-    // Create User State
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
     const [newUserData, setNewUserData] = useState({
         email: '',
@@ -45,21 +46,26 @@ export function UserManagement() {
             await createUser.mutateAsync(newUserData)
             setIsCreateDialogOpen(false)
             setNewUserData({ email: '', password: '', fullName: '', role: 'Data Entry' })
+            toast.success('User created successfully')
         } catch (error) {
             console.error('Failed to create user', error)
-            // Ideally show toast error here
+            toast.error(error.message || 'Failed to create user')
         }
     }
 
-    const handleDeactivate = async (user) => {
-        if (!confirm('Are you sure you want to deactivate this user?')) return
+    const handleDeactivate = async () => {
+        if (!deactivateTarget) return
+
         try {
             await updateUser.mutateAsync({
-                id: user.id,
+                id: deactivateTarget.id,
                 updates: { is_active: false }
             })
+            toast.success('User deactivated')
+            setDeactivateTarget(null)
         } catch (error) {
             console.error('Failed to deactivate user', error)
+            toast.error(error.message || 'Failed to deactivate user')
         }
     }
 
@@ -105,8 +111,10 @@ export function UserManagement() {
                 }
             })
             setEditingUser(null)
+            toast.success('User updated')
         } catch (error) {
             console.error('Failed to update user', error)
+            toast.error(error.message || 'Failed to update user')
         }
     }
 
@@ -222,9 +230,9 @@ export function UserManagement() {
                                                             variant="ghost"
                                                             size="sm"
                                                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                            onClick={() => handleDeactivate(user)}
+                                                            onClick={() => setDeactivateTarget(user)}
                                                             disabled={currentUser?.id === user.id}
-                                                            title={currentUser?.id === user.id ? "You cannot deactivate your own account" : "Deactivate User"}
+                                                            title={currentUser?.id === user.id ? 'You cannot deactivate your own account' : 'Deactivate User'}
                                                         >
                                                             <XCircle className="h-4 w-4 mr-2" />
                                                             Deactivate
@@ -292,12 +300,13 @@ export function UserManagement() {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setEditingUser(null)}>Cancel</Button>
                         <Button onClick={handleSave} disabled={updateUser.isPending}>
-                            {updateUser.isPending && <LoadingSpinner className="mr-2 h-4 w-4" />}
+                            {updateUser.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Save Changes
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
@@ -329,7 +338,7 @@ export function UserManagement() {
                                 type="password"
                                 value={newUserData.password}
                                 onChange={(e) => setNewUserData({ ...newUserData, password: e.target.value })}
-                                placeholder="••••••••"
+                                placeholder="********"
                             />
                         </div>
                         <div className="space-y-2">
@@ -359,6 +368,17 @@ export function UserManagement() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </div >
+
+            <ConfirmDialog
+                open={!!deactivateTarget}
+                onOpenChange={(open) => !open && setDeactivateTarget(null)}
+                title="Deactivate User?"
+                description={deactivateTarget ? `Are you sure you want to deactivate ${deactivateTarget.full_name || deactivateTarget.email}?` : ''}
+                confirmLabel="Deactivate"
+                variant="destructive"
+                onConfirm={handleDeactivate}
+                isPending={updateUser.isPending}
+            />
+        </div>
     )
 }

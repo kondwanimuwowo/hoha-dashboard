@@ -5,19 +5,32 @@ import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PersonAvatar } from '@/components/shared/PersonAvatar'
-import { User, Bell, Shield, Palette, Smartphone, Mail, School, AlertTriangle } from 'lucide-react'
+import { User, Bell, Shield, Palette, Mail, School, AlertTriangle } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useTheme } from '@/components/shared/ThemeProvider'
 import { useState } from 'react'
 import { usePromoteStudents } from '@/hooks/useStudents'
+import { useUserPreferences, useUpsertUserPreferences } from '@/hooks/useUserPreferences'
 import { toast } from 'sonner'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 
 export function Settings() {
-    const { user } = useAuth()
+    const { user, profile } = useAuth()
     const { theme, setTheme } = useTheme()
     const [isPromoteDialogOpen, setIsPromoteDialogOpen] = useState(false)
     const promoteStudents = usePromoteStudents()
+    const { data: preferences } = useUserPreferences(user?.id)
+    const upsertPreferences = useUpsertUserPreferences()
+
+    const updatePreferences = async (updates) => {
+        if (!user?.id) return
+
+        try {
+            await upsertPreferences.mutateAsync({ userId: user.id, updates })
+        } catch (error) {
+            toast.error('Failed to save settings: ' + error.message)
+        }
+    }
 
     const handlePromote = async () => {
         try {
@@ -38,7 +51,6 @@ export function Settings() {
             />
 
             <div className="grid gap-6 md:grid-cols-2">
-                {/* Profile Settings */}
                 <Card className="md:col-span-2">
                     <CardHeader>
                         <div className="flex items-center gap-2">
@@ -50,13 +62,15 @@ export function Settings() {
                     <CardContent className="space-y-6">
                         <div className="flex items-start gap-6">
                             <PersonAvatar
-                                photoUrl={user?.user_metadata?.avatar_url}
-                                firstName={user?.email}
+                                photoUrl={profile?.avatar_url || user?.user_metadata?.avatar_url}
+                                firstName={profile?.full_name || user?.email}
                                 lastName=""
                                 className="w-20 h-20 border-4 border-neutral-100"
                             />
                             <div className="space-y-1">
-                                <h3 className="font-medium text-lg text-neutral-900">Administrator</h3>
+                                <h3 className="font-medium text-lg text-neutral-900">
+                                    {profile?.full_name || user?.email?.split('@')[0] || 'User'}
+                                </h3>
                                 <p className="text-sm text-neutral-500">{user?.email}</p>
                                 <div className="pt-2">
                                     <Button variant="outline" size="sm" disabled>Change Avatar</Button>
@@ -76,14 +90,13 @@ export function Settings() {
                                 <Label htmlFor="role">Role</Label>
                                 <div className="relative">
                                     <Shield className="absolute left-3 top-2.5 h-4 w-4 text-neutral-400" />
-                                    <Input id="role" value="Super Admin" disabled className="pl-9" />
+                                    <Input id="role" value={profile?.role || 'Data Entry'} disabled className="pl-9" />
                                 </div>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* Appearance */}
                 <Card>
                     <CardHeader>
                         <div className="flex items-center gap-2">
@@ -102,7 +115,11 @@ export function Settings() {
                             </div>
                             <Switch
                                 checked={theme === 'dark'}
-                                onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+                                onCheckedChange={async (checked) => {
+                                    const nextTheme = checked ? 'dark' : 'light'
+                                    setTheme(nextTheme)
+                                    await updatePreferences({ theme_preference: nextTheme })
+                                }}
                             />
                         </div>
                         <div className="flex items-center justify-between">
@@ -112,12 +129,15 @@ export function Settings() {
                                     Reduce spacing in lists and tables
                                 </p>
                             </div>
-                            <Switch disabled />
+                            <Switch
+                                checked={preferences?.compact_mode ?? false}
+                                onCheckedChange={(checked) => updatePreferences({ compact_mode: checked })}
+                                disabled={upsertPreferences.isPending}
+                            />
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* Academic Year Management */}
                 <Card className="md:col-span-2">
                     <CardHeader>
                         <div className="flex items-center gap-2">
@@ -146,7 +166,6 @@ export function Settings() {
                     </CardContent>
                 </Card>
 
-                {/* Notifications */}
                 <Card>
                     <CardHeader>
                         <div className="flex items-center gap-2">
@@ -163,7 +182,11 @@ export function Settings() {
                                     Receive daily summaries via email
                                 </p>
                             </div>
-                            <Switch defaultChecked />
+                            <Switch
+                                checked={preferences?.email_notifications ?? true}
+                                onCheckedChange={(checked) => updatePreferences({ email_notifications: checked })}
+                                disabled={upsertPreferences.isPending}
+                            />
                         </div>
                         <div className="flex items-center justify-between">
                             <div className="space-y-0.5">
@@ -172,7 +195,11 @@ export function Settings() {
                                     Receive alerts on your device
                                 </p>
                             </div>
-                            <Switch defaultChecked />
+                            <Switch
+                                checked={preferences?.push_notifications ?? true}
+                                onCheckedChange={(checked) => updatePreferences({ push_notifications: checked })}
+                                disabled={upsertPreferences.isPending}
+                            />
                         </div>
                         <div className="flex items-center justify-between">
                             <div className="space-y-0.5">
@@ -181,13 +208,16 @@ export function Settings() {
                                     Get notified about platform changes
                                 </p>
                             </div>
-                            <Switch />
+                            <Switch
+                                checked={preferences?.system_updates ?? false}
+                                onCheckedChange={(checked) => updatePreferences({ system_updates: checked })}
+                                disabled={upsertPreferences.isPending}
+                            />
                         </div>
                     </CardContent>
                 </Card>
             </div>
 
-            {/* Promote Dialog */}
             <Dialog open={isPromoteDialogOpen} onOpenChange={setIsPromoteDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
@@ -201,9 +231,9 @@ export function Settings() {
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <ul className="text-sm space-y-2 text-muted-foreground list-disc pl-4">
-                            <li>Early Childhood → Preparatory</li>
-                            <li>Grade 1-11 → Next Grade</li>
-                            <li>Grade 12 → Graduated</li>
+                            <li>Early Childhood -&gt; Preparatory</li>
+                            <li>Grade 1-11 -&gt; Next Grade</li>
+                            <li>Grade 12 -&gt; Graduated</li>
                             <li>Status remains "Active" (except graduates)</li>
                         </ul>
                         <p className="text-sm font-medium text-destructive">

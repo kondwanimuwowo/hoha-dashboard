@@ -12,7 +12,6 @@ import { PersonAvatar } from '@/components/shared/PersonAvatar'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { StudentForm } from '@/components/educare/StudentForm'
 import { useState } from 'react'
-import { motion } from 'framer-motion'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 

@@ -12,7 +12,6 @@ import { VisitForm } from '@/components/clinicare/VisitForm'
 import { Button } from '@/components/ui/button'
 import { Heart, DollarSign, Ambulance, Users, Plus, AlertCircle, Building2 } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { motion } from 'framer-motion'
 
 export function ClinicareOverview() {
     const navigate = useNavigate()

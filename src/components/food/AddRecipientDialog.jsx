@@ -11,7 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PersonAvatar } from '@/components/shared/PersonAvatar'
 import { Badge } from '@/components/ui/badge'
 import { Search, UserPlus, Users as UsersIcon, CheckCircle, Loader2, Home } from 'lucide-react'
-import { motion } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
 
 export function AddRecipientDialog({ open, onOpenChange, distributionId }) {

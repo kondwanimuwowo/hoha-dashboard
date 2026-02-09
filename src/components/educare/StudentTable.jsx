@@ -25,10 +25,10 @@ import {
     CheckCircle2
 } from 'lucide-react'
 import { calculateAge } from '@/lib/utils'
-import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { useUpdateStudent } from '@/hooks/useStudents'
 import { useUpdatePerson } from '@/hooks/usePeople'
+import { useSchools } from '@/hooks/useSchools'
 import { GRADE_LEVELS } from '@/lib/constants'
 import { toast } from 'sonner'
 import {
@@ -41,14 +41,15 @@ import {
 } from '@/components/ui/dialog'
 
 // Editable row component for inline editing
-function EditableRow({ row, onSave, onValuesChange, isSaving }) {
+function EditableRow({ row, onSave, onValuesChange, isSaving, schools }) {
     const [values, setValues] = useState({
         first_name: row.first_name || '',
         last_name: row.last_name || '',
         date_of_birth: row.date_of_birth || '',
         grade_level: row.grade_level || '',
-        emergency_contact_phone: row.emergency_contact_phone || '',
+        government_school_id: row.government_school_id || '__none__',
         parent_name: row.parent_name || '',
+        parent_phone: row.parent_phone || '',
     })
 
     // Check if any value has changed from original
@@ -57,8 +58,9 @@ function EditableRow({ row, onSave, onValuesChange, isSaving }) {
         values.last_name !== (row.last_name || '') ||
         values.date_of_birth !== (row.date_of_birth || '') ||
         values.grade_level !== (row.grade_level || '') ||
-        values.emergency_contact_phone !== (row.emergency_contact_phone || '') ||
-        values.parent_name !== (row.parent_name || '')
+        values.government_school_id !== (row.government_school_id || '__none__') ||
+        values.parent_name !== (row.parent_name || '') ||
+        values.parent_phone !== (row.parent_phone || '')
 
     const handleChange = (field, value) => {
         const newValues = { ...values, [field]: value }
@@ -126,24 +128,38 @@ function EditableRow({ row, onSave, onValuesChange, isSaving }) {
                 </Select>
             </td>
             <td className="px-2 py-2">
-                <div className="text-sm text-neutral-500 truncate max-w-[150px]">
-                    {row.government_school || 'HOHA Only'}
-                </div>
-            </td>
-            <td className="px-2 py-2">
-                <Input
-                    value={values.emergency_contact_phone}
-                    onChange={(e) => handleChange('emergency_contact_phone', e.target.value)}
-                    className={cn("h-8 text-sm", hasChanges && "border-red-300 focus:border-red-500")}
-                    placeholder="Phone"
-                />
+                <Select
+                    value={values.government_school_id}
+                    onValueChange={(value) => handleChange('government_school_id', value)}
+                >
+                    <SelectTrigger className={cn("h-8 text-sm", hasChanges && "border-red-300")}>
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="__none__">HOHA Only</SelectItem>
+                        {(schools || []).map((school) => (
+                            <SelectItem key={school.id} value={school.id}>
+                                {school.school_name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </td>
             <td className="px-2 py-2">
                 <Input
                     value={values.parent_name}
                     onChange={(e) => handleChange('parent_name', e.target.value)}
                     className={cn("h-8 text-sm", hasChanges && "border-red-300 focus:border-red-500")}
-                    placeholder="Parent Name"
+                    placeholder="Parent/Guardian"
+                />
+            </td>
+            <td className="px-2 py-2">
+                <Input
+                    value={values.parent_phone}
+                    onChange={(e) => handleChange('parent_phone', e.target.value)}
+                    className={cn("h-8 text-sm", hasChanges && "border-red-300 focus:border-red-500")}
+                    placeholder="Phone"
+                    disabled={!row.parent_id}
                 />
             </td>
             <td className="px-2 py-2">
@@ -188,6 +204,7 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
 
     const updateStudent = useUpdateStudent()
     const updatePerson = useUpdatePerson()
+    const { data: schools = [] } = useSchools()
 
     const hasUnsavedChanges = Object.keys(dirtyRows).length > 0
 
@@ -210,16 +227,22 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
             last_name: values.last_name,
             date_of_birth: values.date_of_birth,
             grade_level: values.grade_level,
-            emergency_contact_phone: values.emergency_contact_phone
+            government_school_id: values.government_school_id === '__none__' ? null : values.government_school_id
         })
 
-        if (parentId && values.parent_name) {
-            const [firstName, ...lastNameParts] = values.parent_name.split(' ')
-            await updatePerson.mutateAsync({
+        if (parentId && (values.parent_name || values.parent_phone)) {
+            const parentUpdates = {
                 id: parentId,
-                first_name: firstName,
-                last_name: lastNameParts.join(' ')
-            })
+                phone_number: values.parent_phone || null,
+            }
+
+            if (values.parent_name?.trim()) {
+                const [firstName, ...lastNameParts] = values.parent_name.trim().split(' ')
+                parentUpdates.first_name = firstName
+                parentUpdates.last_name = lastNameParts.join(' ')
+            }
+
+            await updatePerson.mutateAsync(parentUpdates)
         }
     }
 
@@ -270,7 +293,7 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
                 // But let's assume if it throws it didn't save. 
                 // Better yet, let's refresh the whole data if any partial success occurred
             }
-        } catch (err) {
+        } catch {
             toast.error('An error occurred while saving all changes')
         } finally {
             setIsSavingAll(false)
@@ -389,22 +412,22 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
                 ),
             },
             {
-                accessorKey: 'emergency_contact_phone',
-                header: 'Phone',
-                size: 140,
-                cell: ({ row }) => (
-                    <div className="text-sm text-neutral-600">
-                        {row.original.emergency_contact_phone || '-'}
-                    </div>
-                ),
-            },
-            {
                 accessorKey: 'parent_name',
                 header: 'Parent/Guardian',
                 size: 180,
                 cell: ({ row }) => (
                     <div className="text-sm text-neutral-600">
                         {row.original.parent_name || '-'}
+                    </div>
+                ),
+            },
+            {
+                accessorKey: 'parent_phone',
+                header: 'Phone',
+                size: 140,
+                cell: ({ row }) => (
+                    <div className="text-sm text-neutral-600">
+                        {row.original.parent_phone || '-'}
                     </div>
                 ),
             },
@@ -457,7 +480,7 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
                                     {Object.keys(dirtyRows).length} unsaved changes
                                 </span>
                             ) : (
-                                <span className="text-amber-600 font-medium">✏️ Quick Edit Mode is ON - Edit fields directly</span>
+                                <span className="text-amber-600 font-medium">Quick Edit Mode is ON - Edit fields directly</span>
                             )}
                         </div>
                     ) : (
@@ -560,6 +583,7 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
                                         onSave={handleSaveRow}
                                         onValuesChange={handleValuesChange}
                                         isSaving={savingRowId === row.original.id}
+                                        schools={schools}
                                     />
                                 ))
                             ) : (

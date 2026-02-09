@@ -19,7 +19,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { GRADE_LEVELS, ENROLLMENT_STATUS } from '@/lib/constants'
 import { Search, Filter } from 'lucide-react'
-import { motion } from 'framer-motion'
 
 export function Students() {
     const navigate = useNavigate()

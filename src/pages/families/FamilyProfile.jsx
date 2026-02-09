@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ArrowLeft, MapPin, Users, Phone } from 'lucide-react'
-import { motion } from 'framer-motion'
 
 export function FamilyProfile() {
     const { id } = useParams() // This is the Head of Household ID

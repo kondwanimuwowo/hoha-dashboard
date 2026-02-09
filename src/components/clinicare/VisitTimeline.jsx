@@ -2,7 +2,6 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import { Stethoscope, AlertCircle, FileText, Calendar } from 'lucide-react'
-import { motion } from 'framer-motion'
 
 export function VisitTimeline({ visits }) {
     if (!visits || visits.length === 0) {

@@ -40,10 +40,11 @@ export function useDashboardStats() {
                 .gte('distribution_date', new Date().toISOString())
                 .order('distribution_date')
                 .limit(1)
-                .limit(1)
                 .maybeSingle()
 
-            // Don't throw error if no upcoming distribution
+            if (distributionError && distributionError.code !== 'PGRST116') {
+                throw distributionError
+            }
 
             // Get recent activity counts
             const thirtyDaysAgo = new Date()

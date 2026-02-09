@@ -21,7 +21,6 @@ import {
     Phone,
     Users
 } from 'lucide-react'
-import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
 export function ParentTable({ data, onRowClick, sorting, onSortingChange }) {

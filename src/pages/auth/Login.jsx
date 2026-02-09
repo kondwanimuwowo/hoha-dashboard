@@ -7,16 +7,16 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 export function Login() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
-    const { signIn, user } = useAuth()
+    const { signIn, user, resetPassword } = useAuth()
     const navigate = useNavigate()
 
-    // Redirect if already logged in
     useEffect(() => {
         if (user) {
             navigate('/')
@@ -28,10 +28,10 @@ export function Login() {
         setError('')
         setLoading(true)
 
-        const { error } = await signIn(email, password)
+        const { error: signInError } = await signIn(email, password)
 
-        if (error) {
-            setError(error.message)
+        if (signInError) {
+            setError(signInError.message)
             setLoading(false)
         } else {
             navigate('/')
@@ -78,7 +78,7 @@ export function Login() {
                             <Input
                                 id="password"
                                 type="password"
-                                placeholder="••••••••"
+                                placeholder="********"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
@@ -96,9 +96,19 @@ export function Login() {
                         <button
                             type="button"
                             className="text-primary-600 hover:underline dark:text-primary-400"
-                            onClick={() => {
-                                // Implement forgot password
-                                alert('Contact your administrator to reset your password')
+                            onClick={async () => {
+                                if (!email) {
+                                    setError('Enter your email first, then click Forgot password.')
+                                    return
+                                }
+
+                                const { error: resetError } = await resetPassword(email)
+                                if (resetError) {
+                                    setError(resetError.message)
+                                    return
+                                }
+
+                                toast.success('Password reset link sent. Check your email.')
                             }}
                         >
                             Forgot password?

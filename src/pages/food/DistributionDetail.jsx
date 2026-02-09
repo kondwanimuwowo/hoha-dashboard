@@ -16,7 +16,6 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Calendar, MapPin, Package, Plus, CheckCircle, ArrowLeft, Trash2, Edit } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
-import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 
 export function DistributionDetail() {

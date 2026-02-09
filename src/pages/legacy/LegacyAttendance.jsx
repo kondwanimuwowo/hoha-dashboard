@@ -13,7 +13,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Calendar, CheckCircle, AlertCircle, BarChart3 } from 'lucide-react'
 import { LEGACY_STAGES, SESSION_TYPES } from '@/lib/constants'
-import { motion } from 'framer-motion'
 import { AttendanceReportTable } from '@/components/shared/AttendanceReportTable'
 
 const MONTHS = [

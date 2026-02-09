@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Menu, Bell, Search, LogOut, User as UserIcon } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { PersonAvatar } from '@/components/shared/PersonAvatar'
@@ -18,7 +18,6 @@ import { NotificationsPopover } from '@/components/shared/NotificationsPopover'
 
 export function Header({ onMenuClick }) {
     const { user, profile, signOut } = useAuth()
-    const navigate = useNavigate()
     const [showSearch, setShowSearch] = useState(false)
 
     useEffect(() => {
@@ -32,16 +31,9 @@ export function Header({ onMenuClick }) {
         return () => document.removeEventListener('keydown', down)
     }, [])
 
-    const getInitials = (nameOrEmail) => {
-        if (!nameOrEmail) return 'U'
-        return nameOrEmail.charAt(0).toUpperCase()
-    }
-
     return (
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-neutral-200 dark:border-border bg-card px-6 shadow-sm">
-            {/* Left Section */}
             <div className="flex items-center space-x-4">
-                {/* Mobile Menu Button */}
                 <Button
                     variant="ghost"
                     size="icon"
@@ -52,7 +44,6 @@ export function Header({ onMenuClick }) {
                     <Menu className="h-5 w-5" />
                 </Button>
 
-                {/* Search Bar - Hidden on mobile */}
                 <div className="hidden md:flex items-center">
                     <button
                         onClick={() => setShowSearch(true)}
@@ -60,19 +51,17 @@ export function Header({ onMenuClick }) {
                     >
                         <Search className="h-4 w-4 mr-2" />
                         <span>Search...</span>
-                        <kbd className="pointer-events-none absolute right-2 top-2 hidden h-6 select-none items-center gap-1 rounded border bg-white px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100 sm:flex">
-                            <span className="text-xs">⌘</span>K
+                        <kbd className="pointer-events-none absolute right-2 top-2 hidden h-6 select-none items-center rounded border bg-white px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100 sm:flex">
+                            Ctrl+K
                         </kbd>
                     </button>
                     <GlobalSearchDialog open={showSearch} onOpenChange={setShowSearch} />
                 </div>
             </div>
 
-            {/* Right Section */}
             <div className="flex items-center space-x-3">
                 <ModeToggle />
 
-                {/* Notifications */}
                 <NotificationsPopover>
                     <Button
                         variant="ghost"
@@ -81,12 +70,10 @@ export function Header({ onMenuClick }) {
                         aria-label="Notifications"
                     >
                         <Bell className="h-5 w-5" />
-                        {/* Notification Badge */}
                         <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
                     </Button>
                 </NotificationsPopover>
 
-                {/* User Menu */}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <button className="flex items-center space-x-3 rounded-lg px-3 py-2 hover:bg-neutral-100 dark:hover:bg-accent transition-colors">

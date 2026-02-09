@@ -15,7 +15,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { Package, Plus, Calendar, MapPin } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { QUARTERS } from '@/lib/constants'
-import { motion } from 'framer-motion'
 
 export function Distributions() {
     const navigate = useNavigate()
@@ -104,6 +103,7 @@ export function Distributions() {
 }
 
 function CreateDistributionDialog({ open, onOpenChange }) {
+    const navigate = useNavigate()
     const [formData, setFormData] = useState({
         distribution_date: '',
         quarter: '',
@@ -117,10 +117,8 @@ function CreateDistributionDialog({ open, onOpenChange }) {
         e.preventDefault()
         try {
             const data = await createDistribution.mutateAsync(formData)
-            console.log('Created distribution:', data)
             onOpenChange(false)
             if (data?.id) {
-                console.log(`Navigating to /food/distributions/${data.id}`)
                 navigate(`/food/distributions/${data.id}`)
             }
         } catch (err) {

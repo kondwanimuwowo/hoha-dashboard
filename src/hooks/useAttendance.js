@@ -15,6 +15,11 @@ export function useAttendance(date, gradeLevel) {
                 .eq('attendance_date', date)
 
             if (error) throw error
+
+            if (gradeLevel && gradeLevel !== 'all') {
+                return (data || []).filter((record) => record.schedule?.grade_level === gradeLevel)
+            }
+
             return data
         },
         enabled: !!date,

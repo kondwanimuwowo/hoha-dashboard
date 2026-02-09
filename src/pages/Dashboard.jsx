@@ -5,7 +5,6 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { GraduationCap, Users, Heart, Calendar, UserPlus, ClipboardList, Plus } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
-import { motion } from 'framer-motion'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -82,8 +81,19 @@ export function Dashboard() {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
-                                <div className="text-sm text-muted-foreground">
-                                    Activity feed coming soon...
+                                <div className="flex items-center justify-between text-sm">
+                                    <span className="text-muted-foreground">New students (30 days)</span>
+                                    <span className="font-semibold text-foreground">{stats?.recentActivity?.students || 0}</span>
+                                </div>
+                                <div className="flex items-center justify-between text-sm">
+                                    <span className="text-muted-foreground">New women enrolled (30 days)</span>
+                                    <span className="font-semibold text-foreground">{stats?.recentActivity?.women || 0}</span>
+                                </div>
+                                <div className="flex items-center justify-between text-sm border-t pt-3">
+                                    <span className="text-muted-foreground">Next scheduled distribution</span>
+                                    <span className="font-semibold text-foreground">
+                                        {stats?.nextDistribution ? formatDate(stats.nextDistribution.distribution_date) : 'Not scheduled'}
+                                    </span>
                                 </div>
                             </div>
                         </CardContent>

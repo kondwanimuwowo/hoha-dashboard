@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useDistributions } from '@/hooks/useFoodDistribution'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatsCard } from '@/components/shared/StatsCard'
@@ -7,7 +7,6 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Package, Calendar, Users, Plus, History } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
-import { motion } from 'framer-motion'
 import { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
@@ -30,6 +29,7 @@ export function FoodOverview() {
     ) || []
 
     const totalHampers = thisYearDistributions.reduce((sum, d) => sum + (d.total_hampers_distributed || 0), 0)
+    const totalFamiliesServed = thisYearDistributions.reduce((sum, d) => sum + (d.families_served || 0), 0)
     const nextDistribution = distributions?.find(d =>
         new Date(d.distribution_date) >= new Date()
     )
@@ -72,8 +72,8 @@ export function FoodOverview() {
                 />
                 <StatsCard
                     title="Families Served"
-                    value={totalHampers}
-                    subtitle="Unique families"
+                    value={totalFamiliesServed}
+                    subtitle="Distinct households"
                     icon={Users}
                     colorClass="bg-purple-50 text-purple-600"
                 />
@@ -175,6 +175,7 @@ export function FoodOverview() {
 }
 
 function CreateDistributionDialog({ open, onOpenChange }) {
+    const navigate = useNavigate()
     const [formData, setFormData] = useState({
         distribution_date: '',
         quarter: '',
@@ -188,10 +189,8 @@ function CreateDistributionDialog({ open, onOpenChange }) {
         e.preventDefault()
         try {
             const data = await createDistribution.mutateAsync(formData)
-            console.log('Created distribution from Overview:', data)
             onOpenChange(false)
             if (data?.id) {
-                console.log(`Navigating to /food/distributions/${data.id}`)
                 navigate(`/food/distributions/${data.id}`)
             }
         } catch (err) {

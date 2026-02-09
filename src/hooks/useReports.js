@@ -6,45 +6,52 @@ export function useReportStats() {
         queryKey: ['report-stats'],
         queryFn: async () => {
             // Get all distributions
-            const { data: foodDist } = await supabase
+            const { data: foodDist, error: foodDistError } = await supabase
                 .from('food_distribution')
                 .select('*, recipients:food_recipients(count)')
+            if (foodDistError) throw foodDistError
 
-            const { data: reliefDist } = await supabase
+            const { data: reliefDist, error: reliefDistError } = await supabase
                 .from('emergency_relief_distributions')
                 .select('*, recipients:emergency_relief_recipients(count)')
+            if (reliefDistError) throw reliefDistError
 
             // Get people stats
-            const { data: people } = await supabase
+            const { data: people, error: peopleError } = await supabase
                 .from('people')
                 .select('gender, date_of_birth')
+            if (peopleError) throw peopleError
 
             // Get students
-            const { data: students } = await supabase
+            const { data: students, error: studentsError } = await supabase
                 .from('educare_enrollment')
                 .select('id')
                 .eq('current_status', 'Active')
+            if (studentsError) throw studentsError
 
             // Get women
-            const { data: women } = await supabase
+            const { data: women, error: womenError } = await supabase
                 .from('legacy_women_enrollment')
                 .select('id')
                 .eq('status', 'Active')
+            if (womenError) throw womenError
 
             // Get Educare attendance (last 30 days)
             const thirtyDaysAgo = new Date()
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-            const { data: educareAttendance } = await supabase
+            const { data: educareAttendance, error: educareAttendanceError } = await supabase
                 .from('tuition_attendance')
                 .select('status, attendance_date')
                 .gte('attendance_date', thirtyDaysAgo.toISOString().split('T')[0])
+            if (educareAttendanceError) throw educareAttendanceError
 
             // Get Legacy attendance (last 30 days)
-            const { data: legacyAttendance } = await supabase
+            const { data: legacyAttendance, error: legacyAttendanceError } = await supabase
                 .from('legacy_program_attendance')
                 .select('status, session_date')
                 .gte('session_date', thirtyDaysAgo.toISOString().split('T')[0])
+            if (legacyAttendanceError) throw legacyAttendanceError
 
             // Calculate attendance rates
             const educarePresent = educareAttendance?.filter(a => a.status === 'Present').length || 0
@@ -108,11 +115,12 @@ export function useDistributionTrends() {
     return useQuery({
         queryKey: ['distribution-trends'],
         queryFn: async () => {
-            const { data: foodDist } = await supabase
+            const { data: foodDist, error } = await supabase
                 .from('food_distribution')
                 .select('quarter, year, recipients:food_recipients(count)')
                 .order('year', { ascending: true })
                 .order('quarter', { ascending: true })
+            if (error) throw error
 
             return foodDist?.map(d => ({
                 period: `${d.quarter} ${d.year}`,
@@ -136,15 +144,17 @@ export function useAttendanceTrends() {
                 days.push(date.toISOString().split('T')[0])
             }
 
-            const { data: educareData } = await supabase
+            const { data: educareData, error: educareError } = await supabase
                 .from('tuition_attendance')
                 .select('status, attendance_date')
                 .gte('attendance_date', days[0])
+            if (educareError) throw educareError
 
-            const { data: legacyData } = await supabase
+            const { data: legacyData, error: legacyError } = await supabase
                 .from('legacy_program_attendance')
                 .select('status, session_date')
                 .gte('session_date', days[0])
+            if (legacyError) throw legacyError
 
             return days.map(day => {
                 const educareDay = educareData?.filter(a => a.attendance_date === day) || []

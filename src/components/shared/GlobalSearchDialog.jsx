@@ -1,18 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Search, FileText, User, ChevronRight, Loader2 } from 'lucide-react'
+import { Search, FileText, ChevronRight, Loader2 } from 'lucide-react'
 import { usePeople } from '@/hooks/usePeople'
 
-// Navigation items to search through
 const NAV_ITEMS = [
     { title: 'Dashboard', path: '/', description: 'Overview and quick actions' },
     { title: 'Educare Overview', path: '/educare', description: 'Student management dashboard' },
     { title: 'Student List', path: '/educare/students', description: 'View and manage students' },
     { title: 'Mark Attendance (Educare)', path: '/educare/attendance', description: 'Daily tuition attendance' },
-    { title: 'Legacy Overview', path: '/legacy', description: 'Women\'s empowerment program' },
+    { title: 'Legacy Overview', path: '/legacy', description: "Women's empowerment program" },
     { title: 'Participant List', path: '/legacy/participants', description: 'View and manage women' },
     { title: 'Mark Attendance (Legacy)', path: '/legacy/attendance', description: 'Session attendance' },
     { title: 'Clinicare Services', path: '/clinicare', description: 'Medical services overview' },
@@ -26,16 +23,13 @@ export function GlobalSearchDialog({ open, onOpenChange }) {
     const [searchQuery, setSearchQuery] = useState('')
     const [debouncedQuery, setDebouncedQuery] = useState('')
 
-    // Debounce effect
     useEffect(() => {
         const timer = setTimeout(() => setDebouncedQuery(searchQuery), 300)
         return () => clearTimeout(timer)
     }, [searchQuery])
 
-    // Search people
     const { data: people, isLoading } = usePeople(debouncedQuery)
 
-    // Filter pages
     const filteredPages = NAV_ITEMS.filter(item =>
         item.title.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
         item.description.toLowerCase().includes(debouncedQuery.toLowerCase())
@@ -69,7 +63,6 @@ export function GlobalSearchDialog({ open, onOpenChange }) {
                 </DialogHeader>
 
                 <div className="max-h-[60vh] overflow-y-auto p-2">
-                    {/* Empty State */}
                     {!searchQuery && (
                         <div className="p-8 text-center text-neutral-500 text-sm">
                             <Search className="w-12 h-12 mx-auto mb-3 opacity-20" />
@@ -79,7 +72,6 @@ export function GlobalSearchDialog({ open, onOpenChange }) {
 
                     {searchQuery && (
                         <div className="space-y-4">
-                            {/* Pages Section */}
                             {filteredPages.length > 0 && (
                                 <div>
                                     <h4 className="text-xs font-semibold text-neutral-500 uppercase tracking-wider px-3 mb-2 mt-2">
@@ -92,7 +84,7 @@ export function GlobalSearchDialog({ open, onOpenChange }) {
                                                 onClick={() => handleSelect(page.path)}
                                                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-neutral-100 transition-colors group text-left"
                                             >
-                                                <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center group-hover:bg-white border border-transparent group-hover:border-neutral-200 transaction-all">
+                                                <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center group-hover:bg-white border border-transparent group-hover:border-neutral-200 transition-all">
                                                     <FileText className="w-4 h-4 text-neutral-500" />
                                                 </div>
                                                 <div className="flex-1">
@@ -106,7 +98,6 @@ export function GlobalSearchDialog({ open, onOpenChange }) {
                                 </div>
                             )}
 
-                            {/* People Section */}
                             {people && people.length > 0 && (
                                 <div>
                                     <h4 className="text-xs font-semibold text-neutral-500 uppercase tracking-wider px-3 mb-2 mt-4">
@@ -134,7 +125,7 @@ export function GlobalSearchDialog({ open, onOpenChange }) {
                                                     </div>
                                                     <div className="text-xs text-neutral-500 flex gap-2">
                                                         <span>{person.gender}</span>
-                                                        <span>•</span>
+                                                        <span>-</span>
                                                         <span>{person.phone_number || 'No phone'}</span>
                                                     </div>
                                                 </div>
@@ -145,7 +136,6 @@ export function GlobalSearchDialog({ open, onOpenChange }) {
                                 </div>
                             )}
 
-                            {/* No Results */}
                             {filteredPages.length === 0 && (!people || people.length === 0) && !isLoading && (
                                 <div className="p-8 text-center text-neutral-500 text-sm">
                                     <p>No results found for "{searchQuery}"</p>

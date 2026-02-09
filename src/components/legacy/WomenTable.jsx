@@ -12,7 +12,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown } from 'lucide-react'
 import { calculateAge, formatDate } from '@/lib/utils'
-import { motion } from 'framer-motion'
 
 export function WomenTable({ data, onRowClick, sorting, onSortingChange }) {
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 })

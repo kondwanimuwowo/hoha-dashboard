@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useReportStats, useDistributionTrends, useAttendanceTrends } from '@/hooks/useReports'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
@@ -32,7 +32,6 @@ import {
 const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899']
 
 export function Reports() {
-    const [attendanceFilter, setAttendanceFilter] = useState('month')
     const { data: stats, isLoading } = useReportStats()
     const { data: trends } = useDistributionTrends()
     const { data: attendanceTrends } = useAttendanceTrends()
@@ -384,8 +383,8 @@ export function Reports() {
                         <CardContent className="p-4">
                             <p className="text-sm text-blue-800 dark:text-blue-200">
                                 <strong>Note:</strong> For detailed monthly and termly attendance reports with advanced filtering,
-                                visit the <a href="/educare/attendance" className="underline font-medium">Educare Attendance</a> or
-                                <a href="/legacy/attendance" className="underline font-medium"> Legacy Attendance</a> pages.
+                                visit the <Link to="/educare/attendance" className="underline font-medium">Educare Attendance</Link> or
+                                <Link to="/legacy/attendance" className="underline font-medium"> Legacy Attendance</Link> pages.
                             </p>
                         </CardContent>
                     </Card>

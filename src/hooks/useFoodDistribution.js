@@ -14,7 +14,21 @@ export function useDistributions() {
                 .order('distribution_date', { ascending: false })
 
             if (error) throw error
-            return data
+
+            const { data: householdMetrics, error: metricError } = await supabase
+                .from('food_distribution_household_metrics')
+                .select('distribution_id, families_served')
+
+            if (metricError) throw metricError
+
+            const metricsByDistributionId = new Map(
+                (householdMetrics || []).map((metric) => [metric.distribution_id, metric.families_served])
+            )
+
+            return (data || []).map((distribution) => ({
+                ...distribution,
+                families_served: metricsByDistributionId.get(distribution.id) || 0,
+            }))
         },
     })
 }
@@ -38,6 +52,14 @@ export function useDistribution(id) {
                 console.warn(`No distribution found with ID: ${id}`)
             }
 
+            const { data: householdMetrics, error: metricError } = await supabase
+                .from('food_distribution_household_metrics')
+                .select('families_served')
+                .eq('distribution_id', id)
+                .maybeSingle()
+
+            if (metricError) throw metricError
+
             const { data: recipients, error: recError } = await supabase
                 .from('food_recipients')
                 .select(`
@@ -51,6 +73,7 @@ export function useDistribution(id) {
             return {
                 ...distribution,
                 recipients: recipients || [],
+                families_served: householdMetrics?.families_served || 0,
             }
         },
         enabled: !!id,
