@@ -37,9 +37,7 @@ export function FoodHistory() {
                     recipients:food_recipients(
                         *,
                         family_head:people!family_head_id(*),
-                        family_group:family_groups(
-                            people!family_head_id(first_name, last_name)
-                        )
+                        primary_person:people!primary_person_id(*)
                     )
                 `)
                 .order('distribution_date', { ascending: false })
@@ -56,7 +54,7 @@ export function FoodHistory() {
             dist.quarter?.toLowerCase().includes(query) ||
             dist.distribution_location?.toLowerCase().includes(query) ||
             dist.recipients?.some(r =>
-                `${r.family_head?.first_name} ${r.family_head?.last_name}`.toLowerCase().includes(query)
+                `${(r.primary_person?.first_name || r.family_head?.first_name || '')} ${(r.primary_person?.last_name || r.family_head?.last_name || '')}`.toLowerCase().includes(query)
             )
         )
     })
@@ -192,7 +190,9 @@ function DistributionCard({ distribution, isExpanded, onToggle }) {
                                     Recipients
                                 </h4>
                                 <div className="space-y-2">
-                                    {distribution.recipients.map((recipient) => (
+                                    {distribution.recipients.map((recipient) => {
+                                        const head = recipient.primary_person || recipient.family_head
+                                        return (
                                         <div
                                             key={recipient.id}
                                             className="flex items-center justify-between p-3 bg-white dark:bg-card rounded-lg border border-neutral-200 dark:border-border"
@@ -200,11 +200,11 @@ function DistributionCard({ distribution, isExpanded, onToggle }) {
                                             <div className="flex-1">
                                                 <div className="flex items-center space-x-2">
                                                     <div className="font-medium text-neutral-900 dark:text-foreground">
-                                                        {recipient.family_head?.first_name} {recipient.family_head?.last_name}
+                                                        {head?.first_name} {head?.last_name}
                                                     </div>
-                                                    {recipient.family_group && (
+                                                    {recipient.family_member_names?.length > 0 && (
                                                         <Badge variant="outline" className="text-xs">
-                                                            Family Group
+                                                            Household
                                                         </Badge>
                                                     )}
                                                 </div>
@@ -235,7 +235,8 @@ function DistributionCard({ distribution, isExpanded, onToggle }) {
                                                 )}
                                             </div>
                                         </div>
-                                    ))}
+                                        )
+                                    })}
                                 </div>
                             </div>
                         </motion.div>

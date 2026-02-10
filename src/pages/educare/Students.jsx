@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStudents } from '@/hooks/useStudents'
 import { useParents } from '@/hooks/usePeople'
@@ -23,6 +23,7 @@ import { Search, Filter } from 'lucide-react'
 export function Students() {
     const navigate = useNavigate()
     const [search, setSearch] = useState('')
+    const [debouncedSearch, setDebouncedSearch] = useState('')
     const [gradeFilter, setGradeFilter] = useState('all')
     const [statusFilter, setStatusFilter] = useState('Active')
     const [schoolFilter, setSchoolFilter] = useState('all')
@@ -32,9 +33,14 @@ export function Students() {
     const [activeTab, setActiveTab] = useState('students')
     const [selectedParent, setSelectedParent] = useState(null)
 
+    useEffect(() => {
+        const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 300)
+        return () => window.clearTimeout(timer)
+    }, [search])
+
     const { data: schools } = useSchools()
     const { data: students, isLoading: isLoadingStudents } = useStudents({
-        search,
+        search: debouncedSearch,
         gradeLevel: gradeFilter === 'all' ? undefined : gradeFilter,
         status: statusFilter === 'all' ? undefined : statusFilter,
         school: schoolFilter === 'all' ? undefined : schoolFilter,
@@ -42,7 +48,7 @@ export function Students() {
         sortOrder: sorting[0]?.desc ? 'desc' : 'asc'
     })
 
-    const { data: parents, isLoading: isLoadingParents } = useParents(search)
+    const { data: parents, isLoading: isLoadingParents } = useParents(debouncedSearch)
 
     const isLoading = activeTab === 'students' ? isLoadingStudents : isLoadingParents
 

@@ -8,6 +8,8 @@
     "build": "vite build",
     "check": "npm run build",
     "lint": "eslint .",
+    "lint:ci": "eslint . --max-warnings=0",
+    "bundle:check": "node scripts/check-bundle-size.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

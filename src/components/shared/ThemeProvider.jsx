@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState } from "react"
 
 const ThemeProviderContext = createContext({
@@ -7,28 +8,19 @@ const ThemeProviderContext = createContext({
 
 export function ThemeProvider({
     children,
-    defaultTheme = "system",
+    defaultTheme = "light",
     storageKey = "vite-ui-theme",
     ...props
 }) {
-    const [theme, setTheme] = useState(
-        () => localStorage.getItem(storageKey) || defaultTheme
-    )
+    const [theme, setTheme] = useState(() => {
+        const stored = localStorage.getItem(storageKey)
+        return stored === "light" || stored === "dark" ? stored : defaultTheme
+    })
 
     useEffect(() => {
         const root = window.document.documentElement
 
         root.classList.remove("light", "dark")
-
-        if (theme === "system") {
-            const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-                .matches
-                ? "dark"
-                : "light"
-
-            root.classList.add(systemTheme)
-            return
-        }
 
         root.classList.add(theme)
     }, [theme])

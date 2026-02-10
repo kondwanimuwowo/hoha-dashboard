@@ -64,7 +64,8 @@ export function useDistribution(id) {
                 .from('food_recipients')
                 .select(`
           *,
-          family_head:people!family_head_id(*)
+          family_head:people!family_head_id(*),
+          primary_person:people!primary_person_id(*)
         `)
                 .eq('distribution_id', id)
 
@@ -145,11 +146,56 @@ export function useAddRecipient() {
                 }
             }
 
-            // 2. Insert Recipient
+            // 2. Resolve household details from family_groups (single source of truth)
+            let resolvedGroup = null
+            if (family_group_id) {
+                const { data, error } = await supabase
+                    .from('family_groups')
+                    .select('*')
+                    .eq('recipient_id', family_group_id)
+                    .maybeSingle()
+                if (error) throw error
+                resolvedGroup = data
+            } else if (family_head_id) {
+                // First check if selected person is a household head
+                const { data: headData, error: headError } = await supabase
+                    .from('family_groups')
+                    .select('*')
+                    .eq('recipient_id', family_head_id)
+                    .maybeSingle()
+                if (headError) throw headError
+
+                if (headData) {
+                    resolvedGroup = headData
+                } else {
+                    // Otherwise check if selected person is a child member in a household
+                    const { data: memberData, error: memberError } = await supabase
+                        .from('family_groups')
+                        .select('*')
+                        .contains('family_member_ids', [family_head_id])
+                        .maybeSingle()
+                    if (memberError) throw memberError
+                    resolvedGroup = memberData
+                }
+            }
+
+            const derivedFamilyHeadId = resolvedGroup?.recipient_id || family_head_id
+            const derivedFamilySize = Number.isFinite(Number(resolvedGroup?.family_size))
+                ? Number(resolvedGroup.family_size)
+                : 1
+
+            // 3. Insert Recipient
             const { data, error } = await supabase
                 .from('food_recipients')
                 .insert([{
                     ...recipientData,
+                    family_head_id: derivedFamilyHeadId,
+                    family_group_id: resolvedGroup?.recipient_id || family_group_id || null,
+                    primary_person_id: resolvedGroup?.recipient_id || recipientData.primary_person_id || derivedFamilyHeadId,
+                    family_member_ids: resolvedGroup?.family_member_ids || recipientData.family_member_ids || null,
+                    family_member_names: resolvedGroup?.family_member_names || recipientData.family_member_names || null,
+                    family_type: resolvedGroup?.family_type || recipientData.family_type || null,
+                    family_size: derivedFamilySize,
                     collected: true, // Auto-mark as collected when adding to list? Or seperate step? 
                     // "Record Distribution" implies immediate collection.
                     // If it's just a "List", then collected=false. 

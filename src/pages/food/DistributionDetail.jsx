@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Calendar, MapPin, Package, Plus, CheckCircle, ArrowLeft, Trash2, Edit } from 'lucide-react'
+import { Calendar, MapPin, Package, Plus, CheckCircle, ArrowLeft, Trash2, Edit, Printer } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
 
@@ -28,6 +28,7 @@ export function DistributionDetail() {
     const [showAddRecipient, setShowAddRecipient] = useState(false)
     const [showEditDialog, setShowEditDialog] = useState(false)
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+    const [recipientToRemove, setRecipientToRemove] = useState(null)
     const [viewMode, setViewMode] = useState('detail') // 'detail' or 'checkin'
     const [success, setSuccess] = useState('')
 
@@ -64,14 +65,19 @@ export function DistributionDetail() {
     }
 
     const handleRemoveRecipient = async (recipientId) => {
-        if (!confirm('Are you sure you want to remove this recipient?')) return
+        setRecipientToRemove(recipientId)
+    }
 
+    const confirmRemoveRecipient = async () => {
+        if (!recipientToRemove) return
         try {
-            await removeRecipient.mutateAsync(recipientId)
+            await removeRecipient.mutateAsync(recipientToRemove)
             toast.success('Recipient removed')
         } catch (err) {
             console.error('Failed to remove recipient:', err)
             toast.error('Failed to remove recipient')
+        } finally {
+            setRecipientToRemove(null)
         }
     }
 
@@ -129,6 +135,82 @@ export function DistributionDetail() {
     const total = recipients.length
     const progress = total > 0 ? (collected / total) * 100 : 0
 
+    const handlePrintCollectors = () => {
+        const printableRows = recipients
+            .map((recipient, index) => {
+                const householdHead = recipient.primary_person || recipient.family_head
+                const headName = `${householdHead?.first_name || ''} ${householdHead?.last_name || ''}`.trim() || 'Unknown'
+                const children = Array.isArray(recipient.family_member_names) ? recipient.family_member_names : []
+                const childrenHtml = children.length > 0
+                    ? `<div class="children">Children: ${children.join(', ')}</div>`
+                    : ''
+
+                return `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${headName}</td>
+                        <td>${recipient.family_size || 1}</td>
+                        <td>${recipient.family_head?.phone_number || householdHead?.phone_number || '-'}</td>
+                        <td>${recipient.collection_time ? 'Collected' : 'Pending'}</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td colspan="4">${childrenHtml}</td>
+                    </tr>
+                `
+            })
+            .join('')
+
+        const html = `
+            <!doctype html>
+            <html>
+            <head>
+                <meta charset="utf-8" />
+                <title>Collector List - ${distribution.quarter}</title>
+                <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; color: #111; }
+                    h1, h2 { margin: 0 0 8px; }
+                    .meta { margin-bottom: 16px; color: #444; }
+                    table { width: 100%; border-collapse: collapse; }
+                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
+                    th { background: #f5f5f5; }
+                    .children { font-size: 12px; color: #555; }
+                </style>
+            </head>
+            <body>
+                <h1>Food Distribution Collector List</h1>
+                <div class="meta">
+                    <div><strong>Date:</strong> ${formatDate(distribution.distribution_date)}</div>
+                    <div><strong>Location:</strong> ${distribution.distribution_location || '-'}</div>
+                    <div><strong>Quarter:</strong> ${distribution.quarter || '-'}</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Household Head</th>
+                            <th>Family Size</th>
+                            <th>Phone</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>${printableRows}</tbody>
+                </table>
+            </body>
+            </html>
+        `
+
+        const printWindow = window.open('', '_blank')
+        if (!printWindow) {
+            toast.error('Unable to open print window. Please allow pop-ups for this site.')
+            return
+        }
+        printWindow.document.write(html)
+        printWindow.document.close()
+        printWindow.focus()
+        printWindow.print()
+    }
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -169,6 +251,10 @@ export function DistributionDetail() {
 
                     {isAdmin && (
                         <div className="flex items-center gap-2 border-l pl-2">
+                            <Button variant="outline" size="sm" onClick={handlePrintCollectors}>
+                                <Printer className="h-4 w-4 mr-2" />
+                                Print List
+                            </Button>
                             <Button variant="outline" size="sm" onClick={startEditing}>
                                 <Edit className="h-4 w-4 mr-2" />
                                 Edit
@@ -328,6 +414,29 @@ export function DistributionDetail() {
                         <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
                         <Button variant="destructive" onClick={handleDeleteDistribution} disabled={deleteDistribution.isPending}>
                             {deleteDistribution.isPending ? 'Deleting...' : 'Delete Permanently'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={!!recipientToRemove} onOpenChange={(open) => !open && setRecipientToRemove(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Remove Recipient?</DialogTitle>
+                        <DialogDescription>
+                            This person will be removed from this distribution list. You can add them again later if needed.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setRecipientToRemove(null)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={confirmRemoveRecipient}
+                            disabled={removeRecipient.isPending}
+                        >
+                            {removeRecipient.isPending ? 'Removing...' : 'Remove Recipient'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

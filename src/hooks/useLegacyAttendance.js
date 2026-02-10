@@ -13,7 +13,7 @@ export function useLegacyAttendance(date, sessionType) {
         `)
                 .eq('session_date', date)
 
-            if (sessionType) {
+            if (sessionType && sessionType !== 'all') {
                 query = query.eq('session_type', sessionType)
             }
 
@@ -88,15 +88,46 @@ export function useMarkLegacyAttendance() {
 
     return useMutation({
         mutationFn: async (attendanceRecords) => {
-            const { data, error } = await supabase
-                .from('legacy_program_attendance')
-                .upsert(attendanceRecords, {
-                    onConflict: 'woman_id,session_date,session_type'
-                })
-                .select()
+            const results = []
 
-            if (error) throw error
-            return data
+            for (const record of attendanceRecords) {
+                const { data: existing, error: findError } = await supabase
+                    .from('legacy_program_attendance')
+                    .select('id')
+                    .eq('woman_id', record.woman_id)
+                    .eq('session_date', record.session_date)
+                    .eq('session_type', record.session_type)
+                    .limit(1)
+                    .maybeSingle()
+
+                if (findError) throw findError
+
+                if (existing?.id) {
+                    const { data: updated, error: updateError } = await supabase
+                        .from('legacy_program_attendance')
+                        .update({
+                            status: record.status,
+                            notes: record.notes || null,
+                        })
+                        .eq('id', existing.id)
+                        .select()
+                        .single()
+
+                    if (updateError) throw updateError
+                    results.push(updated)
+                } else {
+                    const { data: inserted, error: insertError } = await supabase
+                        .from('legacy_program_attendance')
+                        .insert([record])
+                        .select()
+                        .single()
+
+                    if (insertError) throw insertError
+                    results.push(inserted)
+                }
+            }
+
+            return results
         },
         onSuccess: (_, variables) => {
             const date = variables[0]?.session_date

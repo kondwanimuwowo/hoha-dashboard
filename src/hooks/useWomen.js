@@ -1,9 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 
 export function useWomen(filters = {}) {
     return useQuery({
         queryKey: ['women', filters],
+        placeholderData: keepPreviousData,
         queryFn: async () => {
             let query = supabase
                 .from('legacy_women_enrollment')
@@ -32,7 +33,24 @@ export function useWomen(filters = {}) {
             const { data, error } = await query
             if (error) throw error
 
-            let results = data || []
+            let results = (data || []).filter((item) => {
+                const enrollmentActive = !item.deleted_at
+                const personActive = item.woman && !item.woman.deleted_at && item.woman.is_active !== false
+                return enrollmentActive && personActive
+            })
+
+            // De-duplicate accidental multiple enrollments by woman_id, preferring latest enrollment.
+            const deduped = new Map()
+            results
+                .sort((a, b) => {
+                    const aDate = new Date(a.enrollment_date || 0).getTime()
+                    const bDate = new Date(b.enrollment_date || 0).getTime()
+                    return bDate - aDate
+                })
+                .forEach((item) => {
+                    if (!deduped.has(item.woman_id)) deduped.set(item.woman_id, item)
+                })
+            results = Array.from(deduped.values())
 
             // Client-side filtering for search
             if (filters.search) {
@@ -101,6 +119,20 @@ export function useCreateWoman() {
         mutationFn: async (womanData) => {
             // If woman_id provided, they already exist
             if (womanData.woman_id) {
+                const { data: existingEnrollment, error: existingError } = await supabase
+                    .from('legacy_women_enrollment')
+                    .select('id')
+                    .eq('woman_id', womanData.woman_id)
+                    .eq('status', 'Active')
+                    .is('deleted_at', null)
+                    .limit(1)
+                    .maybeSingle()
+
+                if (existingError) throw existingError
+                if (existingEnrollment) {
+                    throw new Error('This person is already enrolled as an active Legacy participant.')
+                }
+
                 const { data, error } = await supabase
                     .from('legacy_women_enrollment')
                     .insert([{
@@ -123,10 +155,13 @@ export function useCreateWoman() {
                 .insert([{
                     first_name: womanData.first_name,
                     last_name: womanData.last_name,
+                    phone_number: womanData.phone_number || null,
+                    photo_url: womanData.photo_url || null,
                     address: womanData.address,
                     compound_area: womanData.compound_area,
-                    notes: womanData.personal_notes,
+                    notes: womanData.case_notes || womanData.personal_notes || null,
                     date_of_birth: womanData.date_of_birth || null,
+                    is_active: true,
                 }])
                 .select()
                 .single()
@@ -151,6 +186,7 @@ export function useCreateWoman() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['women'] })
+            queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
         },
     })
 }
@@ -245,7 +281,7 @@ export function useDeleteWoman() {
             // Soft delete - set deleted_at timestamp on person record
             const { error: personError } = await supabase
                 .from('people')
-                .update({ deleted_at: new Date().toISOString() })
+                .update({ deleted_at: new Date().toISOString(), is_active: false })
                 .eq('id', womanId)
 
             if (personError) throw personError
@@ -262,6 +298,7 @@ export function useDeleteWoman() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['women'] })
+            queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
         },
     })
 }

@@ -1,9 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 
 export function usePeople(search = '') {
     return useQuery({
         queryKey: ['people', search],
+        placeholderData: keepPreviousData,
         queryFn: async () => {
             let query = supabase
                 .from('people')
@@ -105,7 +106,7 @@ export function useDeletePerson() {
         mutationFn: async (id) => {
             const { error } = await supabase
                 .from('people')
-                .update({ deleted_at: new Date().toISOString() })
+                .update({ deleted_at: new Date().toISOString(), is_active: false })
                 .eq('id', id)
 
             if (error) throw error
@@ -121,6 +122,7 @@ export function useDeletePerson() {
 export function useParents(search = '') {
     return useQuery({
         queryKey: ['parents', search],
+        placeholderData: keepPreviousData,
         queryFn: async () => {
             // First get all people who are marked as a parent/guardian in relationships
             // and have children in educare

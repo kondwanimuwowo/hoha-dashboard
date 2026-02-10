@@ -114,35 +114,35 @@ export function Dashboard() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <Button
                                     variant="outline"
-                                    className="h-auto py-4 flex-col gap-2 items-start justify-start border-blue-200 border-dashed bg-blue-50/30 hover:bg-blue-50 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer"
+                                    className="h-auto py-4 flex-col gap-2 items-start justify-start border-blue-200 border-dashed bg-blue-50/30 hover:bg-blue-50 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer dark:border-blue-900 dark:bg-blue-950/30 dark:hover:bg-blue-900/40"
                                     onClick={() => navigate('/educare/attendance')}
                                 >
                                     <ClipboardList className="h-5 w-5 text-blue-600" />
-                                    <div className="text-left font-semibold text-blue-900">Mark Attendance</div>
+                                    <div className="text-left font-semibold text-blue-900 dark:text-blue-100">Mark Attendance</div>
                                 </Button>
                                 <Button
                                     variant="outline"
-                                    className="h-auto py-4 flex-col gap-2 items-start justify-start border-purple-200 border-dashed bg-purple-50/30 hover:bg-purple-50 hover:border-purple-300 hover:shadow-md transition-all cursor-pointer"
+                                    className="h-auto py-4 flex-col gap-2 items-start justify-start border-purple-200 border-dashed bg-purple-50/30 hover:bg-purple-50 hover:border-purple-300 hover:shadow-md transition-all cursor-pointer dark:border-purple-900 dark:bg-purple-950/30 dark:hover:bg-purple-900/40"
                                     onClick={() => setShowAddStudent(true)}
                                 >
                                     <UserPlus className="h-5 w-5 text-purple-600" />
-                                    <div className="text-left font-semibold text-purple-900">Register Student</div>
+                                    <div className="text-left font-semibold text-purple-900 dark:text-purple-100">Register Student</div>
                                 </Button>
                                 <Button
                                     variant="outline"
-                                    className="h-auto py-4 flex-col gap-2 items-start justify-start border-red-200 border-dashed bg-red-50/30 hover:bg-red-50 hover:border-red-300 hover:shadow-md transition-all cursor-pointer"
+                                    className="h-auto py-4 flex-col gap-2 items-start justify-start border-red-200 border-dashed bg-red-50/30 hover:bg-red-50 hover:border-red-300 hover:shadow-md transition-all cursor-pointer dark:border-red-900 dark:bg-red-950/30 dark:hover:bg-red-900/40"
                                     onClick={() => setShowAddVisit(true)}
                                 >
                                     <Heart className="h-5 w-5 text-red-600" />
-                                    <div className="text-left font-semibold text-red-900">Record Visit</div>
+                                    <div className="text-left font-semibold text-red-900 dark:text-red-100">Record Visit</div>
                                 </Button>
                                 <Button
                                     variant="outline"
-                                    className="h-auto py-4 flex-col gap-2 items-start justify-start border-green-200 border-dashed bg-green-50/30 hover:bg-green-50 hover:border-green-300 hover:shadow-md transition-all cursor-pointer"
+                                    className="h-auto py-4 flex-col gap-2 items-start justify-start border-green-200 border-dashed bg-green-50/30 hover:bg-green-50 hover:border-green-300 hover:shadow-md transition-all cursor-pointer dark:border-green-900 dark:bg-green-950/30 dark:hover:bg-green-900/40"
                                     onClick={() => setShowCreateDist(true)}
                                 >
                                     <Plus className="h-5 w-5 text-green-600" />
-                                    <div className="text-left font-semibold text-green-900">Add Distribution</div>
+                                    <div className="text-left font-semibold text-green-900 dark:text-green-100">Add Distribution</div>
                                 </Button>
                             </div>
                         </CardContent>

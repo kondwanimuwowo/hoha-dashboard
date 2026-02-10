@@ -20,7 +20,7 @@ import { toast } from 'sonner'
 const USER_ROLES = ['Admin', 'Program Manager', 'Data Entry', 'Read-Only']
 
 export function UserManagement() {
-    const { isAdmin, user: currentUser } = useAuth()
+    const { isAdmin, user: currentUser, loading: authLoading } = useAuth()
     const { data: users, isLoading } = useUsers()
     const updateUser = useUpdateUser()
     const createUser = useCreateUser()
@@ -68,6 +68,8 @@ export function UserManagement() {
             toast.error(error.message || 'Failed to deactivate user')
         }
     }
+
+    if (authLoading) return <LoadingSpinner />
 
     if (!isAdmin) {
         return (

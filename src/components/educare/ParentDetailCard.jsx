@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
     Dialog,
     DialogContent,
@@ -35,6 +36,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn } from '@/lib/utils'
 
 export function ParentDetailCard({ parent, isOpen, onClose }) {
+    const navigate = useNavigate()
     const [isEditing, setIsEditing] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
     const [isLinking, setIsLinking] = useState(false)
@@ -44,15 +46,7 @@ export function ParentDetailCard({ parent, isOpen, onClose }) {
     const [isEmergencyContact, setIsEmergencyContact] = useState(true)
 
     // Form state for editing
-    const [editForm, setEditForm] = useState({
-        first_name: parent?.first_name || '',
-        last_name: parent?.last_name || '',
-        phone_number: parent?.phone_number || '',
-        address: parent?.address || '',
-        emergency_contact_name: parent?.emergency_contact_name || '',
-        emergency_contact_phone: parent?.emergency_contact_phone || '',
-        emergency_contact_relationship: parent?.emergency_contact_relationship || ''
-    })
+    const [editForm, setEditForm] = useState(null)
 
     const updatePerson = useUpdatePerson()
     const deletePerson = useDeletePerson()
@@ -61,6 +55,29 @@ export function ParentDetailCard({ parent, isOpen, onClose }) {
 
     if (!parent) return null
 
+    const hasEmergencyContact =
+        !!parent.emergency_contact_name ||
+        !!parent.emergency_contact_phone ||
+        !!parent.emergency_contact_relationship
+
+    const startEditing = () => {
+        setEditForm({
+            first_name: parent.first_name || '',
+            last_name: parent.last_name || '',
+            phone_number: parent.phone_number || '',
+            address: parent.address || '',
+            emergency_contact_name: parent.emergency_contact_name || '',
+            emergency_contact_phone: parent.emergency_contact_phone || '',
+            emergency_contact_relationship: parent.emergency_contact_relationship || ''
+        })
+        setIsEditing(true)
+    }
+
+    const stopEditing = () => {
+        setIsEditing(false)
+        setEditForm(null)
+    }
+
     const handleUpdate = async () => {
         try {
             await updatePerson.mutateAsync({
@@ -68,7 +85,7 @@ export function ParentDetailCard({ parent, isOpen, onClose }) {
                 ...editForm
             })
             toast.success('Parent details updated')
-            setIsEditing(false)
+            stopEditing()
         } catch (error) {
             toast.error('Failed to update: ' + error.message)
         }
@@ -127,12 +144,12 @@ export function ParentDetailCard({ parent, isOpen, onClose }) {
                             {isEditing ? (
                                 <div className="space-y-2 w-full">
                                     <Input
-                                        value={editForm.first_name}
+                                        value={editForm?.first_name || ''}
                                         onChange={e => setEditForm({ ...editForm, first_name: e.target.value })}
                                         placeholder="First Name"
                                     />
                                     <Input
-                                        value={editForm.last_name}
+                                        value={editForm?.last_name || ''}
                                         onChange={e => setEditForm({ ...editForm, last_name: e.target.value })}
                                         placeholder="Last Name"
                                     />
@@ -150,11 +167,11 @@ export function ParentDetailCard({ parent, isOpen, onClose }) {
                                         <Button onClick={handleUpdate} disabled={updatePerson.isPending}>
                                             {updatePerson.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save Changes'}
                                         </Button>
-                                        <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
+                                        <Button variant="outline" onClick={stopEditing}>Cancel</Button>
                                     </>
                                 ) : (
                                     <>
-                                        <Button onClick={() => setIsEditing(true)} className="w-full">
+                                        <Button onClick={startEditing} className="w-full">
                                             <Edit className="h-4 w-4 mr-2" />
                                             Edit Profile
                                         </Button>
@@ -174,7 +191,7 @@ export function ParentDetailCard({ parent, isOpen, onClose }) {
                                     <Label className="text-xs text-muted-foreground uppercase">Phone Number</Label>
                                     {isEditing ? (
                                         <Input
-                                            value={editForm.phone_number}
+                                            value={editForm?.phone_number || ''}
                                             onChange={e => setEditForm({ ...editForm, phone_number: e.target.value })}
                                         />
                                     ) : (
@@ -189,7 +206,7 @@ export function ParentDetailCard({ parent, isOpen, onClose }) {
                                     <Label className="text-xs text-muted-foreground uppercase">Address</Label>
                                     {isEditing ? (
                                         <Input
-                                            value={editForm.address}
+                                            value={editForm?.address || ''}
                                             onChange={e => setEditForm({ ...editForm, address: e.target.value })}
                                         />
                                     ) : (
@@ -202,44 +219,50 @@ export function ParentDetailCard({ parent, isOpen, onClose }) {
 
                                 <div className="pt-2 border-t mt-2">
                                     <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-2">Emergency Contact for this Parent</Label>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1">
-                                            <Label className="text-xs text-muted-foreground uppercase">Name</Label>
-                                            {isEditing ? (
-                                                <Input
-                                                    value={editForm.emergency_contact_name}
-                                                    onChange={e => setEditForm({ ...editForm, emergency_contact_name: e.target.value })}
-                                                    placeholder="Who to call..."
-                                                />
-                                            ) : (
-                                                <p className="text-sm font-medium">{parent.emergency_contact_name || 'Not provided'}</p>
-                                            )}
-                                        </div>
-                                        <div className="space-y-1">
-                                            <Label className="text-xs text-muted-foreground uppercase">Phone</Label>
-                                            {isEditing ? (
-                                                <Input
-                                                    value={editForm.emergency_contact_phone}
-                                                    onChange={e => setEditForm({ ...editForm, emergency_contact_phone: e.target.value })}
-                                                    placeholder="Phone number"
-                                                />
-                                            ) : (
-                                                <p className="text-sm font-medium">{parent.emergency_contact_phone || 'Not provided'}</p>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div className="space-y-1 mt-2">
-                                        <Label className="text-xs text-muted-foreground uppercase">Relationship</Label>
-                                        {isEditing ? (
-                                            <Input
-                                                value={editForm.emergency_contact_relationship}
-                                                onChange={e => setEditForm({ ...editForm, emergency_contact_relationship: e.target.value })}
-                                                placeholder="e.g. Spouse"
-                                            />
-                                        ) : (
-                                            <p className="text-sm font-medium">{parent.emergency_contact_relationship || 'Not provided'}</p>
-                                        )}
-                                    </div>
+                                    {isEditing || hasEmergencyContact ? (
+                                        <>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-1">
+                                                    <Label className="text-xs text-muted-foreground uppercase">Name</Label>
+                                                    {isEditing ? (
+                                                        <Input
+                                                            value={editForm?.emergency_contact_name || ''}
+                                                            onChange={e => setEditForm({ ...editForm, emergency_contact_name: e.target.value })}
+                                                            placeholder="Who to call..."
+                                                        />
+                                                    ) : (
+                                                        <p className="text-sm font-medium">{parent.emergency_contact_name || '-'}</p>
+                                                    )}
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <Label className="text-xs text-muted-foreground uppercase">Phone</Label>
+                                                    {isEditing ? (
+                                                        <Input
+                                                            value={editForm?.emergency_contact_phone || ''}
+                                                            onChange={e => setEditForm({ ...editForm, emergency_contact_phone: e.target.value })}
+                                                            placeholder="Phone number"
+                                                        />
+                                                    ) : (
+                                                        <p className="text-sm font-medium">{parent.emergency_contact_phone || '-'}</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="space-y-1 mt-2">
+                                                <Label className="text-xs text-muted-foreground uppercase">Relationship</Label>
+                                                {isEditing ? (
+                                                    <Input
+                                                        value={editForm?.emergency_contact_relationship || ''}
+                                                        onChange={e => setEditForm({ ...editForm, emergency_contact_relationship: e.target.value })}
+                                                        placeholder="e.g. Spouse"
+                                                    />
+                                                ) : (
+                                                    <p className="text-sm font-medium">{parent.emergency_contact_relationship || '-'}</p>
+                                                )}
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground">No emergency contact saved for this parent.</p>
+                                    )}
                                 </div>
                             </div>
 
@@ -260,7 +283,15 @@ export function ParentDetailCard({ parent, isOpen, onClose }) {
                                 <div className="space-y-2">
                                     {parent.educare_children?.length > 0 ? (
                                         parent.educare_children.map(child => (
-                                            <div key={child.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+                                            <button
+                                                key={child.id}
+                                                type="button"
+                                                className="w-full text-left flex items-center justify-between p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
+                                                onClick={() => {
+                                                    onClose()
+                                                    navigate(`/educare/students/${child.id}`)
+                                                }}
+                                            >
                                                 <div className="flex items-center gap-3">
                                                     <PersonAvatar
                                                         firstName={child.first_name}
@@ -275,7 +306,7 @@ export function ParentDetailCard({ parent, isOpen, onClose }) {
                                                 <Badge variant={child.status === 'Active' ? 'success' : 'secondary'}>
                                                     {child.status}
                                                 </Badge>
-                                            </div>
+                                            </button>
                                         ))
                                     ) : (
                                         <div className="text-sm text-center py-4 text-muted-foreground border border-dashed rounded-lg">

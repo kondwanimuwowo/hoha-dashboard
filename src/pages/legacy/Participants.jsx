@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useWomen } from '@/hooks/useWomen'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -17,13 +17,19 @@ import { Search, Filter } from 'lucide-react'
 export function Participants() {
     const navigate = useNavigate()
     const [search, setSearch] = useState('')
+    const [debouncedSearch, setDebouncedSearch] = useState('')
     const [stageFilter, setStageFilter] = useState('all')
     const [statusFilter, setStatusFilter] = useState('Active')
     const [showAddWoman, setShowAddWoman] = useState(false)
     const [sorting, setSorting] = useState([{ id: 'enrollment_date', desc: true }])
 
+    useEffect(() => {
+        const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 300)
+        return () => window.clearTimeout(timer)
+    }, [search])
+
     const { data: women, isLoading } = useWomen({
-        search,
+        search: debouncedSearch,
         stage: stageFilter === 'all' ? undefined : stageFilter,
         status: statusFilter === 'all' ? undefined : statusFilter,
         sortBy: sorting[0]?.id,

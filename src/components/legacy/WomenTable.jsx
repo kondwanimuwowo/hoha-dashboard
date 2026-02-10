@@ -140,6 +140,7 @@ export function WomenTable({ data, onRowClick, sorting, onSortingChange }) {
         []
     )
 
+    // eslint-disable-next-line react-hooks/incompatible-library
     const table = useReactTable({
         data: data || [],
         columns,

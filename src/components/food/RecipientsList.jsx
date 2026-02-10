@@ -8,14 +8,24 @@ import { Search, Check, Trash2, Users, Plus } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
 
+function getChildrenNames(recipient, familyHead) {
+    const parentFullName = `${familyHead?.first_name || ''} ${familyHead?.last_name || ''}`.trim().toLowerCase()
+    const rawNames = Array.isArray(recipient.family_member_names) ? recipient.family_member_names : []
+
+    return rawNames
+        .map((name) => (name || '').trim())
+        .filter(Boolean)
+        .filter((name) => name.toLowerCase() !== parentFullName)
+}
+
 export function RecipientsList({ recipients, viewMode, onMarkCollected, onRemoveRecipient, onAddRecipient }) {
     const [searchQuery, setSearchQuery] = useState('')
 
     // Filter recipients by search
     const filteredRecipients = recipients.filter((recipient) => {
-        const familyHead = recipient.family_head
-        const fullName = `${familyHead?.first_name} ${familyHead?.last_name}`.toLowerCase()
-        const phone = familyHead?.phone_number || ''
+        const displayPerson = recipient.primary_person || recipient.family_head
+        const fullName = `${displayPerson?.first_name} ${displayPerson?.last_name}`.toLowerCase()
+        const phone = displayPerson?.phone_number || ''
         return fullName.includes(searchQuery.toLowerCase()) || phone.includes(searchQuery)
     })
 
@@ -129,8 +139,8 @@ export function RecipientsList({ recipients, viewMode, onMarkCollected, onRemove
 }
 
 function RecipientCard({ recipient, index, onMarkCollected, onRemove, isPending }) {
-    const familyHead = recipient.family_head
-    const familyMembers = recipient.family_member_names || []
+    const familyHead = recipient.primary_person || recipient.family_head
+    const childrenNames = getChildrenNames(recipient, familyHead)
 
     return (
         <motion.div
@@ -158,7 +168,7 @@ function RecipientCard({ recipient, index, onMarkCollected, onRemove, isPending 
                             {recipient.family_group_id && (
                                 <Badge variant="outline" className="text-[10px] h-4 px-1.5 bg-blue-50 text-blue-600 border-blue-200">
                                     <Users className="w-2 h-2 mr-1" />
-                                    Family Group
+                                    Household
                                 </Badge>
                             )}
                         </div>
@@ -166,13 +176,13 @@ function RecipientCard({ recipient, index, onMarkCollected, onRemove, isPending 
                             <span className="font-medium">Family of {recipient.family_size || 'N/A'}</span>
                             {familyHead?.phone_number && (
                                 <>
-                                    <span>•</span>
+                                    <span>&bull;</span>
                                     <span>{familyHead.phone_number}</span>
                                 </>
                             )}
                             {recipient.collection_time && (
                                 <>
-                                    <span>•</span>
+                                    <span>&bull;</span>
                                     <span className="text-green-600">
                                         Collected {formatDate(recipient.collection_time)}
                                     </span>
@@ -180,14 +190,10 @@ function RecipientCard({ recipient, index, onMarkCollected, onRemove, isPending 
                             )}
                         </div>
 
-                        {/* Family Members List */}
-                        {familyMembers.length > 0 && (
-                            <div className="mt-1 flex flex-wrap gap-1">
-                                {familyMembers.map((name, i) => (
-                                    <span key={i} className="text-[10px] bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded leading-none">
-                                        {name}
-                                    </span>
-                                ))}
+                        {/* Children List */}
+                        {childrenNames.length > 0 && (
+                            <div className="mt-1 text-sm text-neutral-700">
+                                <span className="font-medium">Children:</span> {childrenNames.join(', ')}
                             </div>
                         )}
 
@@ -265,8 +271,8 @@ function CheckInView({ pending, collected, searchQuery, setSearchQuery, onMarkCo
                 <CardContent className="p-0">
                     <div className="divide-y divide-neutral-100">
                         {pending.map((recipient) => {
-                            const familyHead = recipient.family_head
-                            const familyMembers = recipient.family_member_names || []
+                            const familyHead = recipient.primary_person || recipient.family_head
+                            const childrenNames = getChildrenNames(recipient, familyHead)
 
                             return (
                                 <div key={recipient.id} className="p-4">
@@ -276,16 +282,12 @@ function CheckInView({ pending, collected, searchQuery, setSearchQuery, onMarkCo
                                         </div>
                                         <div className="text-neutral-600 flex items-center gap-2">
                                             <span>Family of {recipient.family_size}</span>
-                                            {familyHead?.phone_number && <span>• {familyHead.phone_number}</span>}
+                                            {familyHead?.phone_number && <span>&bull; {familyHead.phone_number}</span>}
                                         </div>
-                                        {/* Family Members Small List */}
-                                        {familyMembers.length > 0 && (
-                                            <div className="mt-1 flex flex-wrap gap-1">
-                                                {familyMembers.map((name, i) => (
-                                                    <span key={i} className="text-[10px] bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded">
-                                                        {name}
-                                                    </span>
-                                                ))}
+                                        {/* Children List */}
+                                        {childrenNames.length > 0 && (
+                                            <div className="mt-1 text-sm text-neutral-700">
+                                                <span className="font-medium">Children:</span> {childrenNames.join(', ')}
                                             </div>
                                         )}
                                     </div>
@@ -302,7 +304,7 @@ function CheckInView({ pending, collected, searchQuery, setSearchQuery, onMarkCo
                         })}
                         {pending.length === 0 && (
                             <div className="p-12 text-center text-neutral-500">
-                                All hampers collected! 🎉
+                                All hampers collected! Done.
                             </div>
                         )}
                     </div>

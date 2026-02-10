@@ -1,23 +1,36 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 
-export function useAttendance(date, gradeLevel) {
+export function useAttendance(date, gradeFilters) {
     return useQuery({
-        queryKey: ['attendance', date, gradeLevel],
+        queryKey: ['attendance', date, gradeFilters],
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('tuition_attendance')
                 .select(`
           *,
-          child:people(id, first_name, last_name, photo_url),
+          child:people(
+            id,
+            first_name,
+            last_name,
+            photo_url,
+            educare_enrollment(grade_level, current_status, deleted_at)
+          ),
           schedule:tuition_schedule(*)
         `)
                 .eq('attendance_date', date)
 
             if (error) throw error
 
-            if (gradeLevel && gradeLevel !== 'all') {
-                return (data || []).filter((record) => record.schedule?.grade_level === gradeLevel)
+            const selectedGrades = Array.isArray(gradeFilters)
+                ? gradeFilters.filter(Boolean)
+                : (gradeFilters && gradeFilters !== 'all' ? [gradeFilters] : [])
+
+            if (selectedGrades.length > 0) {
+                return (data || []).filter((record) => {
+                    const enrollment = record.child?.educare_enrollment?.find((e) => !e.deleted_at)
+                    return enrollment && selectedGrades.includes(enrollment.grade_level)
+                })
             }
 
             return data
@@ -76,15 +89,52 @@ export function useMarkAttendance() {
 
     return useMutation({
         mutationFn: async (attendanceRecords) => {
-            const { data, error } = await supabase
-                .from('tuition_attendance')
-                .upsert(attendanceRecords, {
-                    onConflict: 'child_id,schedule_id,attendance_date'
-                })
-                .select()
+            const results = []
 
-            if (error) throw error
-            return data
+            for (const record of attendanceRecords) {
+                let findQuery = supabase
+                    .from('tuition_attendance')
+                    .select('id')
+                    .eq('child_id', record.child_id)
+                    .eq('attendance_date', record.attendance_date)
+                    .limit(1)
+
+                if (record.schedule_id) {
+                    findQuery = findQuery.eq('schedule_id', record.schedule_id)
+                } else {
+                    findQuery = findQuery.is('schedule_id', null)
+                }
+
+                const { data: existing, error: findError } = await findQuery.maybeSingle()
+                if (findError) throw findError
+
+                if (existing?.id) {
+                    const { data: updated, error: updateError } = await supabase
+                        .from('tuition_attendance')
+                        .update({
+                            status: record.status,
+                            notes: record.notes || null,
+                            schedule_id: record.schedule_id || null,
+                        })
+                        .eq('id', existing.id)
+                        .select()
+                        .single()
+
+                    if (updateError) throw updateError
+                    results.push(updated)
+                } else {
+                    const { data: inserted, error: insertError } = await supabase
+                        .from('tuition_attendance')
+                        .insert([record])
+                        .select()
+                        .single()
+
+                    if (insertError) throw insertError
+                    results.push(inserted)
+                }
+            }
+
+            return results
         },
         onSuccess: (_, variables) => {
             const date = variables[0]?.attendance_date
@@ -109,8 +159,12 @@ export function useMonthlyAttendanceReport(month, year, gradeLevel) {
                 .select('*, person:people(id, first_name, last_name)')
                 .eq('current_status', 'Active')
 
-            if (gradeLevel && gradeLevel !== 'all') {
-                studentsQuery = studentsQuery.eq('grade_level', gradeLevel)
+            const selectedGrades = Array.isArray(gradeLevel)
+                ? gradeLevel.filter(Boolean)
+                : (gradeLevel && gradeLevel !== 'all' ? [gradeLevel] : [])
+
+            if (selectedGrades.length > 0) {
+                studentsQuery = studentsQuery.in('grade_level', selectedGrades)
             }
 
             const { data: students, error: studentsError } = await studentsQuery
@@ -188,8 +242,12 @@ export function useTermlyAttendanceReport(term, year, gradeLevel) {
                 .select('*, person:people(id, first_name, last_name)')
                 .eq('current_status', 'Active')
 
-            if (gradeLevel && gradeLevel !== 'all') {
-                studentsQuery = studentsQuery.eq('grade_level', gradeLevel)
+            const selectedGrades = Array.isArray(gradeLevel)
+                ? gradeLevel.filter(Boolean)
+                : (gradeLevel && gradeLevel !== 'all' ? [gradeLevel] : [])
+
+            if (selectedGrades.length > 0) {
+                studentsQuery = studentsQuery.in('grade_level', selectedGrades)
             }
 
             const { data: students, error: studentsError } = await studentsQuery

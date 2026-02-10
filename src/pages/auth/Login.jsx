@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { ModeToggle } from '@/components/shared/ModeToggle'
 
 export function Login() {
     const [email, setEmail] = useState('')
@@ -42,6 +43,9 @@ export function Login() {
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-background px-4">
+            <div className="absolute right-4 top-4">
+                <ModeToggle />
+            </div>
             <Card className="w-full max-w-md">
                 <CardHeader className="space-y-1 text-center">
                     <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-600 text-white">

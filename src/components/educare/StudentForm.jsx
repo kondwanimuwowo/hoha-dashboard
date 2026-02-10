@@ -35,9 +35,41 @@ const studentSchema = z.object({
     notes: z.string().nullable().optional(),
 })
 
+function getInitialGuardians(initialData) {
+    if (!initialData) {
+        return [{ first_name: '', last_name: '', phone_number: '', relationship: 'Mother', linked_person_id: null }]
+    }
+
+    if (initialData.relationships?.length) {
+        const existingGuardians = initialData.relationships.map(rel => ({
+            first_name: rel.related_person?.first_name || '',
+            last_name: rel.related_person?.last_name || '',
+            phone_number: rel.related_person?.phone_number || '',
+            relationship: rel.relationship_type,
+            linked_person_id: rel.related_person_id,
+            relationship_id: rel.id
+        }))
+        if (existingGuardians.length > 0) return existingGuardians
+    }
+
+    if (initialData['relationships!relationships_related_person_id_fkey']?.length) {
+        const existingGuardians = initialData['relationships!relationships_related_person_id_fkey'].map(rel => ({
+            first_name: rel.person?.first_name || '',
+            last_name: rel.person?.last_name || '',
+            phone_number: rel.person?.phone_number || '',
+            relationship: rel.relationship_type,
+            linked_person_id: rel.person_id,
+            relationship_id: rel.id
+        }))
+        if (existingGuardians.length > 0) return existingGuardians
+    }
+
+    return [{ first_name: '', last_name: '', phone_number: '', relationship: 'Mother', linked_person_id: null }]
+}
+
 export function StudentForm({ onSuccess, onCancel, initialData }) {
     const [error, setError] = useState('')
-    const [guardians, setGuardians] = useState([{ first_name: '', last_name: '', phone_number: '', relationship: 'Mother', linked_person_id: null }])
+    const [guardians, setGuardians] = useState(() => getInitialGuardians(initialData))
     const [sameAsParent] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [showSuggestions, setShowSuggestions] = useState(false)
@@ -84,32 +116,6 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                 setValue('current_status', enrollment.current_status || 'Active')
             }
 
-            if (initialData.relationships) {
-                const existingGuardians = initialData.relationships.map(rel => ({
-                    first_name: rel.related_person?.first_name || '',
-                    last_name: rel.related_person?.last_name || '',
-                    phone_number: rel.related_person?.phone_number || '',
-                    relationship: rel.relationship_type,
-                    linked_person_id: rel.related_person_id,
-                    relationship_id: rel.id
-                }))
-                if (existingGuardians.length > 0) {
-                    setGuardians(existingGuardians)
-                }
-            } else if (initialData['relationships!relationships_related_person_id_fkey']) {
-                const rels = initialData['relationships!relationships_related_person_id_fkey']
-                const existingGuardians = rels.map(rel => ({
-                    first_name: rel.person?.first_name || '',
-                    last_name: rel.person?.last_name || '',
-                    phone_number: rel.person?.phone_number || '',
-                    relationship: rel.relationship_type,
-                    linked_person_id: rel.person_id,
-                    relationship_id: rel.id
-                }))
-                if (existingGuardians.length > 0) {
-                    setGuardians(existingGuardians)
-                }
-            }
         }
     }, [initialData, setValue])
 

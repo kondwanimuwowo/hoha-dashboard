@@ -119,6 +119,7 @@ export function ParentTable({ data, onRowClick, sorting, onSortingChange }) {
         [onRowClick]
     )
 
+    // eslint-disable-next-line react-hooks/incompatible-library
     const table = useReactTable({
         data: data || [],
         columns,

@@ -1,16 +1,19 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 
 export function useStudents(filters = {}) {
     return useQuery({
         queryKey: ['students', filters],
+        placeholderData: keepPreviousData,
         queryFn: async () => {
             let query = supabase
                 .from('student_details')
                 .select('*')
 
             // Apply Filters
-            if (filters.gradeLevel) {
+            if (Array.isArray(filters.gradeLevels) && filters.gradeLevels.length > 0) {
+                query = query.in('grade_level', filters.gradeLevels)
+            } else if (filters.gradeLevel) {
                 query = query.eq('grade_level', filters.gradeLevel)
             }
 
@@ -89,6 +92,7 @@ export function useCreateStudent() {
                     emergency_contact_phone: studentData.emergency_contact_phone,
                     emergency_contact_relationship: studentData.emergency_contact_relationship,
                     notes: studentData.notes,
+                    is_active: true,
                 }])
                 .select()
                 .single()
@@ -126,6 +130,8 @@ export function useCreateStudent() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['students'] })
+            queryClient.invalidateQueries({ queryKey: ['educare-stats'] })
+            queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
         },
     })
 }
@@ -187,7 +193,7 @@ export function useDeleteStudent() {
             // Soft delete - set deleted_at timestamp
             const { error: personError } = await supabase
                 .from('people')
-                .update({ deleted_at: new Date().toISOString() })
+                .update({ deleted_at: new Date().toISOString(), is_active: false })
                 .eq('id', id)
 
             if (personError) throw personError
@@ -204,6 +210,8 @@ export function useDeleteStudent() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['students'] })
+            queryClient.invalidateQueries({ queryKey: ['educare-stats'] })
+            queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
         },
     })
 }

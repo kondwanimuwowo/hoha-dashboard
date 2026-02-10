@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useWomen } from '@/hooks/useWomen'
 import { useMarkLegacyAttendance, useLegacyAttendance, useMonthlyLegacyAttendanceReport, useTermlyLegacyAttendanceReport } from '@/hooks/useLegacyAttendance'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -41,19 +41,39 @@ export function LegacyAttendance() {
     const today = new Date().toISOString().split('T')[0]
     const currentMonth = new Date().getMonth() + 1
     const currentYear = new Date().getFullYear()
+    const persistedFilters = (() => {
+        if (typeof window === 'undefined') {
+            return null
+        }
+        try {
+            const raw = window.localStorage.getItem('legacy-attendance-filters-v1')
+            return raw ? JSON.parse(raw) : null
+        } catch {
+            return null
+        }
+    })()
 
     const [viewMode, setViewMode] = useState('daily')
-    const [selectedDate, setSelectedDate] = useState(today)
+    const [selectedDate, setSelectedDate] = useState(persistedFilters?.selectedDate || today)
     const [selectedMonth, setSelectedMonth] = useState(currentMonth.toString().padStart(2, '0'))
     const [selectedYear, setSelectedYear] = useState(currentYear.toString())
     const [selectedTerm, setSelectedTerm] = useState('1')
-    const [selectedStage, setSelectedStage] = useState('')
-    const [selectedSessionType, setSelectedSessionType] = useState('')
+    const [selectedStage, setSelectedStage] = useState(persistedFilters?.selectedStage || '')
+    const [selectedSessionType, setSelectedSessionType] = useState(persistedFilters?.selectedSessionType || '')
     const [success, setSuccess] = useState('')
     const [error, setError] = useState('')
 
+    useEffect(() => {
+        localStorage.setItem(
+            'legacy-attendance-filters-v1',
+            JSON.stringify({ selectedDate, selectedStage, selectedSessionType })
+        )
+    }, [selectedDate, selectedStage, selectedSessionType])
+
+    const normalizedStage = selectedStage && selectedStage !== 'all' ? selectedStage : undefined
+
     const { data: women, isLoading: womenLoading } = useWomen({
-        stage: selectedStage || undefined,
+        stage: normalizedStage,
         status: 'Active',
     })
 
@@ -65,13 +85,13 @@ export function LegacyAttendance() {
     const { data: monthlyReport, isLoading: monthlyLoading } = useMonthlyLegacyAttendanceReport(
         selectedMonth,
         selectedYear,
-        selectedStage
+        normalizedStage
     )
 
     const { data: termlyReport, isLoading: termlyLoading } = useTermlyLegacyAttendanceReport(
         selectedTerm,
         selectedYear,
-        selectedStage
+        normalizedStage
     )
 
     const markAttendance = useMarkLegacyAttendance()
@@ -214,10 +234,10 @@ export function LegacyAttendance() {
                         <Card>
                             <CardContent className="p-12 text-center">
                                 <div className="text-neutral-500">
-                                    {!selectedSessionType || selectedSessionType === 'all'
+                                            {!selectedSessionType || selectedSessionType === 'all'
                                         ? 'Please select a session type to mark attendance'
-                                        : selectedStage
-                                            ? `No active women found in ${selectedStage}`
+                                        : normalizedStage
+                                            ? `No active women found in ${normalizedStage}`
                                             : 'No active women found'}
                                 </div>
                             </CardContent>

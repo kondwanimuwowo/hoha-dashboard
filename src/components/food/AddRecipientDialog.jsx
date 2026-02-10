@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+﻿import { motion } from 'framer-motion'
 import { useState } from 'react'
 import { usePeople, useCreatePerson, useFamilyGroups } from '@/hooks/usePeople'
 import { useAddRecipient } from '@/hooks/useFoodDistribution'
@@ -13,13 +13,13 @@ import { PersonAvatar } from '@/components/shared/PersonAvatar'
 import { Badge } from '@/components/ui/badge'
 import { Search, UserPlus, Users as UsersIcon, CheckCircle, Loader2, Home } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { toast } from 'sonner'
 
 export function AddRecipientDialog({ open, onOpenChange, distributionId }) {
     const [activeTab, setActiveTab] = useState('families')
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedPerson, setSelectedPerson] = useState(null)
     const [selectedGroup, setSelectedGroup] = useState(null)
-    const [familySize, setFamilySize] = useState('')
     const [specialNeeds, setSpecialNeeds] = useState('')
     const [familyInfo, setFamilyInfo] = useState(null)
 
@@ -47,15 +47,17 @@ export function AddRecipientDialog({ open, onOpenChange, distributionId }) {
         // Check if Head
         const { data: headData } = await supabase
             .from('family_groups')
-            .select('id, recipient_name')
+            .select('recipient_id, recipient_name, family_size, family_member_names')
             .eq('recipient_id', personId)
             .maybeSingle()
 
         if (headData) {
             setFamilyInfo({
-                id: headData.id,
+                id: headData.recipient_id,
                 role: 'Head',
-                name: headData.recipient_name
+                name: headData.recipient_name,
+                family_size: headData.family_size,
+                family_member_names: headData.family_member_names || [],
             })
             return
         }
@@ -63,7 +65,7 @@ export function AddRecipientDialog({ open, onOpenChange, distributionId }) {
         // Check if Member (in family_member_ids array)
         const { data: memberData } = await supabase
             .from('family_groups')
-            .select('recipient_id, recipient_name, family_member_ids')
+            .select('recipient_id, recipient_name, family_member_ids, family_size, family_member_names')
             .contains('family_member_ids', [personId])
             .maybeSingle()
 
@@ -71,7 +73,9 @@ export function AddRecipientDialog({ open, onOpenChange, distributionId }) {
             setFamilyInfo({
                 id: memberData.recipient_id,
                 role: 'Member',
-                name: memberData.recipient_name
+                name: memberData.recipient_name,
+                family_size: memberData.family_size,
+                family_member_names: memberData.family_member_names || [],
             })
             return
         }
@@ -91,21 +95,19 @@ export function AddRecipientDialog({ open, onOpenChange, distributionId }) {
                 distribution_id: distributionId,
                 family_head_id: headId,
                 family_group_id: groupId,
-                family_size: parseInt(familySize) || 1,
                 special_needs: specialNeeds || null,
             })
             onOpenChange(false)
             resetForm()
         } catch (err) {
             console.error('Failed to add recipient:', err)
-            alert(err.message)
+            toast.error(err.message || 'Failed to add recipient')
         }
     }
 
     const resetForm = () => {
         setSelectedPerson(null)
         setSelectedGroup(null)
-        setFamilySize('')
         setSpecialNeeds('')
         setSearchQuery('')
         setActiveTab('families')
@@ -156,7 +158,6 @@ export function AddRecipientDialog({ open, onOpenChange, distributionId }) {
                                                 setSelectedGroup(family)
                                                 setSelectedPerson(null)
                                                 setFamilyInfo(null)
-                                                setFamilySize(family.family_size.toString())
                                             }}
                                         >
                                             <div className="flex items-center space-x-3">
@@ -168,7 +169,7 @@ export function AddRecipientDialog({ open, onOpenChange, distributionId }) {
                                                         {family.recipient_name}
                                                     </div>
                                                     <div className="text-sm text-neutral-600">
-                                                        {family.compound_area || 'No area'} • {family.family_size} Members
+                                                        {family.compound_area || 'No area'} &bull; Family of {family.family_size}
                                                     </div>
                                                 </div>
                                             </div>
@@ -191,29 +192,17 @@ export function AddRecipientDialog({ open, onOpenChange, distributionId }) {
                                             {selectedGroup.recipient_name}
                                         </div>
                                     </div>
-                                    <Badge variant="outline">{selectedGroup.family_size} Persons</Badge>
+                                    <Badge variant="outline">Family of {selectedGroup.family_size}</Badge>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="famSize">Family Size *</Label>
-                                        <Input
-                                            id="famSize"
-                                            type="number"
-                                            value={familySize}
-                                            onChange={(e) => setFamilySize(e.target.value)}
-                                            required
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="needs">Special Needs</Label>
-                                        <Input
-                                            id="needs"
-                                            value={specialNeeds}
-                                            onChange={(e) => setSpecialNeeds(e.target.value)}
-                                            placeholder="Optional"
-                                        />
-                                    </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="needs">Special Needs</Label>
+                                    <Input
+                                        id="needs"
+                                        value={specialNeeds}
+                                        onChange={(e) => setSpecialNeeds(e.target.value)}
+                                        placeholder="Optional"
+                                    />
                                 </div>
 
                                 <Button type="submit" className="w-full" disabled={addRecipient.isPending}>
@@ -302,24 +291,22 @@ export function AddRecipientDialog({ open, onOpenChange, distributionId }) {
                                     </div>
 
                                     {familyInfo && (
-                                        <div className="text-sm text-blue-800 bg-blue-50 p-2 rounded border border-blue-100">
-                                            Linked to Family Group: <strong>{familyInfo.name}'s Family</strong>
+                                        <div className="text-sm text-blue-800 bg-blue-50 p-2 rounded border border-blue-100 space-y-1">
+                                            <div>
+                                                Linked to Family Group: <strong>{familyInfo.name}'s Family</strong>
+                                            </div>
+                                            <div>
+                                                System-calculated size: <strong>Family of {familyInfo.family_size}</strong>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
 
-                                <div className="space-y-2">
-                                    <Label htmlFor="familySize">Family Size *</Label>
-                                    <Input
-                                        id="familySize"
-                                        type="number"
-                                        min="1"
-                                        value={familySize}
-                                        onChange={(e) => setFamilySize(e.target.value)}
-                                        placeholder="e.g., 5"
-                                        required
-                                    />
-                                </div>
+                                {!familyInfo && (
+                                    <div className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
+                                        No household mapping found. This recipient will be added as an individual (family of 1).
+                                    </div>
+                                )}
 
                                 <div className="space-y-2">
                                     <Label htmlFor="specialNeeds">Special Needs (Optional)</Label>
@@ -365,7 +352,6 @@ function NewPersonForm({ distributionId, onSuccess }) {
         last_name: '',
         phone_number: '',
         compound_area: '',
-        family_size: '',
         special_needs: '',
     })
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -397,7 +383,6 @@ function NewPersonForm({ distributionId, onSuccess }) {
             await addRecipient.mutateAsync({
                 distribution_id: distributionId,
                 family_head_id: newPerson.id,
-                family_size: parseInt(formData.family_size),
                 special_needs: formData.special_needs,
                 // family_group_id is null for now
             })
@@ -478,19 +463,6 @@ function NewPersonForm({ distributionId, onSuccess }) {
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="newFamilySize">Family Size *</Label>
-                <Input
-                    id="newFamilySize"
-                    type="number"
-                    min="1"
-                    value={formData.family_size}
-                    onChange={(e) => setFormData({ ...formData, family_size: e.target.value })}
-                    required
-                    disabled={isSubmitting}
-                />
-            </div>
-
-            <div className="space-y-2">
                 <Label htmlFor="newSpecialNeeds">Special Needs (Optional)</Label>
                 <Textarea
                     id="newSpecialNeeds"
@@ -522,4 +494,5 @@ function NewPersonForm({ distributionId, onSuccess }) {
         </form>
     )
 }
+
 

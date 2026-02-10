@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useBeforeUnload, useBlocker } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { PersonAvatar } from '@/components/shared/PersonAvatar'
@@ -12,71 +13,143 @@ import { cn } from '@/lib/utils'
 
 export function LegacyAttendanceSheet({ women, date, sessionType, stage, existingAttendance, onSave }) {
     const [attendanceRecords, setAttendanceRecords] = useState({})
+    const [initialRecords, setInitialRecords] = useState({})
     const [searchQuery, setSearchQuery] = useState('')
     const [isSaving, setIsSaving] = useState(false)
+    const [isAutoSaving, setIsAutoSaving] = useState(false)
+    const [lastSavedAt, setLastSavedAt] = useState(null)
 
-    // Initialize attendance records
     useEffect(() => {
         const records = {}
         women.forEach((enrollment) => {
             const existing = existingAttendance?.find((a) => a.woman_id === enrollment.woman_id)
-            records[enrollment.woman_id] = existing?.status || ''
+            records[enrollment.woman_id] = {
+                status: existing?.status || '',
+                note: existing?.notes || '',
+            }
         })
         setAttendanceRecords(records)
+        setInitialRecords(records)
     }, [women, existingAttendance])
 
+    const hasUnsavedChanges = useMemo(
+        () => JSON.stringify(attendanceRecords) !== JSON.stringify(initialRecords),
+        [attendanceRecords, initialRecords]
+    )
+
+    const isPersisting = isSaving || isAutoSaving
+
+    useBeforeUnload((event) => {
+        if (!hasUnsavedChanges || isPersisting) return
+        event.preventDefault()
+        event.returnValue = 'You have unsaved attendance changes.'
+    })
+
+    const blocker = useBlocker(({ currentLocation, nextLocation }) => {
+        return hasUnsavedChanges
+            && !isPersisting
+            && currentLocation.pathname !== nextLocation.pathname
+    })
+
+    useEffect(() => {
+        if (blocker.state !== 'blocked') return
+
+        const shouldLeave = window.confirm(
+            'You have unsaved attendance changes. Leave this page and lose those changes?'
+        )
+
+        if (shouldLeave) {
+            blocker.proceed()
+        } else {
+            blocker.reset()
+        }
+    }, [blocker])
+
     const markStatus = (womanId, status) => {
-        setAttendanceRecords((prev) => ({
-            ...prev,
-            [womanId]: prev[womanId] === status ? '' : status,
-        }))
+        setAttendanceRecords((prev) => {
+            const current = prev[womanId] || { status: '', note: '' }
+            const nextStatus = current.status === status ? '' : status
+            return {
+                ...prev,
+                [womanId]: { ...current, status: nextStatus },
+            }
+        })
+    }
+
+    const setExcusedNote = (womanId, note) => {
+        setAttendanceRecords((prev) => {
+            const current = prev[womanId] || { status: '', note: '' }
+            return {
+                ...prev,
+                [womanId]: { ...current, note },
+            }
+        })
     }
 
     const markAllPresent = () => {
         const records = {}
         women.forEach((enrollment) => {
-            records[enrollment.woman_id] = ATTENDANCE_STATUS.PRESENT
+            records[enrollment.woman_id] = { status: ATTENDANCE_STATUS.PRESENT, note: '' }
         })
         setAttendanceRecords(records)
     }
 
-    const handleSave = async () => {
-        setIsSaving(true)
+    const persistAttendance = useCallback(async (recordsSnapshot, { auto = false } = {}) => {
+        if (auto) setIsAutoSaving(true)
+        else setIsSaving(true)
 
-        // Convert to array format expected by the API
-        const attendanceData = Object.entries(attendanceRecords)
-            .filter(([_, status]) => status) // Only include women with a status
-            .map(([womanId, status]) => ({
+        const attendanceData = Object.entries(recordsSnapshot)
+            .filter(([, record]) => record?.status)
+            .map(([womanId, record]) => ({
                 woman_id: womanId,
                 session_date: date,
                 session_type: sessionType,
-                status: status,
+                status: record.status,
+                notes: record.status === ATTENDANCE_STATUS.EXCUSED ? (record.note || null) : null,
             }))
 
         try {
             await onSave(attendanceData)
+            setInitialRecords(recordsSnapshot)
+            setLastSavedAt(new Date())
         } finally {
-            setIsSaving(false)
+            if (auto) setIsAutoSaving(false)
+            else setIsSaving(false)
         }
+    }, [date, onSave, sessionType])
+
+    const handleSave = async () => {
+        await persistAttendance(attendanceRecords, { auto: false })
     }
 
-    // Calculate statistics
+    useEffect(() => {
+        if (!hasUnsavedChanges || isPersisting) return
+
+        const timer = window.setTimeout(() => {
+            void persistAttendance(attendanceRecords, { auto: true })
+        }, 30000)
+
+        return () => window.clearTimeout(timer)
+    }, [attendanceRecords, hasUnsavedChanges, isPersisting, persistAttendance])
+
     const total = women.length
-    const present = Object.values(attendanceRecords).filter(s => s === ATTENDANCE_STATUS.PRESENT).length
-    const absent = Object.values(attendanceRecords).filter(s => s === ATTENDANCE_STATUS.ABSENT).length
-    const late = Object.values(attendanceRecords).filter(s => s === ATTENDANCE_STATUS.LATE).length
-    const excused = Object.values(attendanceRecords).filter(s => s === ATTENDANCE_STATUS.EXCUSED).length
+    const present = Object.values(attendanceRecords).filter(r => r?.status === ATTENDANCE_STATUS.PRESENT).length
+    const absent = Object.values(attendanceRecords).filter(r => r?.status === ATTENDANCE_STATUS.ABSENT).length
+    const late = Object.values(attendanceRecords).filter(r => r?.status === ATTENDANCE_STATUS.LATE).length
+    const excused = Object.values(attendanceRecords).filter(r => r?.status === ATTENDANCE_STATUS.EXCUSED).length
     const unmarked = total - (present + absent + late + excused)
 
-    // Filter women by search
-    const filteredWomen = women.filter((enrollment) => {
+    const uniqueWomen = Array.from(
+        new Map(women.map((enrollment) => [enrollment.woman_id, enrollment])).values()
+    )
+
+    const filteredWomen = uniqueWomen.filter((enrollment) => {
         const fullName = `${enrollment.woman?.first_name} ${enrollment.woman?.last_name}`.toLowerCase()
         return fullName.includes(searchQuery.toLowerCase())
     })
 
     return (
         <div className="space-y-4">
-            {/* Stats & Actions Bar */}
             <Card>
                 <CardContent className="p-4">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -120,16 +193,24 @@ export function LegacyAttendanceSheet({ women, date, sessionType, stage, existin
                             <Button onClick={markAllPresent} variant="outline" size="sm">
                                 Mark All Present
                             </Button>
-                            <Button onClick={handleSave} disabled={isSaving} size="sm">
+                            <Button onClick={handleSave} disabled={isPersisting} size="sm">
                                 <Save className="mr-2 h-4 w-4" />
-                                {isSaving ? 'Saving...' : 'Save Attendance'}
+                                {isPersisting ? 'Saving...' : 'Save Attendance'}
                             </Button>
                         </div>
                     </div>
+                    {(hasUnsavedChanges || isAutoSaving || lastSavedAt) && (
+                        <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                            {isAutoSaving
+                                ? 'Autosaving attendance...'
+                                : hasUnsavedChanges
+                                    ? 'You have unsaved changes. Autosave runs every 30 seconds.'
+                                    : `Last saved at ${lastSavedAt?.toLocaleTimeString()}`}
+                        </div>
+                    )}
                 </CardContent>
             </Card>
 
-            {/* Search */}
             <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
                 <Input
@@ -140,12 +221,11 @@ export function LegacyAttendanceSheet({ women, date, sessionType, stage, existin
                 />
             </div>
 
-            {/* Women List */}
             <Card>
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <CardTitle className="text-lg">
-                            {filteredWomen.length} Woman{filteredWomen.length !== 1 ? '' : ''}
+                            {filteredWomen.length} Woman{filteredWomen.length !== 1 ? 's' : ''}
                             {stage && ` - ${stage}`}
                         </CardTitle>
                         <Badge variant="outline">{sessionType}</Badge>
@@ -156,12 +236,13 @@ export function LegacyAttendanceSheet({ women, date, sessionType, stage, existin
                         <AnimatePresence>
                             {filteredWomen.map((enrollment, index) => {
                                 const woman = enrollment.woman
-                                const status = attendanceRecords[enrollment.woman_id]
+                                const record = attendanceRecords[enrollment.woman_id] || { status: '', note: '' }
+                                const status = record.status
                                 const age = calculateAge(woman?.date_of_birth)
 
                                 return (
                                     <motion.div
-                                        key={enrollment.woman_id}
+                                        key={`${enrollment.woman_id}-${index}`}
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         exit={{ opacity: 0, x: -20 }}
@@ -186,13 +267,13 @@ export function LegacyAttendanceSheet({ women, date, sessionType, stage, existin
                                                         <span>{enrollment.stage}</span>
                                                         {age && (
                                                             <>
-                                                                <span>•</span>
+                                                                <span>&bull;</span>
                                                                 <span>{age} years</span>
                                                             </>
                                                         )}
                                                         {woman?.phone_number && (
                                                             <>
-                                                                <span>•</span>
+                                                                <span>&bull;</span>
                                                                 <span>{woman.phone_number}</span>
                                                             </>
                                                         )}
@@ -250,6 +331,16 @@ export function LegacyAttendanceSheet({ women, date, sessionType, stage, existin
                                                 </Button>
                                             </div>
                                         </div>
+
+                                        {status === ATTENDANCE_STATUS.EXCUSED && (
+                                            <div className="mt-3 max-w-md">
+                                                <Input
+                                                    value={record.note || ''}
+                                                    onChange={(e) => setExcusedNote(enrollment.woman_id, e.target.value)}
+                                                    placeholder="Reason for excused absence..."
+                                                />
+                                            </div>
+                                        )}
                                     </motion.div>
                                 )
                             })}

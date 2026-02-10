@@ -55,7 +55,6 @@ export function FoodOverview() {
                 </Button>
             </div>
 
-            {/* Stats Grid */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 <StatsCard
                     title="Total Distributions"
@@ -87,8 +86,6 @@ export function FoodOverview() {
                 />
             </div>
 
-            {/* Quick Actions */}
-            {/* Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Button
                     className="w-full"
@@ -120,7 +117,6 @@ export function FoodOverview() {
                 onOpenChange={setShowCreate}
             />
 
-            {/* Quarterly Overview */}
             <Card>
                 <CardContent className="p-6">
                     <h3 className="text-lg font-semibold mb-4">Distributions by Quarter ({currentYear})</h3>
@@ -141,7 +137,6 @@ export function FoodOverview() {
                 </CardContent>
             </Card>
 
-            {/* Recent Distributions */}
             <Card>
                 <CardContent className="p-6">
                     <h3 className="text-lg font-semibold mb-4">Recent Distributions</h3>
@@ -152,14 +147,15 @@ export function FoodOverview() {
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: index * 0.1 }}
-                                className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent transition-colors"
+                                className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent transition-colors cursor-pointer"
+                                onClick={() => navigate(`/food/distributions/${dist.id}`)}
                             >
                                 <div>
                                     <p className="font-medium text-foreground">
                                         {dist.quarter} {new Date(dist.distribution_date).getFullYear()} Distribution
                                     </p>
                                     <p className="text-sm text-muted-foreground">
-                                        {formatDate(dist.distribution_date)} • {dist.distribution_location}
+                                        {formatDate(dist.distribution_date)} &bull; {dist.distribution_location}
                                     </p>
                                 </div>
                                 <div className="text-right">
@@ -276,4 +272,3 @@ function CreateDistributionDialog({ open, onOpenChange }) {
         </Dialog>
     )
 }
-

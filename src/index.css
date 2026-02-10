@@ -173,6 +173,18 @@
     @apply border-border;
   }
 
+  a[href],
+  button,
+  [role="button"],
+  [class*="cursor-pointer"] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;

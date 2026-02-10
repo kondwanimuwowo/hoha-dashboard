@@ -44,7 +44,9 @@ export function WomenForm({ onSuccess, onCancel, initialData }) {
     const [error, setError] = useState('')
     const [isNewPerson, setIsNewPerson] = useState(!initialData)
     const [searchQuery, setSearchQuery] = useState('')
-    const [linkedChildren, setLinkedChildren] = useState([])
+    const [linkedChildren, setLinkedChildren] = useState(
+        initialData?.children ? initialData.children.map(rel => rel.child).filter(Boolean) : []
+    )
     const [childSearchQuery, setChildSearchQuery] = useState('')
 
     const createWoman = useCreateWoman()
@@ -72,6 +74,10 @@ export function WomenForm({ onSuccess, onCancel, initialData }) {
         },
     })
 
+    const photoUrl = useWatch({ control, name: 'photo_url' })
+    const nrcNumber = useWatch({ control, name: 'nrc_number' })
+    const caseNotes = useWatch({ control, name: 'case_notes' })
+
     useEffect(() => {
         if (initialData && initialData.woman) {
             const woman = initialData.woman
@@ -84,9 +90,6 @@ export function WomenForm({ onSuccess, onCancel, initialData }) {
             setValue('photo_url', woman.photo_url)
             setValue('nrc_number', woman.nrc_number)
 
-            if (initialData.children) {
-                setLinkedChildren(initialData.children.map(rel => rel.child).filter(Boolean))
-            }
         }
     }, [initialData, setValue])
 
@@ -144,66 +147,67 @@ export function WomenForm({ onSuccess, onCancel, initialData }) {
                 </Alert>
             )}
 
-            {/* Choose existing or new */}
-            <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Select Participant</h3>
+            {!initialData && (
+                <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Select Participant</h3>
 
-                <div className="flex gap-2">
-                    <Button
-                        type="button"
-                        variant={isNewPerson ? 'default' : 'outline'}
-                        onClick={() => setIsNewPerson(true)}
-                        className="flex-1"
-                    >
-                        New Person
-                    </Button>
-                    <Button
-                        type="button"
-                        variant={!isNewPerson ? 'default' : 'outline'}
-                        onClick={() => setIsNewPerson(false)}
-                        className="flex-1"
-                    >
-                        Existing Person
-                    </Button>
-                </div>
-
-                {!isNewPerson && (
-                    <div className="space-y-2">
-                        <Label>Search for existing person</Label>
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder="Search by name..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-9"
-                            />
-                        </div>
-
-                        {people && people.length > 0 && (
-                            <div className="max-h-48 overflow-y-auto border rounded-lg">
-                                {people.map((person) => (
-                                    <button
-                                        key={person.id}
-                                        type="button"
-                                        onClick={() => {
-                                            setValue('woman_id', person.id)
-                                            setSearchQuery(`${person.first_name} ${person.last_name}`)
-                                        }}
-                                        className="w-full text-left p-3 hover:bg-muted transition-colors border-b last:border-b-0"
-                                    >
-                                        <div className="font-medium">{person.first_name} {person.last_name}</div>
-                                        <div className="text-sm text-muted-foreground">{person.phone_number}</div>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
+                    <div className="flex gap-2">
+                        <Button
+                            type="button"
+                            variant={isNewPerson ? 'default' : 'outline'}
+                            onClick={() => setIsNewPerson(true)}
+                            className="flex-1"
+                        >
+                            New Person
+                        </Button>
+                        <Button
+                            type="button"
+                            variant={!isNewPerson ? 'default' : 'outline'}
+                            onClick={() => setIsNewPerson(false)}
+                            className="flex-1"
+                        >
+                            Existing Person
+                        </Button>
                     </div>
-                )}
-            </div>
 
-            {/* New person form */}
-            {isNewPerson && (
+                    {!isNewPerson && (
+                        <div className="space-y-2">
+                            <Label>Search for existing person</Label>
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    placeholder="Search by name..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="pl-9"
+                                />
+                            </div>
+
+                            {people && people.length > 0 && (
+                                <div className="max-h-48 overflow-y-auto border rounded-lg">
+                                    {people.map((person) => (
+                                        <button
+                                            key={person.id}
+                                            type="button"
+                                            onClick={() => {
+                                                setValue('woman_id', person.id)
+                                                setSearchQuery(`${person.first_name} ${person.last_name}`)
+                                            }}
+                                            className="w-full text-left p-3 hover:bg-muted transition-colors border-b last:border-b-0"
+                                        >
+                                            <div className="font-medium">{person.first_name} {person.last_name}</div>
+                                            <div className="text-sm text-muted-foreground">{person.phone_number}</div>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Personal information (always in edit mode, only for new-person mode in create) */}
+            {(initialData || isNewPerson) && (
                 <div className="space-y-4">
                     <h3 className="text-lg font-semibold">Personal Information</h3>
 
@@ -457,6 +461,3 @@ export function WomenForm({ onSuccess, onCancel, initialData }) {
         </form>
     )
 }
-    const photoUrl = useWatch({ control, name: 'photo_url' })
-    const nrcNumber = useWatch({ control, name: 'nrc_number' })
-    const caseNotes = useWatch({ control, name: 'case_notes' })

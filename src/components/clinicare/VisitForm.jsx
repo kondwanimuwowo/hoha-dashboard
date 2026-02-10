@@ -36,7 +36,9 @@ const visitSchema = z.object({
 
 export function VisitForm({ initialData, onSuccess, onCancel }) {
     const [error, setError] = useState('')
-    const [searchQuery, setSearchQuery] = useState('')
+    const [searchQuery, setSearchQuery] = useState(() =>
+        initialData?.patient ? `${initialData.patient.first_name} ${initialData.patient.last_name}` : ''
+    )
     const [showNewPatient, setShowNewPatient] = useState(false)
 
     const createVisit = useCreateVisit()
@@ -71,13 +73,6 @@ export function VisitForm({ initialData, onSuccess, onCancel }) {
             in_hoha_program: true,
         },
     })
-
-    // Set initial search query for the patient name
-    useEffect(() => {
-        if (initialData?.patient) {
-            setSearchQuery(`${initialData.patient.first_name} ${initialData.patient.last_name}`)
-        }
-    }, [initialData])
 
     const watchIsEmergency = useWatch({ control, name: 'is_emergency' })
     const watchTransport = useWatch({ control, name: 'transport_provided' })

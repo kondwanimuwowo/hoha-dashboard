@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useStudents } from '@/hooks/useStudents'
 import { useMarkAttendance, useAttendance, useMonthlyAttendanceReport, useTermlyAttendanceReport } from '@/hooks/useAttendance'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -15,6 +15,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Calendar, CheckCircle, AlertCircle, BarChart3 } from 'lucide-react'
 import { GRADE_LEVELS } from '@/lib/constants'
 import { AttendanceReportTable } from '@/components/shared/AttendanceReportTable'
+import {
+    DropdownMenu,
+    DropdownMenuCheckboxItem,
+    DropdownMenuContent,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 const MONTHS = [
     { value: '01', label: 'January' },
@@ -41,38 +49,106 @@ export function Attendance() {
     const today = new Date().toISOString().split('T')[0]
     const currentMonth = new Date().getMonth() + 1
     const currentYear = new Date().getFullYear()
+    const persistedFilters = (() => {
+        if (typeof window === 'undefined') {
+            return null
+        }
+        try {
+            const raw = window.localStorage.getItem('educare-attendance-filters-v1')
+            return raw ? JSON.parse(raw) : null
+        } catch {
+            return null
+        }
+    })()
 
     const [viewMode, setViewMode] = useState('daily') // 'daily', 'monthly', 'termly'
-    const [selectedDate, setSelectedDate] = useState(today)
+    const [selectedDate, setSelectedDate] = useState(persistedFilters?.selectedDate || today)
     const [selectedMonth, setSelectedMonth] = useState(currentMonth.toString().padStart(2, '0'))
     const [selectedYear, setSelectedYear] = useState(currentYear.toString())
     const [selectedTerm, setSelectedTerm] = useState('1')
-    const [selectedGrade, setSelectedGrade] = useState('all')
+    const [selectedGrades, setSelectedGrades] = useState(
+        Array.isArray(persistedFilters?.selectedGrades) ? persistedFilters.selectedGrades : []
+    )
     const [success, setSuccess] = useState('')
     const [error, setError] = useState('')
 
-    const normalizedGrade = selectedGrade && selectedGrade !== 'all' ? selectedGrade : undefined
+    useEffect(() => {
+        localStorage.setItem(
+            'educare-attendance-filters-v1',
+            JSON.stringify({ selectedDate, selectedGrades })
+        )
+    }, [selectedDate, selectedGrades])
+
+    const selectedGradeLabel = useMemo(() => {
+        if (selectedGrades.length === 0) return 'All Grades'
+        if (selectedGrades.length === 1) return selectedGrades[0]
+        return `${selectedGrades.length} grades selected`
+    }, [selectedGrades])
+
+    const setAllGrades = (checked) => {
+        setSelectedGrades(checked ? [...GRADE_LEVELS] : [])
+    }
+
+    const renderGradeFilter = (id) => (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button id={id} variant="outline" className="w-full justify-start">
+                    {selectedGradeLabel}
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-64">
+                <DropdownMenuLabel>Select One or More Grades</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuCheckboxItem
+                    checked={selectedGrades.length === GRADE_LEVELS.length}
+                    onCheckedChange={setAllGrades}
+                    onSelect={(event) => event.preventDefault()}
+                >
+                    All Grades
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuSeparator />
+                {GRADE_LEVELS.map((grade) => (
+                    <DropdownMenuCheckboxItem
+                        key={grade}
+                        checked={selectedGrades.includes(grade)}
+                        onCheckedChange={(checked) => {
+                            if (checked) {
+                                setSelectedGrades((prev) => (
+                                    prev.includes(grade) ? prev : [...prev, grade]
+                                ))
+                            } else {
+                                setSelectedGrades((prev) => prev.filter((g) => g !== grade))
+                            }
+                        }}
+                        onSelect={(event) => event.preventDefault()}
+                    >
+                        {grade}
+                    </DropdownMenuCheckboxItem>
+                ))}
+            </DropdownMenuContent>
+        </DropdownMenu>
+    )
 
     const { data: students, isLoading: studentsLoading } = useStudents({
-        gradeLevel: normalizedGrade,
+        gradeLevels: selectedGrades.length > 0 ? selectedGrades : undefined,
         status: 'Active',
     })
 
     const { data: existingAttendance, isLoading: attendanceLoading } = useAttendance(
         selectedDate,
-        normalizedGrade
+        selectedGrades
     )
 
     const { data: monthlyReport, isLoading: monthlyLoading } = useMonthlyAttendanceReport(
         selectedMonth,
         selectedYear,
-        selectedGrade
+        selectedGrades
     )
 
     const { data: termlyReport, isLoading: termlyLoading } = useTermlyAttendanceReport(
         selectedTerm,
         selectedYear,
-        selectedGrade
+        selectedGrades
     )
 
     const markAttendance = useMarkAttendance()
@@ -152,26 +228,14 @@ export function Attendance() {
 
                                 <div className="space-y-2">
                                     <Label htmlFor="grade">Grade Level</Label>
-                                    <Select value={selectedGrade} onValueChange={setSelectedGrade}>
-                                        <SelectTrigger id="grade">
-                                            <SelectValue placeholder="All Grades" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">All Grades</SelectItem>
-                                            {GRADE_LEVELS.map((grade) => (
-                                                <SelectItem key={grade} value={grade}>
-                                                    {grade}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    {renderGradeFilter('grade')}
                                 </div>
 
                                 <div className="flex items-end">
                                     <Button
                                         onClick={() => {
                                             setSelectedDate(today)
-                                            setSelectedGrade('all')
+                                            setSelectedGrades([])
                                         }}
                                         variant="outline"
                                         className="w-full"
@@ -190,7 +254,7 @@ export function Attendance() {
                         <AttendanceSheet
                             students={students}
                             date={selectedDate}
-                            gradeLevel={selectedGrade}
+                            gradeLabel={selectedGradeLabel}
                             existingAttendance={existingAttendance}
                             onSave={handleSaveAttendance}
                         />
@@ -198,11 +262,9 @@ export function Attendance() {
                         <Card>
                             <CardContent className="p-12 text-center">
                                 <div className="text-neutral-500">
-                                    {selectedGrade
-                                        ? normalizedGrade
-                                            ? `No active students found in ${normalizedGrade}`
-                                            : 'No active students found'
-                                        : 'Select a grade level to mark attendance'}
+                                    {selectedGrades.length > 0
+                                        ? `No active students found for selected grades (${selectedGrades.join(', ')})`
+                                        : 'No active students found'}
                                 </div>
                             </CardContent>
                         </Card>
@@ -251,19 +313,7 @@ export function Attendance() {
 
                                 <div className="space-y-2">
                                     <Label>Grade Level</Label>
-                                    <Select value={selectedGrade} onValueChange={setSelectedGrade}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="All Grades" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">All Grades</SelectItem>
-                                            {GRADE_LEVELS.map((grade) => (
-                                                <SelectItem key={grade} value={grade}>
-                                                    {grade}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    {renderGradeFilter('monthly-grade')}
                                 </div>
                             </div>
 
@@ -318,19 +368,7 @@ export function Attendance() {
 
                                 <div className="space-y-2">
                                     <Label>Grade Level</Label>
-                                    <Select value={selectedGrade} onValueChange={setSelectedGrade}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="All Grades" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">All Grades</SelectItem>
-                                            {GRADE_LEVELS.map((grade) => (
-                                                <SelectItem key={grade} value={grade}>
-                                                    {grade}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    {renderGradeFilter('termly-grade')}
                                 </div>
                             </div>
 

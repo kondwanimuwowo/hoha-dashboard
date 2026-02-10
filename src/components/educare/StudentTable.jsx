@@ -28,8 +28,9 @@ import {
 import { calculateAge } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { useUpdateStudent } from '@/hooks/useStudents'
-import { useUpdatePerson } from '@/hooks/usePeople'
+import { useParents } from '@/hooks/usePeople'
 import { useSchools } from '@/hooks/useSchools'
+import { supabase } from '@/lib/supabase'
 import { GRADE_LEVELS } from '@/lib/constants'
 import { toast } from 'sonner'
 import {
@@ -42,14 +43,15 @@ import {
 } from '@/components/ui/dialog'
 
 // Editable row component for inline editing
-function EditableRow({ row, onSave, onValuesChange, isSaving, schools }) {
+function EditableRow({ row, onSave, onValuesChange, isSaving, schools, parentOptions }) {
+    const initialParentId = row.parent_id || '__none__'
     const [values, setValues] = useState({
         first_name: row.first_name || '',
         last_name: row.last_name || '',
         date_of_birth: row.date_of_birth || '',
         grade_level: row.grade_level || '',
         government_school_id: row.government_school_id || '__none__',
-        parent_name: row.parent_name || '',
+        parent_id: initialParentId,
         parent_phone: row.parent_phone || '',
     })
 
@@ -60,17 +62,25 @@ function EditableRow({ row, onSave, onValuesChange, isSaving, schools }) {
         values.date_of_birth !== (row.date_of_birth || '') ||
         values.grade_level !== (row.grade_level || '') ||
         values.government_school_id !== (row.government_school_id || '__none__') ||
-        values.parent_name !== (row.parent_name || '') ||
+        values.parent_id !== initialParentId ||
         values.parent_phone !== (row.parent_phone || '')
 
     const handleChange = (field, value) => {
         const newValues = { ...values, [field]: value }
+        if (field === 'parent_id') {
+            if (value === '__none__') {
+                newValues.parent_phone = ''
+            } else {
+                const selectedParent = parentOptions.find((parent) => parent.id === value)
+                newValues.parent_phone = selectedParent?.phone_number || ''
+            }
+        }
         setValues(newValues)
-        onValuesChange?.(row.id, newValues, row.parent_id, hasChanges || field !== values[field])
+        onValuesChange?.(row.id, newValues, initialParentId, hasChanges || field !== values[field])
     }
 
     const handleSave = () => {
-        onSave(row.id, values, row.parent_id)
+        onSave(row.id, values, initialParentId)
     }
 
     return (
@@ -147,20 +157,29 @@ function EditableRow({ row, onSave, onValuesChange, isSaving, schools }) {
                 </Select>
             </td>
             <td className="px-2 py-2">
-                <Input
-                    value={values.parent_name}
-                    onChange={(e) => handleChange('parent_name', e.target.value)}
-                    className={cn("h-8 text-sm", hasChanges && "border-red-300 focus:border-red-500")}
-                    placeholder="Parent/Guardian"
-                />
+                <Select
+                    value={values.parent_id}
+                    onValueChange={(value) => handleChange('parent_id', value)}
+                >
+                    <SelectTrigger className={cn("h-8 text-sm", hasChanges && "border-red-300")}>
+                        <SelectValue placeholder="Select parent/guardian" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="__none__">No parent linked</SelectItem>
+                        {(parentOptions || []).map((parent) => (
+                            <SelectItem key={parent.id} value={parent.id}>
+                                {parent.first_name} {parent.last_name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </td>
             <td className="px-2 py-2">
                 <Input
                     value={values.parent_phone}
-                    onChange={(e) => handleChange('parent_phone', e.target.value)}
                     className={cn("h-8 text-sm", hasChanges && "border-red-300 focus:border-red-500")}
                     placeholder="Phone"
-                    disabled={!row.parent_id}
+                    disabled
                 />
             </td>
             <td className="px-2 py-2">
@@ -204,8 +223,8 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
     const [showExitWarning, setShowExitWarning] = useState(false)
 
     const updateStudent = useUpdateStudent()
-    const updatePerson = useUpdatePerson()
     const { data: schools = [] } = useSchools()
+    const { data: parents = [] } = useParents('')
 
     const hasUnsavedChanges = Object.keys(dirtyRows).length > 0
 
@@ -221,7 +240,7 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
         })
     }
 
-    const saveSingleStudent = async (studentId, values, parentId) => {
+    const saveSingleStudent = async (studentId, values, originalParentId) => {
         await updateStudent.mutateAsync({
             id: studentId,
             first_name: values.first_name,
@@ -231,20 +250,93 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
             government_school_id: values.government_school_id === '__none__' ? null : values.government_school_id
         })
 
-        if (parentId && (values.parent_name || values.parent_phone)) {
-            const parentUpdates = {
-                id: parentId,
-                phone_number: values.parent_phone || null,
-            }
+        const nextParentId = values.parent_id === '__none__' ? null : values.parent_id
+        const previousParentId = originalParentId === '__none__' ? null : originalParentId
 
-            if (values.parent_name?.trim()) {
-                const [firstName, ...lastNameParts] = values.parent_name.trim().split(' ')
-                parentUpdates.first_name = firstName
-                parentUpdates.last_name = lastNameParts.join(' ')
-            }
-
-            await updatePerson.mutateAsync(parentUpdates)
+        if (nextParentId === previousParentId) {
+            return
         }
+
+        const { data: existingLinks, error: linksError } = await supabase
+            .from('relationships')
+            .eq('related_person_id', studentId)
+            .in('relationship_type', ['Mother', 'Father', 'Parent', 'Guardian'])
+            .select('id, person_id, is_primary')
+
+        if (linksError) throw linksError
+
+        const primaryLink = (existingLinks || []).find((link) => link.is_primary)
+
+        if (!nextParentId) {
+            if (primaryLink) {
+                const { error: deletePrimaryError } = await supabase
+                    .from('relationships')
+                    .delete()
+                    .eq('id', primaryLink.id)
+
+                if (deletePrimaryError) throw deletePrimaryError
+            }
+            return
+        }
+
+        let activePrimaryId = null
+        if (primaryLink) {
+            if (primaryLink.person_id !== nextParentId) {
+                const { data: updatedPrimary, error: updatePrimaryError } = await supabase
+                    .from('relationships')
+                    .update({
+                        person_id: nextParentId,
+                        relationship_type: 'Parent',
+                        is_primary: true,
+                    })
+                    .eq('id', primaryLink.id)
+                    .select('id')
+                    .single()
+
+                if (updatePrimaryError) throw updatePrimaryError
+                activePrimaryId = updatedPrimary.id
+            } else {
+                activePrimaryId = primaryLink.id
+            }
+        } else {
+            const existingMatch = (existingLinks || []).find((link) => link.person_id === nextParentId)
+
+            if (existingMatch) {
+                const { data: promotedLink, error: promoteError } = await supabase
+                    .from('relationships')
+                    .update({ is_primary: true, relationship_type: 'Parent' })
+                    .eq('id', existingMatch.id)
+                    .select('id')
+                    .single()
+
+                if (promoteError) throw promoteError
+                activePrimaryId = promotedLink.id
+            } else {
+                const { data: insertedLink, error: linkError } = await supabase
+                    .from('relationships')
+                    .insert([{
+                        person_id: nextParentId,
+                        related_person_id: studentId,
+                        relationship_type: 'Parent',
+                        is_primary: true,
+                        is_emergency_contact: false,
+                    }])
+                    .select('id')
+                    .single()
+
+                if (linkError) throw linkError
+                activePrimaryId = insertedLink.id
+            }
+        }
+
+        const { error: demoteOthersError } = await supabase
+            .from('relationships')
+            .update({ is_primary: false })
+            .eq('related_person_id', studentId)
+            .in('relationship_type', ['Mother', 'Father', 'Parent', 'Guardian'])
+            .neq('id', activePrimaryId)
+
+        if (demoteOthersError) throw demoteOthersError
     }
 
     const handleSaveRow = async (studentId, values, parentId) => {
@@ -585,6 +677,7 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
                                         onValuesChange={handleValuesChange}
                                         isSaving={savingRowId === row.original.id}
                                         schools={schools}
+                                        parentOptions={parents}
                                     />
                                 ))
                             ) : (
