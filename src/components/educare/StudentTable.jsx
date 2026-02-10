@@ -164,7 +164,7 @@ function EditableRow({ row, onSave, onValuesChange, isSaving, schools, parentOpt
                     <SelectTrigger className={cn("h-8 text-sm", hasChanges && "border-red-300")}>
                         <SelectValue placeholder="Select parent/guardian" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-72 overflow-y-auto">
                         <SelectItem value="__none__">No parent linked</SelectItem>
                         {(parentOptions || []).map((parent) => (
                             <SelectItem key={parent.id} value={parent.id}>
@@ -259,9 +259,9 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
 
         const { data: existingLinks, error: linksError } = await supabase
             .from('relationships')
+            .select('id, person_id, is_primary')
             .eq('related_person_id', studentId)
             .in('relationship_type', ['Mother', 'Father', 'Parent', 'Guardian'])
-            .select('id, person_id, is_primary')
 
         if (linksError) throw linksError
 
