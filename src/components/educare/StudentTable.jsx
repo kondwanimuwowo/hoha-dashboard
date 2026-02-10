@@ -14,11 +14,22 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from '@/components/ui/command'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import {
     ChevronLeft,
     ChevronRight,
     ChevronsLeft,
     ChevronsRight,
     ArrowUpDown,
+    ChevronsUpDown,
+    Check,
     Edit2,
     Save,
     Loader2,
@@ -45,6 +56,7 @@ import {
 // Editable row component for inline editing
 function EditableRow({ row, onSave, onValuesChange, isSaving, schools, parentOptions }) {
     const initialParentId = row.parent_id || '__none__'
+    const [parentOpen, setParentOpen] = useState(false)
     const [values, setValues] = useState({
         first_name: row.first_name || '',
         last_name: row.last_name || '',
@@ -82,6 +94,10 @@ function EditableRow({ row, onSave, onValuesChange, isSaving, schools, parentOpt
     const handleSave = () => {
         onSave(row.id, values, initialParentId)
     }
+
+    const selectedParent = values.parent_id !== '__none__'
+        ? (parentOptions || []).find((parent) => parent.id === values.parent_id)
+        : null
 
     return (
         <tr className={cn(
@@ -157,22 +173,71 @@ function EditableRow({ row, onSave, onValuesChange, isSaving, schools, parentOpt
                 </Select>
             </td>
             <td className="px-2 py-2">
-                <Select
-                    value={values.parent_id}
-                    onValueChange={(value) => handleChange('parent_id', value)}
-                >
-                    <SelectTrigger className={cn("h-8 text-sm", hasChanges && "border-red-300")}>
-                        <SelectValue placeholder="Select parent/guardian" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-72 overflow-y-auto">
-                        <SelectItem value="__none__">No parent linked</SelectItem>
-                        {(parentOptions || []).map((parent) => (
-                            <SelectItem key={parent.id} value={parent.id}>
-                                {parent.first_name} {parent.last_name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                <Popover open={parentOpen} onOpenChange={setParentOpen}>
+                    <PopoverTrigger asChild>
+                        <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={parentOpen}
+                            className={cn(
+                                "h-8 w-full justify-between text-sm",
+                                hasChanges && "border-red-300"
+                            )}
+                        >
+                            {selectedParent
+                                ? `${selectedParent.first_name} ${selectedParent.last_name}`
+                                : 'No parent linked'}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[320px] p-0">
+                        <Command>
+                            <CommandInput placeholder="Search parent/guardian..." />
+                            <CommandList className="max-h-72">
+                                <CommandEmpty>No parent found.</CommandEmpty>
+                                <CommandGroup>
+                                    <CommandItem
+                                        value="No parent linked"
+                                        onSelect={() => {
+                                            handleChange('parent_id', '__none__')
+                                            setParentOpen(false)
+                                        }}
+                                    >
+                                        <Check className={cn("mr-2 h-4 w-4", values.parent_id === '__none__' ? "opacity-100" : "opacity-0")} />
+                                        No parent linked
+                                    </CommandItem>
+                                    {(parentOptions || []).map((parent) => {
+                                        const fullName = `${parent.first_name} ${parent.last_name}`
+                                        const searchable = `${fullName} ${parent.phone_number || ''}`
+                                        return (
+                                            <CommandItem
+                                                key={parent.id}
+                                                value={searchable}
+                                                onSelect={() => {
+                                                    handleChange('parent_id', parent.id)
+                                                    setParentOpen(false)
+                                                }}
+                                            >
+                                                <Check
+                                                    className={cn(
+                                                        "mr-2 h-4 w-4",
+                                                        values.parent_id === parent.id ? "opacity-100" : "opacity-0"
+                                                    )}
+                                                />
+                                                <span>{fullName}</span>
+                                                {parent.phone_number && (
+                                                    <span className="ml-2 text-xs text-muted-foreground">
+                                                        {parent.phone_number}
+                                                    </span>
+                                                )}
+                                            </CommandItem>
+                                        )
+                                    })}
+                                </CommandGroup>
+                            </CommandList>
+                        </Command>
+                    </PopoverContent>
+                </Popover>
             </td>
             <td className="px-2 py-2">
                 <Input
