@@ -45,7 +45,6 @@ export default defineConfig({
           if (normalized.includes('/date-fns/')) return 'vendor-date'
           if (normalized.includes('/zod/')) return 'vendor-zod'
           if (normalized.includes('/@floating-ui/')) return 'vendor-floating-ui'
-          if (normalized.includes('/react-hook-form/')) return 'vendor-form'
           if (normalized.includes('/@reduxjs/')) return 'vendor-redux'
           if (normalized.includes('/immer/')) return 'vendor-redux'
           if (normalized.includes('/es-toolkit/')) return 'vendor-redux'
