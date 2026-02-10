@@ -41,6 +41,7 @@ import { cn } from '@/lib/utils'
 import { useUpdateStudent } from '@/hooks/useStudents'
 import { useParents } from '@/hooks/usePeople'
 import { useSchools } from '@/hooks/useSchools'
+import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { GRADE_LEVELS } from '@/lib/constants'
 import { toast } from 'sonner'
@@ -287,6 +288,7 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
     const [dirtyRows, setDirtyRows] = useState({}) // { [id]: { values, parentId } }
     const [showExitWarning, setShowExitWarning] = useState(false)
 
+    const queryClient = useQueryClient()
     const updateStudent = useUpdateStudent()
     const { data: schools = [] } = useSchools()
     const { data: parents = [] } = useParents('')
@@ -408,6 +410,16 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
         setSavingRowId(studentId)
         try {
             await saveSingleStudent(studentId, values, parentId)
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ['students'] }),
+                queryClient.invalidateQueries({ queryKey: ['parents'] }),
+                queryClient.invalidateQueries({ queryKey: ['people'] }),
+            ])
+            await Promise.all([
+                queryClient.refetchQueries({ queryKey: ['students'], type: 'active' }),
+                queryClient.refetchQueries({ queryKey: ['parents'], type: 'active' }),
+                queryClient.refetchQueries({ queryKey: ['people'], type: 'active' }),
+            ])
             setDirtyRows(prev => {
                 const next = { ...prev }
                 delete next[studentId]
@@ -440,6 +452,19 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
                     failCount++
                 }
             }))
+
+            if (successCount > 0) {
+                await Promise.all([
+                    queryClient.invalidateQueries({ queryKey: ['students'] }),
+                    queryClient.invalidateQueries({ queryKey: ['parents'] }),
+                    queryClient.invalidateQueries({ queryKey: ['people'] }),
+                ])
+                await Promise.all([
+                    queryClient.refetchQueries({ queryKey: ['students'], type: 'active' }),
+                    queryClient.refetchQueries({ queryKey: ['parents'], type: 'active' }),
+                    queryClient.refetchQueries({ queryKey: ['people'], type: 'active' }),
+                ])
+            }
 
             if (failCount === 0) {
                 toast.success(`Successfully saved all ${successCount} changes`)
