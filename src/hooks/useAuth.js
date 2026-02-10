@@ -71,6 +71,13 @@ export function useAuth() {
         return { data, error }
     }
 
+    const updatePassword = async (newPassword) => {
+        const { data, error } = await supabase.auth.updateUser({
+            password: newPassword,
+        })
+        return { data, error }
+    }
+
     return {
         user,
         profile,
@@ -78,6 +85,7 @@ export function useAuth() {
         signIn,
         signOut,
         resetPassword,
+        updatePassword,
         isAdmin: profile?.role === 'Admin',
         isProgramManager: profile?.role === 'Program Manager',
     }

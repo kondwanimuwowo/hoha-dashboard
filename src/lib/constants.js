@@ -38,7 +38,11 @@ export const RELATIONSHIP_TYPES = [
     'Guardian',
     'Sibling',
     'Spouse',
+    'Grandmother',
+    'Grandfather',
     'Grandparent',
+    'Aunt',
+    'Uncle',
     'Aunt/Uncle',
     'Other'
 ]

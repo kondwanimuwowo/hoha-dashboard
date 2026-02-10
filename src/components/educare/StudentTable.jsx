@@ -56,7 +56,27 @@ import {
 
 // Editable row component for inline editing
 function EditableRow({ row, onSave, onValuesChange, isSaving, schools, parentOptions }) {
-    const initialParentId = row.parent_id || '__none__'
+    const normalizeText = (value) => (value || '').trim().toLowerCase()
+    const inferParentId = () => {
+        if (row.parent_id) return row.parent_id
+
+        const normalizedParentName = normalizeText(row.parent_name)
+        const normalizedParentPhone = normalizeText(row.parent_phone)
+        if (!normalizedParentName && !normalizedParentPhone) return '__none__'
+
+        const match = (parentOptions || []).find((parent) => {
+            const fullName = normalizeText(`${parent.first_name} ${parent.last_name}`)
+            const phone = normalizeText(parent.phone_number)
+            if (normalizedParentPhone && phone) {
+                return normalizedParentPhone === phone
+            }
+            return normalizedParentName && fullName === normalizedParentName
+        })
+
+        return match?.id || '__none__'
+    }
+
+    const initialParentId = inferParentId()
     const [parentOpen, setParentOpen] = useState(false)
     const [values, setValues] = useState({
         first_name: row.first_name || '',
@@ -99,6 +119,10 @@ function EditableRow({ row, onSave, onValuesChange, isSaving, schools, parentOpt
     const selectedParent = values.parent_id !== '__none__'
         ? (parentOptions || []).find((parent) => parent.id === values.parent_id)
         : null
+
+    const parentLabel = selectedParent
+        ? `${selectedParent.first_name} ${selectedParent.last_name}`
+        : (row.parent_name || 'No parent linked')
 
     return (
         <tr className={cn(
@@ -185,9 +209,7 @@ function EditableRow({ row, onSave, onValuesChange, isSaving, schools, parentOpt
                                 hasChanges && "border-red-300"
                             )}
                         >
-                            {selectedParent
-                                ? `${selectedParent.first_name} ${selectedParent.last_name}`
-                                : 'No parent linked'}
+                            {parentLabel}
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                     </PopoverTrigger>
@@ -291,7 +313,7 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
     const queryClient = useQueryClient()
     const updateStudent = useUpdateStudent()
     const { data: schools = [] } = useSchools()
-    const { data: parents = [] } = useParents('')
+    const { data: parents = [], isLoading: isLoadingParents } = useParents('')
 
     const hasUnsavedChanges = Object.keys(dirtyRows).length > 0
 
@@ -484,6 +506,10 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
     }
 
     const handleToggleQuickEdit = () => {
+        if (!isQuickEdit && isLoadingParents) {
+            toast.info('Loading parent/guardian options. Please try again in a moment.')
+            return
+        }
         if (isQuickEdit && hasUnsavedChanges) {
             setShowExitWarning(true)
         } else {

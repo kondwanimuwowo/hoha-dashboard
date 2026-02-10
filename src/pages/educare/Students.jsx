@@ -15,7 +15,7 @@ import { UserPlus, Users, GraduationCap, Home } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { GRADE_LEVELS, ENROLLMENT_STATUS } from '@/lib/constants'
 import { Search, Filter } from 'lucide-react'
@@ -196,6 +196,9 @@ export function Students() {
                 <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Register New Student</DialogTitle>
+                        <DialogDescription>
+                            Create a new student record and link guardian/emergency details.
+                        </DialogDescription>
                     </DialogHeader>
                     <StudentForm
                         onSuccess={() => {
@@ -211,6 +214,9 @@ export function Students() {
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Register New Parent</DialogTitle>
+                        <DialogDescription>
+                            Create a parent or guardian profile and link children.
+                        </DialogDescription>
                     </DialogHeader>
                     <ParentForm
                         onSuccess={() => {

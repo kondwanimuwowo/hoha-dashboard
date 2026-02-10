@@ -5,19 +5,25 @@ import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PersonAvatar } from '@/components/shared/PersonAvatar'
-import { User, Bell, Shield, Palette, Mail, School, AlertTriangle } from 'lucide-react'
+import { User, Bell, Shield, Palette, Mail, School, AlertTriangle, Lock } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useTheme } from '@/components/shared/ThemeProvider'
 import { useState } from 'react'
 import { usePromoteStudents } from '@/hooks/useStudents'
 import { useUserPreferences, useUpsertUserPreferences } from '@/hooks/useUserPreferences'
 import { toast } from 'sonner'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 
 export function Settings() {
-    const { user, profile } = useAuth()
+    const { user, profile, updatePassword } = useAuth()
     const { theme, setTheme } = useTheme()
     const [isPromoteDialogOpen, setIsPromoteDialogOpen] = useState(false)
+    const [isChangingPassword, setIsChangingPassword] = useState(false)
+    const [passwordForm, setPasswordForm] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+    })
     const promoteStudents = usePromoteStudents()
     const { data: preferences } = useUserPreferences(user?.id)
     const upsertPreferences = useUpsertUserPreferences()
@@ -40,6 +46,40 @@ export function Settings() {
             setIsPromoteDialogOpen(false)
         } catch (error) {
             toast.error('Failed to promote students: ' + error.message)
+        }
+    }
+
+    const handleChangePassword = async () => {
+        const { currentPassword, newPassword, confirmPassword } = passwordForm
+
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            toast.error('Please fill in all password fields.')
+            return
+        }
+        if (newPassword.length < 8) {
+            toast.error('New password must be at least 8 characters.')
+            return
+        }
+        if (newPassword !== confirmPassword) {
+            toast.error('New password and confirmation do not match.')
+            return
+        }
+        setIsChangingPassword(true)
+        try {
+            const { error: updateError } = await updatePassword(newPassword)
+            if (updateError) {
+                toast.error(updateError.message || 'Failed to update password.')
+                return
+            }
+
+            setPasswordForm({
+                currentPassword: '',
+                newPassword: '',
+                confirmPassword: '',
+            })
+            toast.success('Password updated successfully.')
+        } finally {
+            setIsChangingPassword(false)
         }
     }
 
@@ -216,6 +256,55 @@ export function Settings() {
                         </div>
                     </CardContent>
                 </Card>
+
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-2">
+                            <Lock className="w-5 h-5 text-primary-600" />
+                            <CardTitle>Security</CardTitle>
+                        </div>
+                        <CardDescription>Change your account password</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="current-password">Current Password</Label>
+                            <Input
+                                id="current-password"
+                                type="password"
+                                value={passwordForm.currentPassword}
+                                onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))}
+                                autoComplete="current-password"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="new-password">New Password</Label>
+                            <Input
+                                id="new-password"
+                                type="password"
+                                value={passwordForm.newPassword}
+                                onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))}
+                                autoComplete="new-password"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="confirm-password">Confirm New Password</Label>
+                            <Input
+                                id="confirm-password"
+                                type="password"
+                                value={passwordForm.confirmPassword}
+                                onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                                autoComplete="new-password"
+                            />
+                        </div>
+                        <Button
+                            onClick={handleChangePassword}
+                            disabled={isChangingPassword}
+                            className="w-full"
+                        >
+                            {isChangingPassword ? 'Updating Password...' : 'Update Password'}
+                        </Button>
+                    </CardContent>
+                </Card>
             </div>
 
             <Dialog open={isPromoteDialogOpen} onOpenChange={setIsPromoteDialogOpen}>
@@ -225,6 +314,9 @@ export function Settings() {
                             <AlertTriangle className="h-5 w-5 text-amber-500" />
                             Confirm Grade Progression
                         </DialogTitle>
+                        <DialogDescription className="pt-2 text-foreground">
+                            You are about to move all active students to their next grade levels for the new academic year.
+                        </DialogDescription>
                         <CardDescription className="pt-2 text-foreground">
                             You are about to move <strong>all active students</strong> to their next grade levels for the new academic year.
                         </CardDescription>

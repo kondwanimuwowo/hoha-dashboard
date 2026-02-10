@@ -162,7 +162,21 @@ export function ParentForm({ onSuccess, onCancel }) {
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="emergency_contact_relationship">Relationship to Parent</Label>
-                            <Input id="emergency_contact_relationship" {...register('emergency_contact_relationship')} placeholder="e.g. Spouse, Brother" />
+                            <Select
+                                onValueChange={(value) => setValue('emergency_contact_relationship', value)}
+                                defaultValue=""
+                            >
+                                <SelectTrigger id="emergency_contact_relationship">
+                                    <SelectValue placeholder="Select relationship" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {RELATIONSHIP_TYPES.map((type) => (
+                                        <SelectItem key={type} value={type}>
+                                            {type}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
 
