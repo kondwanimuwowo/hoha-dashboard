@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Calendar, CheckCircle, AlertCircle, BarChart3 } from 'lucide-react'
+import { Calendar, CheckCircle, AlertCircle, BarChart3, Printer } from 'lucide-react'
 import { GRADE_LEVELS } from '@/lib/constants'
 import { AttendanceReportTable } from '@/components/shared/AttendanceReportTable'
 import {
@@ -153,7 +153,7 @@ export function Attendance() {
 
     const markAttendance = useMarkAttendance()
 
-    const handleSaveAttendance = async (attendanceData) => {
+    const handleSaveAttendance = useCallback(async (attendanceData) => {
         setError('')
         setSuccess('')
         try {
@@ -163,7 +163,7 @@ export function Attendance() {
         } catch (err) {
             setError(err.message || 'Failed to save attendance')
         }
-    }
+    }, [markAttendance])
 
     const isLoading = studentsLoading || attendanceLoading
 
@@ -274,8 +274,17 @@ export function Attendance() {
                 {/* Monthly Report Tab */}
                 <TabsContent value="monthly" className="space-y-6">
                     <Card>
-                        <CardHeader>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0">
                             <CardTitle>Monthly Attendance Report</CardTitle>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => window.print()}
+                                className="gap-2 no-print"
+                            >
+                                <Printer className="h-4 w-4" />
+                                Print Report
+                            </Button>
                         </CardHeader>
                         <CardContent>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -329,8 +338,17 @@ export function Attendance() {
                 {/* Termly Report Tab */}
                 <TabsContent value="termly" className="space-y-6">
                     <Card>
-                        <CardHeader>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0">
                             <CardTitle>Termly Attendance Report</CardTitle>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => window.print()}
+                                className="gap-2 no-print"
+                            >
+                                <Printer className="h-4 w-4" />
+                                Print Report
+                            </Button>
                         </CardHeader>
                         <CardContent>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">

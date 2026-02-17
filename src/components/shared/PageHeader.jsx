@@ -17,10 +17,12 @@ export function PageHeader({ title, description, action, actionLabel, actionIcon
                     )}
                 </div>
                 {action && actionLabel && (
-                    <Button onClick={action} size="lg">
-                        {ActionIcon && <ActionIcon className="mr-2 h-4 w-4" />}
-                        {actionLabel}
-                    </Button>
+                    <div className="no-print">
+                        <Button onClick={action} size="lg">
+                            {ActionIcon && <ActionIcon className="mr-2 h-4 w-4" />}
+                            {actionLabel}
+                        </Button>
+                    </div>
                 )}
             </div>
         </motion.div>

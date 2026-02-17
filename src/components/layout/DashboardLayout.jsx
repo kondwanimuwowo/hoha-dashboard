@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { Header } from './Header'
 import { useState } from 'react'
+import { MaintenanceBanner } from '@/components/shared/MaintenanceBanner'
 
 export function DashboardLayout() {
     const [desktopOpen, setDesktopOpen] = useState(true)
@@ -28,6 +29,8 @@ export function DashboardLayout() {
                         <Outlet />
                     </div>
                 </main>
+
+                <MaintenanceBanner />
             </div>
         </div>
     )

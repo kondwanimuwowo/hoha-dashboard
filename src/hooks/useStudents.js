@@ -29,8 +29,18 @@ export function useStudents(filters = {}) {
                 }
             }
 
+            if (filters.registrationStatus === 'registered') {
+                query = query.eq('is_registered_member', true)
+            } else if (filters.registrationStatus === 'non-registered') {
+                query = query.eq('is_registered_member', false)
+            }
+
             if (filters.search) {
                 query = query.or(`first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%,phone_number.ilike.%${filters.search}%`)
+            }
+
+            if (filters.isRegistered !== undefined) {
+                query = query.eq('is_registered_member', filters.isRegistered)
             }
 
             // Apply Sorting
@@ -56,11 +66,7 @@ export function useStudent(id) {
                 .from('people')
                 .select(`
           *,
-          educare_enrollment(*),
-          relationships!relationships_related_person_id_fkey(
-            *,
-            person:people!relationships_person_id_fkey(*)
-          )
+          educare_enrollment(*)
         `)
                 .eq('id', id)
                 .single()
@@ -77,56 +83,28 @@ export function useCreateStudent() {
 
     return useMutation({
         mutationFn: async (studentData) => {
-            // First create the person
-            const { data: person, error: personError } = await supabase
-                .from('people')
-                .insert([{
-                    first_name: studentData.first_name,
-                    last_name: studentData.last_name,
-                    date_of_birth: studentData.date_of_birth,
-                    gender: studentData.gender,
-                    phone_number: studentData.phone_number,
-                    address: studentData.address,
-                    compound_area: studentData.compound_area,
-                    emergency_contact_name: studentData.emergency_contact_name,
-                    emergency_contact_phone: studentData.emergency_contact_phone,
-                    emergency_contact_relationship: studentData.emergency_contact_relationship,
-                    notes: studentData.notes,
-                    is_active: true,
-                }])
-                .select()
-                .single()
+            const { data, error } = await supabase.rpc('create_student_with_enrollment', {
+                p_first_name: studentData.first_name,
+                p_last_name: studentData.last_name,
+                p_date_of_birth: studentData.date_of_birth,
+                p_gender: studentData.gender,
+                p_phone_number: studentData.phone_number || null,
+                p_address: studentData.address || null,
+                p_compound_area: studentData.compound_area || null,
+                p_emergency_contact_name: studentData.emergency_contact_name || null,
+                p_emergency_contact_phone: studentData.emergency_contact_phone || null,
+                p_emergency_contact_relationship: studentData.emergency_contact_relationship || null,
+                p_notes: studentData.notes || null,
+                p_grade_level: studentData.grade_level,
+                p_government_school_id: studentData.government_school_id || null,
+                p_enrollment_date: studentData.enrollment_date || null,
+                p_parent_id: studentData.parent_id || null,
+                p_relationship_type: studentData.relationship_type || null,
+                p_is_emergency_contact: studentData.is_emergency_contact || false,
+            })
 
-            if (personError) throw personError
-
-            // Then create educare enrollment
-            const { error: enrollmentError } = await supabase
-                .from('educare_enrollment')
-                .insert([{
-                    child_id: person.id,
-                    grade_level: studentData.grade_level,
-                    government_school_id: studentData.government_school_id,
-                    enrollment_date: studentData.enrollment_date || null,
-                }])
-
-            if (enrollmentError) throw enrollmentError
-
-            // Create relationships if parent data provided
-            if (studentData.parent_id) {
-                const { error: relationshipError } = await supabase
-                    .from('relationships')
-                    .insert([{
-                        person_id: studentData.parent_id,
-                        related_person_id: person.id,
-                        relationship_type: studentData.relationship_type || 'Parent',
-                        is_primary: true,
-                        is_emergency_contact: studentData.is_emergency_contact || false,
-                    }])
-
-                if (relationshipError) throw relationshipError
-            }
-
-            return person
+            if (error) throw error
+            return { id: data }
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['students'] })

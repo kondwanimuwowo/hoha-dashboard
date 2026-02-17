@@ -7,6 +7,7 @@ import {
     Heart,
     UtensilsCrossed,
     Package,
+    HandHeart,
     BarChart3,
     Settings,
     ChevronLeft,
@@ -53,6 +54,12 @@ const navigation = [
         description: 'Crisis support'
     },
     {
+        name: 'Community Outreach',
+        href: '/community-outreach',
+        icon: HandHeart,
+        description: 'Weekly outreach'
+    },
+    {
         name: 'Reports',
         href: '/reports',
         icon: BarChart3,
@@ -88,7 +95,7 @@ export function Sidebar({ mobileOpen, desktopOpen, onMobileClose, onDesktopToggl
                     width: desktopOpen ? 280 : 80
                 }}
                 transition={{ duration: 0.3, ease: 'easeInOut' }}
-                className="hidden lg:flex flex-col border-r border-neutral-200 dark:border-border bg-card"
+                className="hidden lg:flex flex-col border-r border-neutral-200 dark:border-border bg-card no-print"
             >
                 {/* Logo Section */}
                 <div className="flex h-16 items-center justify-between px-6 border-b border-neutral-200 dark:border-border">
@@ -210,7 +217,7 @@ export function Sidebar({ mobileOpen, desktopOpen, onMobileClose, onDesktopToggl
                             animate={{ x: 0 }}
                             exit={{ x: -280 }}
                             transition={{ duration: 0.3, ease: 'easeInOut' }}
-                            className="fixed inset-y-0 left-0 z-50 w-72 flex flex-col border-r border-neutral-200 dark:border-border bg-card lg:hidden"
+                            className="fixed inset-y-0 left-0 z-50 w-72 flex flex-col border-r border-neutral-200 dark:border-border bg-card lg:hidden no-print"
                         >
                             {/* Logo Section */}
                             <div className="flex h-16 items-center justify-between px-6 border-b border-neutral-200 dark:border-border">

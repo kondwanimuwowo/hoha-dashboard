@@ -42,19 +42,24 @@ CREATE INDEX IF NOT EXISTS idx_case_notes_type ON case_notes(note_type);
 ALTER TABLE case_notes ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for case_notes
+DROP POLICY IF EXISTS "Enable read access for authenticated users" ON case_notes;
 CREATE POLICY "Enable read access for authenticated users" ON case_notes
   FOR SELECT USING (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Enable insert for authenticated users" ON case_notes;
 CREATE POLICY "Enable insert for authenticated users" ON case_notes
   FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Enable update for own notes" ON case_notes;
 CREATE POLICY "Enable update for own notes" ON case_notes
   FOR UPDATE USING (created_by = auth.uid());
 
+DROP POLICY IF EXISTS "Enable delete for own notes" ON case_notes;
 CREATE POLICY "Enable delete for own notes" ON case_notes
   FOR DELETE USING (created_by = auth.uid());
 
 -- Trigger for case_notes updated_at
+DROP TRIGGER IF EXISTS update_case_notes_updated_at ON case_notes;
 CREATE TRIGGER update_case_notes_updated_at BEFORE UPDATE ON case_notes
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -86,19 +91,24 @@ CREATE INDEX IF NOT EXISTS idx_student_documents_upload_date ON student_document
 ALTER TABLE student_documents ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for student_documents
+DROP POLICY IF EXISTS "Enable read access for authenticated users" ON student_documents;
 CREATE POLICY "Enable read access for authenticated users" ON student_documents
   FOR SELECT USING (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Enable insert for authenticated users" ON student_documents;
 CREATE POLICY "Enable insert for authenticated users" ON student_documents
   FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Enable update for authenticated users" ON student_documents;
 CREATE POLICY "Enable update for authenticated users" ON student_documents
   FOR UPDATE USING (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Enable delete for authenticated users" ON student_documents;
 CREATE POLICY "Enable delete for authenticated users" ON student_documents
   FOR DELETE USING (auth.role() = 'authenticated');
 
 -- Trigger for student_documents updated_at
+DROP TRIGGER IF EXISTS update_student_documents_updated_at ON student_documents;
 CREATE TRIGGER update_student_documents_updated_at BEFORE UPDATE ON student_documents
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -124,16 +134,20 @@ CREATE INDEX IF NOT EXISTS idx_parent_emergency_contacts_parent ON parent_emerge
 ALTER TABLE parent_emergency_contacts ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for parent_emergency_contacts
+DROP POLICY IF EXISTS "Enable read access for authenticated users" ON parent_emergency_contacts;
 CREATE POLICY "Enable read access for authenticated users" ON parent_emergency_contacts
   FOR SELECT USING (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Enable insert for authenticated users" ON parent_emergency_contacts;
 CREATE POLICY "Enable insert for authenticated users" ON parent_emergency_contacts
   FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Enable update for authenticated users" ON parent_emergency_contacts;
 CREATE POLICY "Enable update for authenticated users" ON parent_emergency_contacts
   FOR UPDATE USING (auth.role() = 'authenticated');
 
 -- Trigger for parent_emergency_contacts updated_at
+DROP TRIGGER IF EXISTS update_parent_emergency_contacts_updated_at ON parent_emergency_contacts;
 CREATE TRIGGER update_parent_emergency_contacts_updated_at BEFORE UPDATE ON parent_emergency_contacts
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 

@@ -18,6 +18,7 @@ CREATE TRIGGER on_auth_user_created
 -- Security Policies for user_profiles
 
 -- Allow admins to update everything
+DROP POLICY IF EXISTS "Admins can update all profiles" ON public.user_profiles;
 CREATE POLICY "Admins can update all profiles"
   ON public.user_profiles
   FOR UPDATE
@@ -29,6 +30,7 @@ CREATE POLICY "Admins can update all profiles"
   );
 
 -- Allow users to read all profiles (to see who is who)
+DROP POLICY IF EXISTS "Authenticated users can view all profiles" ON public.user_profiles;
 CREATE POLICY "Authenticated users can view all profiles"
   ON public.user_profiles
   FOR SELECT

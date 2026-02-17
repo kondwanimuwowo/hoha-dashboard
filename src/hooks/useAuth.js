@@ -1,10 +1,34 @@
-import { useState, useEffect } from 'react'
+import { createContext, createElement, useContext, useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
-export function useAuth() {
+const AuthContext = createContext(undefined)
+
+export function AuthProvider({ children }) {
     const [user, setUser] = useState(null)
     const [profile, setProfile] = useState(null)
     const [loading, setLoading] = useState(true)
+
+    const fetchProfile = async (userId) => {
+        try {
+            const { data, error } = await supabase
+                .from('user_profiles')
+                .select('*')
+                .eq('id', userId)
+                .maybeSingle()
+
+            if (error && error.code !== 'PGRST116') {
+                // PGRST116 is "no rows returned" which is okay
+                console.error('Error fetching profile:', error)
+            }
+
+            setProfile(data || null)
+        } catch (error) {
+            console.error('Error fetching profile:', error)
+            setProfile(null)
+        } finally {
+            setLoading(false)
+        }
+    }
 
     useEffect(() => {
         // Get initial session
@@ -31,28 +55,6 @@ export function useAuth() {
         return () => subscription.unsubscribe()
     }, [])
 
-    const fetchProfile = async (userId) => {
-        try {
-            const { data, error } = await supabase
-                .from('user_profiles')
-                .select('*')
-                .eq('id', userId)
-                .maybeSingle()
-
-            if (error && error.code !== 'PGRST116') {
-                // PGRST116 is "no rows returned" which is okay
-                console.error('Error fetching profile:', error)
-            }
-
-            setProfile(data || null)
-        } catch (error) {
-            console.error('Error fetching profile:', error)
-            setProfile(null)
-        } finally {
-            setLoading(false)
-        }
-    }
-
     const signIn = async (email, password) => {
         const { data, error } = await supabase.auth.signInWithPassword({
             email,
@@ -78,7 +80,7 @@ export function useAuth() {
         return { data, error }
     }
 
-    return {
+    const value = useMemo(() => ({
         user,
         profile,
         loading,
@@ -88,5 +90,17 @@ export function useAuth() {
         updatePassword,
         isAdmin: profile?.role === 'Admin',
         isProgramManager: profile?.role === 'Program Manager',
+    }), [loading, profile, user])
+
+    return createElement(AuthContext.Provider, { value }, children)
+}
+
+export function useAuth() {
+    const context = useContext(AuthContext)
+
+    if (!context) {
+        throw new Error('useAuth must be used within an AuthProvider')
     }
+
+    return context
 }

@@ -12,7 +12,8 @@ SET
 FROM public.family_groups fg
 WHERE fr.family_group_id = fg.recipient_id
   AND (
-    fr.primary_person_id IS DISTINCT FROM fg.recipient_id
+    fr.family_size IS DISTINCT FROM fg.family_size
+    OR fr.primary_person_id IS DISTINCT FROM fg.recipient_id
     OR fr.family_member_ids IS DISTINCT FROM fg.family_member_ids
     OR fr.family_member_names IS DISTINCT FROM fg.family_member_names
     OR fr.family_type IS DISTINCT FROM fg.family_type
@@ -35,9 +36,11 @@ WHERE fr.family_group_id IS NULL
     OR fr.family_head_id = ANY(COALESCE(fg.family_member_ids, ARRAY[]::uuid[]))
   )
   AND (
-    fr.primary_person_id IS DISTINCT FROM fg.recipient_id
+    fr.family_size IS DISTINCT FROM fg.family_size
+    OR fr.primary_person_id IS DISTINCT FROM fg.recipient_id
     OR fr.family_member_ids IS DISTINCT FROM fg.family_member_ids
     OR fr.family_member_names IS DISTINCT FROM fg.family_member_names
     OR fr.family_type IS DISTINCT FROM fg.family_type
     OR fr.family_group_id IS DISTINCT FROM fg.recipient_id
   );
+

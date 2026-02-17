@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useStudent, useDeleteStudent } from '@/hooks/useStudents'
 import { useAttendanceSummary } from '@/hooks/useAttendance'
-import { useRelationships } from '@/hooks/useRelationships'
+import { useStudentGuardians } from '@/hooks/useRelationships'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -24,20 +24,26 @@ import { StudentDocuments } from '@/components/records/StudentDocuments'
 export function StudentProfile() {
     const { id } = useParams()
     const navigate = useNavigate()
-    const { data: student, isLoading } = useStudent(id)
-    const { data: relationships } = useRelationships(id)
+    const { data: student, isLoading, isError } = useStudent(id)
+
+    // Only fetch relationships and attendance if student exists
+    const { data: relationships } = useStudentGuardians(student?.id)
     const deleteStudent = useDeleteStudent()
 
     // Get attendance for last 30 days
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - 30)
-    const { data: attendanceData } = useAttendanceSummary(id, startDate.toISOString(), new Date().toISOString())
+    const { data: attendanceData } = useAttendanceSummary(
+        student?.id,
+        startDate.toISOString(),
+        new Date().toISOString()
+    )
 
     const [isEditing, setIsEditing] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
 
     if (isLoading) return <LoadingSpinner />
-    if (!student) return <div>Student not found</div>
+    if (isError || !student) return <div>Student not found</div>
 
     const enrollment = student.educare_enrollment?.[0]
     const age = calculateAge(student.date_of_birth)
@@ -162,7 +168,7 @@ export function StudentProfile() {
                     </DialogHeader>
                     {student && (
                         <StudentForm
-                            initialData={student}
+                            initialData={{ ...student, relationships }}
                             onSuccess={() => setIsEditing(false)}
                             onCancel={() => setIsEditing(false)}
                         />
@@ -305,7 +311,7 @@ export function StudentProfile() {
                                                 <div key={rel.id} className="flex items-center justify-between rounded-lg border border-border p-3">
                                                     <div>
                                                         <p className="font-medium text-foreground">
-                                                            {rel.related_person?.first_name} {rel.related_person?.last_name}
+                                                            {rel.person?.first_name} {rel.person?.last_name}
                                                         </p>
                                                         <p className="text-sm text-muted-foreground">{rel.relationship_type}</p>
                                                     </div>
@@ -331,7 +337,7 @@ export function StudentProfile() {
                                 <CardHeader>
                                     <div className="flex items-center justify-between">
                                         <CardTitle className="text-lg">Emergency Contact</CardTitle>
-                                        {student.relationships?.some(r => r.is_emergency_contact) && (
+                                        {relationships?.some(r => r.is_emergency_contact) && (
                                             <Badge variant="success" className="gap-1">
                                                 <UsersIcon className="h-3 w-3" />
                                                 Linked Parent
@@ -341,7 +347,7 @@ export function StudentProfile() {
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     {(() => {
-                                        const linkedEmergency = student.relationships?.find(r => r.is_emergency_contact)
+                                        const linkedEmergency = relationships?.find(r => r.is_emergency_contact)
                                         const contactName = linkedEmergency
                                             ? `${linkedEmergency.person?.first_name} ${linkedEmergency.person?.last_name}`
                                             : student.emergency_contact_name

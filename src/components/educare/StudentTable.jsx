@@ -34,7 +34,8 @@ import {
     Save,
     Loader2,
     AlertCircle,
-    CheckCircle2
+    CheckCircle2,
+    Printer
 } from 'lucide-react'
 import { calculateAge } from '@/lib/utils'
 import { cn } from '@/lib/utils'
@@ -660,6 +661,91 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
         []
     )
 
+    const escapePrintHtml = (value) => String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+
+    const handlePrintStudents = () => {
+        const studentsForPrint = data || []
+        if (!studentsForPrint.length) {
+            toast.error('No students available to print.')
+            return
+        }
+
+        const rowsHtml = studentsForPrint
+            .map((student, index) => {
+                const fullName = `${student.first_name || ''} ${student.last_name || ''}`.trim() || 'Unknown'
+                const parentName = student.parent_name || 'Not linked'
+                const schoolName = student.government_school || 'HOHA Only'
+                const age = calculateAge(student.date_of_birth)
+
+                return `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${escapePrintHtml(fullName)}</td>
+                        <td>${escapePrintHtml(student.gender || '-')}</td>
+                        <td>${escapePrintHtml(age ?? '-')}</td>
+                        <td>${escapePrintHtml(student.grade_level || '-')}</td>
+                        <td>${escapePrintHtml(schoolName)}</td>
+                        <td>${escapePrintHtml(parentName)}</td>
+                        <td>${escapePrintHtml(student.parent_phone || '-')}</td>
+                        <td>${escapePrintHtml(student.current_status || '-')}</td>
+                    </tr>
+                `
+            })
+            .join('')
+
+        const html = `
+            <!doctype html>
+            <html>
+            <head>
+                <meta charset="utf-8" />
+                <title>All Students</title>
+                <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; color: #111; }
+                    h1 { margin: 0 0 12px; }
+                    table { width: 100%; border-collapse: collapse; }
+                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
+                    th { background: #f5f5f5; }
+                </style>
+            </head>
+            <body>
+                <h1>All Students</h1>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Gender</th>
+                            <th>Age</th>
+                            <th>Grade</th>
+                            <th>School</th>
+                            <th>Parent/Guardian</th>
+                            <th>Phone</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rowsHtml}</tbody>
+                </table>
+            </body>
+            </html>
+        `
+
+        const printWindow = window.open('', '_blank')
+        if (!printWindow) {
+            toast.error('Unable to open print window. Please allow pop-ups for this site.')
+            return
+        }
+
+        printWindow.document.write(html)
+        printWindow.document.close()
+        printWindow.focus()
+        printWindow.print()
+    }
+
     const table = useReactTable({
         data: data || [],
         columns,
@@ -713,6 +799,15 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
                             Save All Changes
                         </Button>
                     )}
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handlePrintStudents}
+                        disabled={!data?.length}
+                    >
+                        <Printer className="mr-2 h-4 w-4" />
+                        Print Table
+                    </Button>
                     <Button
                         variant={isQuickEdit ? "default" : "outline"}
                         size="sm"

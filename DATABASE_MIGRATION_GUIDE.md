@@ -52,6 +52,8 @@ supabase db push
    - Creates distribution helper functions
    - Updates food_recipients table
 
+Note: `010_cleanup.sql` is a manual recovery script and is intentionally stored at `supabase/manual/010_cleanup.sql` so it is not executed as a normal migration.
+
 ## Verification
 
 After applying each migration, verify:

@@ -26,3 +26,11 @@ dist-ssr
 # Data files
 public/*.csv
 
+# Database backups
+backups/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.production

@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
@@ -13,6 +13,7 @@ const EducareOverview = lazy(() => import('@/pages/educare/EducareOverview').the
 const Students = lazy(() => import('@/pages/educare/Students').then((m) => ({ default: m.Students })))
 const StudentProfile = lazy(() => import('@/pages/educare/StudentProfile').then((m) => ({ default: m.StudentProfile })))
 const Attendance = lazy(() => import('@/pages/educare/Attendance').then((m) => ({ default: m.Attendance })))
+const SchoolAwards = lazy(() => import('@/pages/educare/SchoolAwards').then((m) => ({ default: m.SchoolAwards })))
 
 const LegacyOverview = lazy(() => import('@/pages/legacy/LegacyOverview').then((m) => ({ default: m.LegacyOverview })))
 const Participants = lazy(() => import('@/pages/legacy/Participants').then((m) => ({ default: m.Participants })))
@@ -32,10 +33,17 @@ const FoodHistory = lazy(() => import('@/pages/food/FoodHistory').then((m) => ({
 const EmergencyReliefOverview = lazy(() => import('@/pages/emergency-relief/EmergencyReliefOverview'))
 const ReliefHistory = lazy(() => import('@/pages/emergency-relief/ReliefHistory').then((m) => ({ default: m.ReliefHistory })))
 
+const CommunityOutreachOverview = lazy(() => import('@/pages/community-outreach/CommunityOutreachOverview').then((m) => ({ default: m.CommunityOutreachOverview })))
+const OutreachDetail = lazy(() => import('@/pages/community-outreach/OutreachDetail').then((m) => ({ default: m.OutreachDetail })))
+
 const FamilyProfile = lazy(() => import('@/pages/families/FamilyProfile').then((m) => ({ default: m.FamilyProfile })))
 const Settings = lazy(() => import('@/pages/Settings').then((m) => ({ default: m.Settings })))
 const UserManagement = lazy(() => import('@/pages/admin/UserManagement').then((m) => ({ default: m.UserManagement })))
 const Reports = lazy(() => import('@/pages/reports/Reports').then((m) => ({ default: m.Reports })))
+const MaintenanceMode = lazy(() => import('@/pages/MaintenanceMode').then((m) => ({ default: m.MaintenanceMode })))
+const NotFound = lazy(() => import('@/pages/NotFound').then((m) => ({ default: m.NotFound })))
+
+import { useMaintenanceMode } from '@/hooks/useMaintenanceMode'
 
 function RouteLoading() {
   return (
@@ -47,6 +55,7 @@ function RouteLoading() {
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
+  const location = useLocation()
 
   if (loading) {
     return (
@@ -57,7 +66,7 @@ function ProtectedRoute({ children }) {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/login" replace state={{ from: location }} />
   }
 
   return children
@@ -65,6 +74,7 @@ function ProtectedRoute({ children }) {
 
 function AdminRoute({ children }) {
   const { user, loading, isAdmin } = useAuth()
+  const location = useLocation()
 
   if (loading) {
     return (
@@ -75,7 +85,7 @@ function AdminRoute({ children }) {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/login" replace state={{ from: location }} />
   }
 
   if (!isAdmin) {
@@ -86,6 +96,22 @@ function AdminRoute({ children }) {
 }
 
 function App() {
+  const { isAdmin, loading, user } = useAuth()
+  const { isMaintenanceMode } = useMaintenanceMode()
+
+  // If maintenance mode is on and user is NOT an admin, show maintenance page
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
+  }
+
+  if (isMaintenanceMode && user && !isAdmin) {
+    return <MaintenanceMode />
+  }
+
   return (
     <ThemeProvider>
       <Toaster position="top-right" richColors />
@@ -108,6 +134,7 @@ function App() {
               <Route path="students" element={<Students />} />
               <Route path="students/:id" element={<StudentProfile />} />
               <Route path="attendance" element={<Attendance />} />
+              <Route path="awards" element={<SchoolAwards />} />
             </Route>
 
             <Route path="legacy">
@@ -136,6 +163,11 @@ function App() {
               <Route path="history" element={<ReliefHistory />} />
             </Route>
 
+            <Route path="community-outreach">
+              <Route index element={<CommunityOutreachOverview />} />
+              <Route path=":id" element={<OutreachDetail />} />
+            </Route>
+
             <Route path="families/:id" element={<FamilyProfile />} />
             <Route path="settings" element={<Settings />} />
 
@@ -151,9 +183,9 @@ function App() {
             </Route>
 
             <Route path="reports" element={<Reports />} />
+            <Route path="*" element={<NotFound />} />
           </Route>
 
-          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
     </ThemeProvider>

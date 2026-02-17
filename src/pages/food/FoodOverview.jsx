@@ -103,13 +103,6 @@ export function FoodOverview() {
                     Plan Distribution
                 </Button>
 
-                <Button
-                    className="w-full"
-                    onClick={() => navigate('/food/distributions')}
-                >
-                    <Users className="mr-2 h-4 w-4" />
-                    Family Impact
-                </Button>
             </div>
 
             <CreateDistributionDialog

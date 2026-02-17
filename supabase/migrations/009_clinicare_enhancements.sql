@@ -49,16 +49,20 @@ CREATE INDEX IF NOT EXISTS idx_facilities_name ON health_facilities(facility_nam
 ALTER TABLE health_facilities ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for health_facilities
+DROP POLICY IF EXISTS "Enable read access for authenticated users" ON health_facilities;
 CREATE POLICY "Enable read access for authenticated users" ON health_facilities
   FOR SELECT USING (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Enable insert for authenticated users" ON health_facilities;
 CREATE POLICY "Enable insert for authenticated users" ON health_facilities
   FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Enable update for authenticated users" ON health_facilities;
 CREATE POLICY "Enable update for authenticated users" ON health_facilities
   FOR UPDATE USING (auth.role() = 'authenticated');
 
 -- Trigger for health_facilities updated_at
+DROP TRIGGER IF EXISTS update_health_facilities_updated_at ON health_facilities;
 CREATE TRIGGER update_health_facilities_updated_at BEFORE UPDATE ON health_facilities
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 

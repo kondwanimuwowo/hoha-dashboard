@@ -32,7 +32,7 @@ export function Header({ onMenuClick }) {
     }, [])
 
     return (
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-neutral-200 dark:border-border bg-card px-6 shadow-sm">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-neutral-200 dark:border-border bg-card px-6 shadow-sm no-print">
             <div className="flex items-center space-x-4">
                 <Button
                     variant="ghost"

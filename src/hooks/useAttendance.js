@@ -92,46 +92,16 @@ export function useMarkAttendance() {
             const results = []
 
             for (const record of attendanceRecords) {
-                let findQuery = supabase
-                    .from('tuition_attendance')
-                    .select('id')
-                    .eq('child_id', record.child_id)
-                    .eq('attendance_date', record.attendance_date)
-                    .limit(1)
+                const { data, error } = await supabase.rpc('upsert_tuition_attendance', {
+                    p_child_id: record.child_id,
+                    p_attendance_date: record.attendance_date,
+                    p_status: record.status,
+                    p_notes: record.notes || null,
+                    p_schedule_id: record.schedule_id || null,
+                })
 
-                if (record.schedule_id) {
-                    findQuery = findQuery.eq('schedule_id', record.schedule_id)
-                } else {
-                    findQuery = findQuery.is('schedule_id', null)
-                }
-
-                const { data: existing, error: findError } = await findQuery.maybeSingle()
-                if (findError) throw findError
-
-                if (existing?.id) {
-                    const { data: updated, error: updateError } = await supabase
-                        .from('tuition_attendance')
-                        .update({
-                            status: record.status,
-                            notes: record.notes || null,
-                            schedule_id: record.schedule_id || null,
-                        })
-                        .eq('id', existing.id)
-                        .select()
-                        .single()
-
-                    if (updateError) throw updateError
-                    results.push(updated)
-                } else {
-                    const { data: inserted, error: insertError } = await supabase
-                        .from('tuition_attendance')
-                        .insert([record])
-                        .select()
-                        .single()
-
-                    if (insertError) throw insertError
-                    results.push(inserted)
-                }
+                if (error) throw error
+                results.push({ id: data })
             }
 
             return results

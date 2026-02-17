@@ -26,10 +26,13 @@ const visitSchema = z.object({
     transport_costs: z.any().optional(),
     other_fees: z.any().optional(),
     is_emergency: z.boolean().default(false),
+    emergency_comment: z.string().optional().nullable(),
     transport_provided: z.boolean().default(false),
     transport_cost: z.any().optional(),
+    transport_comment: z.string().optional().nullable(),
     follow_up_required: z.boolean().default(false),
     follow_up_date: z.string().optional().nullable(),
+    followup_comment: z.string().optional().nullable(),
     in_hoha_program: z.boolean().default(true),
     notes: z.string().optional().nullable(),
 })
@@ -338,6 +341,18 @@ export function VisitForm({ initialData, onSuccess, onCancel }) {
                         </Label>
                     </div>
 
+                    {watchIsEmergency && (
+                        <div className="ml-6 space-y-2">
+                            <Label htmlFor="emergency_comment">Emergency Details</Label>
+                            <Textarea
+                                id="emergency_comment"
+                                {...register('emergency_comment')}
+                                placeholder="Describe the emergency situation..."
+                                rows={2}
+                            />
+                        </div>
+                    )}
+
                     <div className="flex items-center space-x-2">
                         <Checkbox
                             id="transport_provided"
@@ -358,6 +373,14 @@ export function VisitForm({ initialData, onSuccess, onCancel }) {
                                 step="0.01"
                                 {...register('transport_cost')}
                                 placeholder="0.00"
+                            />
+
+                            <Label htmlFor="transport_comment" className="mt-2">Transport Details</Label>
+                            <Textarea
+                                id="transport_comment"
+                                {...register('transport_comment')}
+                                placeholder="Transport details, route, provider..."
+                                rows={2}
                             />
                         </div>
                     )}
@@ -381,6 +404,14 @@ export function VisitForm({ initialData, onSuccess, onCancel }) {
                                 type="date"
                                 {...register('follow_up_date')}
                             />
+
+                            <Label htmlFor="followup_comment" className="mt-2">Follow-up Notes</Label>
+                            <Textarea
+                                id="followup_comment"
+                                {...register('followup_comment')}
+                                placeholder="Follow-up instructions, next steps..."
+                                rows={2}
+                            />
                         </div>
                     )}
 
@@ -391,7 +422,7 @@ export function VisitForm({ initialData, onSuccess, onCancel }) {
                             onCheckedChange={(checked) => setValue('in_hoha_program', checked)}
                         />
                         <Label htmlFor="in_hoha_program" className="cursor-pointer">
-                            HOHA Program Member
+                            Registered Member
                         </Label>
                     </div>
                 </div>

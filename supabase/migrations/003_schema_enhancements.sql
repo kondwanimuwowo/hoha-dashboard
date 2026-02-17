@@ -44,27 +44,9 @@ CREATE INDEX IF NOT EXISTS idx_people_nrc ON people(nrc_number) WHERE nrc_number
 -- =====================================================
 -- FAMILY GROUPS FOR DISTRIBUTION TRACKING
 -- =====================================================
-
-CREATE TABLE IF NOT EXISTS family_groups (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  family_head_id UUID REFERENCES people(id) ON DELETE CASCADE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS family_members (
-  family_group_id UUID REFERENCES family_groups(id) ON DELETE CASCADE,
-  person_id UUID REFERENCES people(id) ON DELETE CASCADE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  PRIMARY KEY (family_group_id, person_id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_family_groups_head ON family_groups(family_head_id);
-CREATE INDEX IF NOT EXISTS idx_family_members_person ON family_members(person_id);
-
-DROP TRIGGER IF EXISTS update_family_groups_updated_at ON family_groups;
-CREATE TRIGGER update_family_groups_updated_at BEFORE UPDATE ON family_groups
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- Note: family_groups is created as a VIEW in migration 010
+-- The family_groups table structure has been removed to avoid conflicts
+-- with the view-based implementation in migration 010
 
 -- =====================================================
 -- EMERGENCY RELIEF MODULE
@@ -138,8 +120,8 @@ CREATE INDEX IF NOT EXISTS idx_visits_facility ON clinicare_visits(facility_id);
 -- FOOD DISTRIBUTION ENHANCEMENTS
 -- =====================================================
 
--- Add family group tracking to food recipients
-ALTER TABLE food_recipients ADD COLUMN IF NOT EXISTS family_group_id UUID REFERENCES family_groups(id);
+-- Add family group and collection tracking to food recipients
+ALTER TABLE food_recipients ADD COLUMN IF NOT EXISTS family_group_id UUID;
 ALTER TABLE food_recipients ADD COLUMN IF NOT EXISTS collected BOOLEAN DEFAULT false;
 
 CREATE INDEX IF NOT EXISTS idx_food_recipients_family_group ON food_recipients(family_group_id);
@@ -150,24 +132,16 @@ CREATE INDEX IF NOT EXISTS idx_food_recipients_collected ON food_recipients(coll
 -- =====================================================
 
 ALTER TABLE medical_facilities ENABLE ROW LEVEL SECURITY;
-ALTER TABLE family_groups ENABLE ROW LEVEL SECURITY;
-ALTER TABLE family_members ENABLE ROW LEVEL SECURITY;
+-- Note: family_groups and family_members RLS handled in migration 010 (they are views)
 ALTER TABLE emergency_relief_distributions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE emergency_relief_recipients ENABLE ROW LEVEL SECURITY;
 
--- Create policies for new tables
 -- Create policies for new tables
 DROP POLICY IF EXISTS "Enable all access for authenticated users" ON medical_facilities;
 CREATE POLICY "Enable all access for authenticated users" ON medical_facilities
   FOR ALL USING (auth.role() = 'authenticated');
 
-DROP POLICY IF EXISTS "Enable all access for authenticated users" ON family_groups;
-CREATE POLICY "Enable all access for authenticated users" ON family_groups
-  FOR ALL USING (auth.role() = 'authenticated');
-
-DROP POLICY IF EXISTS "Enable all access for authenticated users" ON family_members;
-CREATE POLICY "Enable all access for authenticated users" ON family_members
-  FOR ALL USING (auth.role() = 'authenticated');
+-- Note: family_groups and family_members policies handled in migration 010
 
 DROP POLICY IF EXISTS "Enable all access for authenticated users" ON emergency_relief_distributions;
 CREATE POLICY "Enable all access for authenticated users" ON emergency_relief_distributions

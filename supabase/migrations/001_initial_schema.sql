@@ -4,7 +4,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- =====================================================
 -- PEOPLE (Master Table)
 -- =====================================================
-CREATE TABLE people (
+CREATE TABLE IF NOT EXISTS people (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   first_name VARCHAR(100) NOT NULL,
   last_name VARCHAR(100) NOT NULL,
@@ -26,14 +26,14 @@ CREATE TABLE people (
 );
 
 -- Index for searching
-CREATE INDEX idx_people_name ON people(first_name, last_name);
-CREATE INDEX idx_people_phone ON people(phone_number);
-CREATE INDEX idx_people_active ON people(is_active);
+CREATE INDEX IF NOT EXISTS idx_people_name ON people(first_name, last_name);
+CREATE INDEX IF NOT EXISTS idx_people_phone ON people(phone_number);
+CREATE INDEX IF NOT EXISTS idx_people_active ON people(is_active);
 
 -- =====================================================
 -- RELATIONSHIPS
 -- =====================================================
-CREATE TABLE relationships (
+CREATE TABLE IF NOT EXISTS relationships (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   person_id UUID REFERENCES people(id) ON DELETE CASCADE,
   related_person_id UUID REFERENCES people(id) ON DELETE CASCADE,
@@ -44,13 +44,13 @@ CREATE TABLE relationships (
   CONSTRAINT different_people CHECK (person_id != related_person_id)
 );
 
-CREATE INDEX idx_relationships_person ON relationships(person_id);
-CREATE INDEX idx_relationships_related ON relationships(related_person_id);
+CREATE INDEX IF NOT EXISTS idx_relationships_person ON relationships(person_id);
+CREATE INDEX IF NOT EXISTS idx_relationships_related ON relationships(related_person_id);
 
 -- =====================================================
 -- GOVERNMENT SCHOOLS
 -- =====================================================
-CREATE TABLE government_schools (
+CREATE TABLE IF NOT EXISTS government_schools (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   school_name VARCHAR(200) NOT NULL,
   location VARCHAR(200),
@@ -65,7 +65,7 @@ CREATE TABLE government_schools (
 -- =====================================================
 -- EDUCARE ENROLLMENT
 -- =====================================================
-CREATE TABLE educare_enrollment (
+CREATE TABLE IF NOT EXISTS educare_enrollment (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   child_id UUID REFERENCES people(id) ON DELETE CASCADE,
   grade_level VARCHAR(50) NOT NULL, -- Baby Class, Reception, Grade 1-12
@@ -77,14 +77,14 @@ CREATE TABLE educare_enrollment (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX idx_educare_child ON educare_enrollment(child_id);
-CREATE INDEX idx_educare_status ON educare_enrollment(current_status);
-CREATE INDEX idx_educare_grade ON educare_enrollment(grade_level);
+CREATE INDEX IF NOT EXISTS idx_educare_child ON educare_enrollment(child_id);
+CREATE INDEX IF NOT EXISTS idx_educare_status ON educare_enrollment(current_status);
+CREATE INDEX IF NOT EXISTS idx_educare_grade ON educare_enrollment(grade_level);
 
 -- =====================================================
 -- TUITION SCHEDULE
 -- =====================================================
-CREATE TABLE tuition_schedule (
+CREATE TABLE IF NOT EXISTS tuition_schedule (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   grade_level VARCHAR(50) NOT NULL,
   day_of_week VARCHAR(20) NOT NULL, -- Monday-Sunday
@@ -100,7 +100,7 @@ CREATE TABLE tuition_schedule (
 -- =====================================================
 -- TUITION ATTENDANCE
 -- =====================================================
-CREATE TABLE tuition_attendance (
+CREATE TABLE IF NOT EXISTS tuition_attendance (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   child_id UUID REFERENCES people(id) ON DELETE CASCADE,
   schedule_id UUID REFERENCES tuition_schedule(id),
@@ -113,14 +113,14 @@ CREATE TABLE tuition_attendance (
   UNIQUE(child_id, schedule_id, attendance_date)
 );
 
-CREATE INDEX idx_attendance_child ON tuition_attendance(child_id);
-CREATE INDEX idx_attendance_date ON tuition_attendance(attendance_date);
-CREATE INDEX idx_attendance_status ON tuition_attendance(status);
+CREATE INDEX IF NOT EXISTS idx_attendance_child ON tuition_attendance(child_id);
+CREATE INDEX IF NOT EXISTS idx_attendance_date ON tuition_attendance(attendance_date);
+CREATE INDEX IF NOT EXISTS idx_attendance_status ON tuition_attendance(status);
 
 -- =====================================================
 -- LEGACY WOMEN'S ENROLLMENT
 -- =====================================================
-CREATE TABLE legacy_women_enrollment (
+CREATE TABLE IF NOT EXISTS legacy_women_enrollment (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   woman_id UUID REFERENCES people(id) ON DELETE CASCADE,
   enrollment_date DATE DEFAULT CURRENT_DATE,
@@ -134,13 +134,13 @@ CREATE TABLE legacy_women_enrollment (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX idx_legacy_woman ON legacy_women_enrollment(woman_id);
-CREATE INDEX idx_legacy_status ON legacy_women_enrollment(status);
+CREATE INDEX IF NOT EXISTS idx_legacy_woman ON legacy_women_enrollment(woman_id);
+CREATE INDEX IF NOT EXISTS idx_legacy_status ON legacy_women_enrollment(status);
 
 -- =====================================================
 -- LEGACY PROGRAM ATTENDANCE
 -- =====================================================
-CREATE TABLE legacy_program_attendance (
+CREATE TABLE IF NOT EXISTS legacy_program_attendance (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   woman_id UUID REFERENCES people(id) ON DELETE CASCADE,
   session_date DATE NOT NULL,
@@ -152,13 +152,13 @@ CREATE TABLE legacy_program_attendance (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX idx_legacy_attendance_woman ON legacy_program_attendance(woman_id);
-CREATE INDEX idx_legacy_attendance_date ON legacy_program_attendance(session_date);
+CREATE INDEX IF NOT EXISTS idx_legacy_attendance_woman ON legacy_program_attendance(woman_id);
+CREATE INDEX IF NOT EXISTS idx_legacy_attendance_date ON legacy_program_attendance(session_date);
 
 -- =====================================================
 -- CLINICARE VISITS
 -- =====================================================
-CREATE TABLE clinicare_visits (
+CREATE TABLE IF NOT EXISTS clinicare_visits (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   patient_id UUID REFERENCES people(id) ON DELETE CASCADE,
   visit_date DATE NOT NULL,
@@ -183,14 +183,14 @@ CREATE TABLE clinicare_visits (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX idx_visits_patient ON clinicare_visits(patient_id);
-CREATE INDEX idx_visits_date ON clinicare_visits(visit_date);
-CREATE INDEX idx_visits_followup ON clinicare_visits(follow_up_date) WHERE follow_up_required = true;
+CREATE INDEX IF NOT EXISTS idx_visits_patient ON clinicare_visits(patient_id);
+CREATE INDEX IF NOT EXISTS idx_visits_date ON clinicare_visits(visit_date);
+CREATE INDEX IF NOT EXISTS idx_visits_followup ON clinicare_visits(follow_up_date) WHERE follow_up_required = true;
 
 -- =====================================================
 -- FOOD DISTRIBUTION
 -- =====================================================
-CREATE TABLE food_distribution (
+CREATE TABLE IF NOT EXISTS food_distribution (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   distribution_date DATE NOT NULL,
   quarter VARCHAR(10) NOT NULL, -- Q1, Q2, Q3, Q4
@@ -202,13 +202,13 @@ CREATE TABLE food_distribution (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX idx_distribution_date ON food_distribution(distribution_date);
-CREATE INDEX idx_distribution_quarter ON food_distribution(quarter, year);
+CREATE INDEX IF NOT EXISTS idx_distribution_date ON food_distribution(distribution_date);
+CREATE INDEX IF NOT EXISTS idx_distribution_quarter ON food_distribution(quarter, year);
 
 -- =====================================================
 -- FOOD RECIPIENTS
 -- =====================================================
-CREATE TABLE food_recipients (
+CREATE TABLE IF NOT EXISTS food_recipients (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   distribution_id UUID REFERENCES food_distribution(id) ON DELETE CASCADE,
   family_head_id UUID REFERENCES people(id) ON DELETE CASCADE,
@@ -222,13 +222,13 @@ CREATE TABLE food_recipients (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX idx_recipients_distribution ON food_recipients(distribution_id);
-CREATE INDEX idx_recipients_family ON food_recipients(family_head_id);
+CREATE INDEX IF NOT EXISTS idx_recipients_distribution ON food_recipients(distribution_id);
+CREATE INDEX IF NOT EXISTS idx_recipients_family ON food_recipients(family_head_id);
 
 -- =====================================================
 -- USERS (Auth handled by Supabase Auth, this is for profiles)
 -- =====================================================
-CREATE TABLE user_profiles (
+CREATE TABLE IF NOT EXISTS user_profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   full_name VARCHAR(200),
   email VARCHAR(200),
@@ -260,14 +260,23 @@ ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 -- Policies (authenticated users can access all data for now)
 -- Refine these based on roles later
 
-CREATE POLICY "Enable read access for authenticated users" ON people
-  FOR SELECT USING (auth.role() = 'authenticated');
+DO $$ 
+BEGIN 
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Enable read access for authenticated users' AND tablename = 'people') THEN
+    CREATE POLICY "Enable read access for authenticated users" ON people
+      FOR SELECT USING (auth.role() = 'authenticated');
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Enable insert for authenticated users' AND tablename = 'people') THEN
+    CREATE POLICY "Enable insert for authenticated users" ON people
+      FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+  END IF;
 
-CREATE POLICY "Enable insert for authenticated users" ON people
-  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-
-CREATE POLICY "Enable update for authenticated users" ON people
-  FOR UPDATE USING (auth.role() = 'authenticated');
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Enable update for authenticated users' AND tablename = 'people') THEN
+    CREATE POLICY "Enable update for authenticated users" ON people
+      FOR UPDATE USING (auth.role() = 'authenticated');
+  END IF;
+END $$;
 
 -- Repeat similar policies for other tables
 -- (Or create a function to apply policies to all tables)
@@ -286,45 +295,62 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Apply trigger to all tables
+DROP TRIGGER IF EXISTS update_people_updated_at ON people;
 CREATE TRIGGER update_people_updated_at BEFORE UPDATE ON people
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_relationships_updated_at ON relationships;
 CREATE TRIGGER update_relationships_updated_at BEFORE UPDATE ON relationships
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_government_schools_updated_at ON government_schools;
 CREATE TRIGGER update_government_schools_updated_at BEFORE UPDATE ON government_schools
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_educare_enrollment_updated_at ON educare_enrollment;
 CREATE TRIGGER update_educare_enrollment_updated_at BEFORE UPDATE ON educare_enrollment
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_tuition_schedule_updated_at ON tuition_schedule;
 CREATE TRIGGER update_tuition_schedule_updated_at BEFORE UPDATE ON tuition_schedule
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_tuition_attendance_updated_at ON tuition_attendance;
 CREATE TRIGGER update_tuition_attendance_updated_at BEFORE UPDATE ON tuition_attendance
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_legacy_women_enrollment_updated_at ON legacy_women_enrollment;
 CREATE TRIGGER update_legacy_women_enrollment_updated_at BEFORE UPDATE ON legacy_women_enrollment
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_legacy_program_attendance_updated_at ON legacy_program_attendance;
 CREATE TRIGGER update_legacy_program_attendance_updated_at BEFORE UPDATE ON legacy_program_attendance
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_clinicare_visits_updated_at ON clinicare_visits;
 CREATE TRIGGER update_clinicare_visits_updated_at BEFORE UPDATE ON clinicare_visits
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_food_distribution_updated_at ON food_distribution;
 CREATE TRIGGER update_food_distribution_updated_at BEFORE UPDATE ON food_distribution
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_food_recipients_updated_at ON food_recipients;
 CREATE TRIGGER update_food_recipients_updated_at BEFORE UPDATE ON food_recipients
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_user_profiles_updated_at ON user_profiles;
 CREATE TRIGGER update_user_profiles_updated_at BEFORE UPDATE ON user_profiles
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =====================================================
 -- VIEWS FOR COMMON QUERIES
 -- =====================================================
+
+-- Drop existing views to allow structure changes
+DROP VIEW IF EXISTS student_details CASCADE;
+DROP VIEW IF EXISTS attendance_summary CASCADE;
+DROP VIEW IF EXISTS family_view CASCADE;
 
 -- View: Students with full details
 CREATE VIEW student_details AS

@@ -317,3 +317,37 @@
   background-color: var(--color-primary-200);
   color: var(--color-primary-900);
 }
+
+/* ============================================
+   Print Styles
+   ============================================ */
+
+@media print {
+  .no-print,
+  [data-radix-portal],
+  button {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  .container {
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .card, .border {
+    border-color: #eee !important;
+    box-shadow: none !important;
+  }
+}

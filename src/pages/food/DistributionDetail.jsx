@@ -135,6 +135,13 @@ export function DistributionDetail() {
     const total = recipients.length
     const progress = total > 0 ? (collected / total) * 100 : 0
 
+    const escapePrintHtml = (value) => String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+
     const handlePrintCollectors = () => {
         const printableRows = recipients
             .map((recipient, index) => {
@@ -142,15 +149,15 @@ export function DistributionDetail() {
                 const headName = `${householdHead?.first_name || ''} ${householdHead?.last_name || ''}`.trim() || 'Unknown'
                 const children = Array.isArray(recipient.family_member_names) ? recipient.family_member_names : []
                 const childrenHtml = children.length > 0
-                    ? `<div class="children">Children: ${children.join(', ')}</div>`
+                    ? `<div class="children">Children: ${escapePrintHtml(children.join(', '))}</div>`
                     : ''
 
                 return `
                     <tr>
                         <td>${index + 1}</td>
-                        <td>${headName}</td>
-                        <td>${recipient.family_size || 1}</td>
-                        <td>${recipient.family_head?.phone_number || householdHead?.phone_number || '-'}</td>
+                        <td>${escapePrintHtml(headName)}</td>
+                        <td>${escapePrintHtml(recipient.family_size || 1)}</td>
+                        <td>${escapePrintHtml(recipient.family_head?.phone_number || householdHead?.phone_number || '-')}</td>
                         <td>${recipient.collection_time ? 'Collected' : 'Pending'}</td>
                     </tr>
                     <tr>
@@ -180,9 +187,9 @@ export function DistributionDetail() {
             <body>
                 <h1>Food Distribution Collector List</h1>
                 <div class="meta">
-                    <div><strong>Date:</strong> ${formatDate(distribution.distribution_date)}</div>
-                    <div><strong>Location:</strong> ${distribution.distribution_location || '-'}</div>
-                    <div><strong>Quarter:</strong> ${distribution.quarter || '-'}</div>
+                    <div><strong>Date:</strong> ${escapePrintHtml(formatDate(distribution.distribution_date))}</div>
+                    <div><strong>Location:</strong> ${escapePrintHtml(distribution.distribution_location || '-')}</div>
+                    <div><strong>Quarter:</strong> ${escapePrintHtml(distribution.quarter || '-')}</div>
                 </div>
                 <table>
                     <thead>

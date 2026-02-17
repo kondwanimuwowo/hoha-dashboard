@@ -18,7 +18,8 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { GRADE_LEVELS, ENROLLMENT_STATUS } from '@/lib/constants'
-import { Search, Filter } from 'lucide-react'
+import { Search, Filter, Printer } from 'lucide-react'
+import { RegistrationFilter } from '@/components/shared/RegistrationFilter'
 
 export function Students() {
     const navigate = useNavigate()
@@ -27,6 +28,7 @@ export function Students() {
     const [gradeFilter, setGradeFilter] = useState('all')
     const [statusFilter, setStatusFilter] = useState('Active')
     const [schoolFilter, setSchoolFilter] = useState('all')
+    const [registrationFilter, setRegistrationFilter] = useState('all')
     const [showAddStudent, setShowAddStudent] = useState(false)
     const [showAddParent, setShowAddParent] = useState(false)
     const [sorting, setSorting] = useState([{ id: 'first_name', desc: false }])
@@ -44,6 +46,7 @@ export function Students() {
         gradeLevel: gradeFilter === 'all' ? undefined : gradeFilter,
         status: statusFilter === 'all' ? undefined : statusFilter,
         school: schoolFilter === 'all' ? undefined : schoolFilter,
+        registrationStatus: registrationFilter === 'all' ? undefined : registrationFilter,
         sortBy: sorting[0]?.id,
         sortOrder: sorting[0]?.desc ? 'desc' : 'asc'
     })
@@ -102,7 +105,12 @@ export function Students() {
                         </div>
 
                         {activeTab === 'students' && (
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 flex-wrap">
+                                <RegistrationFilter
+                                    value={registrationFilter}
+                                    onChange={setRegistrationFilter}
+                                />
+
                                 <Select value={gradeFilter} onValueChange={setGradeFilter}>
                                     <SelectTrigger className="w-[140px]">
                                         <Filter className="mr-2 h-4 w-4" />
@@ -147,6 +155,7 @@ export function Students() {
                                         ))}
                                     </SelectContent>
                                 </Select>
+
                             </div>
                         )}
                     </div>
@@ -156,7 +165,7 @@ export function Students() {
                     {students && students.length > 0 ? (
                         <StudentTable
                             data={students}
-                            onRowClick={(student) => navigate(`/educare/students/${student.id}`)}
+                            onRowClick={(student) => navigate(`/educare/students/${student.person_id}`)}
                             sorting={sorting}
                             onSortingChange={setSorting}
                         />

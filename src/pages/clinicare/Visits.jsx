@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useSearchParams } from 'react-router-dom'
+import { RegistrationFilter } from '@/components/shared/RegistrationFilter'
 
 export function Visits() {
     const [searchParams, setSearchParams] = useSearchParams()
@@ -26,7 +27,7 @@ export function Visits() {
         startDate: startDate || undefined,
         endDate: endDate || undefined,
         isEmergency: emergencyFilter === 'yes' ? true : emergencyFilter === 'no' ? false : undefined,
-        inProgram: programFilter === 'yes' ? true : programFilter === 'no' ? false : undefined,
+        inProgram: programFilter === 'registered' ? true : programFilter === 'non-registered' ? false : undefined,
         followUpRequired: followUpFilter || undefined,
     })
 
@@ -75,16 +76,11 @@ export function Visits() {
                     </SelectContent>
                 </Select>
 
-                <Select value={programFilter} onValueChange={setProgramFilter}>
-                    <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="All Patients" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Patients</SelectItem>
-                        <SelectItem value="yes">Program Members</SelectItem>
-                        <SelectItem value="no">Community</SelectItem>
-                    </SelectContent>
-                </Select>
+                <RegistrationFilter
+                    value={programFilter}
+                    onChange={setProgramFilter}
+                    label="Member Type"
+                />
 
                 <Button
                     variant={followUpFilter ? "default" : "outline"}

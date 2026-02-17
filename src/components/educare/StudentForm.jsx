@@ -42,11 +42,11 @@ function getInitialGuardians(initialData) {
 
     if (initialData.relationships?.length) {
         const existingGuardians = initialData.relationships.map(rel => ({
-            first_name: rel.related_person?.first_name || '',
-            last_name: rel.related_person?.last_name || '',
-            phone_number: rel.related_person?.phone_number || '',
+            first_name: rel.related_person?.first_name || rel.person?.first_name || '',
+            last_name: rel.related_person?.last_name || rel.person?.last_name || '',
+            phone_number: rel.related_person?.phone_number || rel.person?.phone_number || '',
             relationship: rel.relationship_type,
-            linked_person_id: rel.related_person_id,
+            linked_person_id: rel.person_id,
             relationship_id: rel.id
         }))
         if (existingGuardians.length > 0) return existingGuardians
@@ -143,6 +143,18 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
         setGuardians(updated)
         setSearchTerm('')
         setShowSuggestions(false)
+    }
+
+    const unlinkGuardian = (index) => {
+        const shouldUnlink = window.confirm('Unlink this parent/guardian from this form entry?')
+        if (!shouldUnlink) return
+
+        const updated = [...guardians]
+        updated[index] = {
+            ...updated[index],
+            linked_person_id: null
+        }
+        setGuardians(updated)
     }
 
     const removeGuardian = (index) => {
@@ -363,15 +375,6 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold">Parent/Guardian Information</h3>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={addGuardian}
-                    >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Another Guardian
-                    </Button>
                 </div>
 
                 {guardians.map((guardian, index) => (
@@ -433,10 +436,24 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
 
                         {guardian.linked_person_id && (
                             <Alert className="mb-2 bg-green-500/10 border-green-500/20">
-                                <Check className="h-4 w-4 text-green-500" />
-                                <AlertDescription className="text-green-700 dark:text-green-400">
-                                    Linked to existing record
-                                </AlertDescription>
+                                <div className="flex items-center justify-between gap-3 w-full">
+                                    <div className="flex items-center gap-2">
+                                        <Check className="h-4 w-4 text-green-500" />
+                                        <AlertDescription className="text-green-700 dark:text-green-400">
+                                            Linked to existing record
+                                        </AlertDescription>
+                                    </div>
+                                    {!guardian.relationship_id && (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => unlinkGuardian(index)}
+                                        >
+                                            Unlink
+                                        </Button>
+                                    )}
+                                </div>
                             </Alert>
                         )}
 
@@ -494,6 +511,113 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                         </div>
                     </div>
                 ))}
+
+                <div className="flex justify-end">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={addGuardian}
+                    >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Another Guardian
+                    </Button>
+                </div>
+            </div>
+
+            {/* Emergency Contact */}
+            <div className={`space-y-4 ${guardians.some(g => g.is_emergency_contact) ? 'opacity-70' : ''}`}>
+                <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">Emergency Contact</h3>
+                    {guardians.some(g => g.is_emergency_contact) && (
+                        <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full border border-green-200">
+                            <Check className="h-4 w-4" />
+                            <span>Parent selected as emergency contact</span>
+                        </div>
+                    )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-4">
+                        <Label className="text-sm text-muted-foreground italic">
+                            {guardians.some(g => g.is_emergency_contact)
+                                ? "Emergency contact details are automatically linked to the selected parent above."
+                                : "Select a parent/guardian above to mark as the emergency contact, or enter manual details below."
+                            }
+                        </Label>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="emergency_contact_name">Contact Name</Label>
+                            <Input
+                                id="emergency_contact_name"
+                                {...register('emergency_contact_name')}
+                                placeholder="Full name"
+                                disabled={guardians.some(g => g.is_emergency_contact)}
+                                className={guardians.some(g => g.is_emergency_contact) ? "bg-muted" : ""}
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="emergency_contact_phone">Contact Phone</Label>
+                            <Input
+                                id="emergency_contact_phone"
+                                {...register('emergency_contact_phone')}
+                                placeholder="+260 XXX XXXX"
+                                disabled={guardians.some(g => g.is_emergency_contact)}
+                                className={guardians.some(g => g.is_emergency_contact) ? "bg-muted" : ""}
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="emergency_contact_relationship">Relationship</Label>
+                            <Select
+                                onValueChange={(value) => setValue('emergency_contact_relationship', value)}
+                                value={emergencyRelationship}
+                                disabled={guardians.some(g => g.is_emergency_contact)}
+                            >
+                                <SelectTrigger className={guardians.some(g => g.is_emergency_contact) ? "bg-muted" : ""}>
+                                    <SelectValue placeholder="Select relationship" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {RELATIONSHIP_TYPES.map((type) => (
+                                        <SelectItem key={type} value={type}>
+                                            {type}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
+                    <div className="bg-muted/20 border rounded-lg p-4 space-y-3 h-fit">
+                        <h4 className="text-sm font-medium flex items-center gap-2">
+                            <ShieldQuestion className="h-4 w-4" />
+                            Linked Parent Info
+                        </h4>
+
+                        {guardians.some(g => g.is_emergency_contact) ? (
+                            <div className="space-y-2 text-sm">
+                                {guardians.filter(g => g.is_emergency_contact).map((g, i) => (
+                                    <div key={i} className="p-3 bg-primary/10 rounded border border-primary/20">
+                                        <p className="font-semibold text-primary">{g.first_name} {g.last_name}</p>
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            {g.phone_number || 'No phone number provided'}
+                                        </p>
+                                        <div className="flex items-center gap-1 mt-2 text-xs text-primary font-medium">
+                                            <Check className="h-3 w-3" />
+                                            Active Emergency Contact
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-xs text-muted-foreground p-4 text-center border-dashed border-2 rounded">
+                                <p>No parent linked as emergency contact yet.</p>
+                                <p className="mt-1">Check the "Emergency Contact" box on a parent above to link them.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
 
             {/* Education Information */}
@@ -569,77 +693,7 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                 )}
             </div>
 
-            {/* Emergency Contact */}
-            <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">Emergency Contact</h3>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-4">
-                        <Label className="text-sm text-muted-foreground italic">
-                            Select a parent/guardian above to mark as the emergency contact, or enter manual details below.
-                        </Label>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="emergency_contact_name">Contact Name</Label>
-                            <Input
-                                id="emergency_contact_name"
-                                {...register('emergency_contact_name')}
-                                placeholder="Full name"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="emergency_contact_phone">Contact Phone</Label>
-                            <Input
-                                id="emergency_contact_phone"
-                                {...register('emergency_contact_phone')}
-                                placeholder="+260 XXX XXXX"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="emergency_contact_relationship">Relationship</Label>
-                            <Select
-                                onValueChange={(value) => setValue('emergency_contact_relationship', value)}
-                                value={emergencyRelationship}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select relationship" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {RELATIONSHIP_TYPES.map((type) => (
-                                        <SelectItem key={type} value={type}>
-                                            {type}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
-
-                    <div className="bg-muted/20 border rounded-lg p-4 space-y-3">
-                        <h4 className="text-sm font-medium flex items-center gap-2">
-                            <ShieldQuestion className="h-4 w-4" />
-                            Linked Parent Info
-                        </h4>
-
-                        {guardians.some(g => g.is_emergency_contact) ? (
-                            <div className="space-y-2 text-sm">
-                                {guardians.filter(g => g.is_emergency_contact).map((g, i) => (
-                                    <div key={i} className="p-2 bg-primary/10 rounded border border-primary/20">
-                                        <p className="font-semibold text-primary">{g.first_name} {g.last_name}</p>
-                                        <p className="text-xs text-muted-foreground">Will be marked as primary emergency contact</p>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-xs text-muted-foreground">No parent linked as emergency contact yet.</p>
-                        )}
-                    </div>
-                </div>
-            </div>
 
             {/* Notes */}
             <div className="space-y-2">

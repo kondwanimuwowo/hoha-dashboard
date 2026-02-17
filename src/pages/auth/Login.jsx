@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,12 +17,17 @@ export function Login() {
     const [loading, setLoading] = useState(false)
     const { signIn, user, resetPassword } = useAuth()
     const navigate = useNavigate()
+    const location = useLocation()
+    const from = location.state?.from
+    const destination = from
+        ? `${from.pathname || ''}${from.search || ''}${from.hash || ''}`
+        : '/'
 
     useEffect(() => {
         if (user) {
-            navigate('/')
+            navigate(destination, { replace: true })
         }
-    }, [user, navigate])
+    }, [destination, navigate, user])
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -35,7 +40,7 @@ export function Login() {
             setError(signInError.message)
             setLoading(false)
         } else {
-            navigate('/')
+            navigate(destination, { replace: true })
         }
     }
 

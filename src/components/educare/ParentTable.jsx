@@ -20,11 +20,91 @@ import {
     ArrowUpDown,
     Eye,
     Phone,
-    Users
+    Users,
+    Printer
 } from 'lucide-react'
+import { toast } from 'sonner'
 
 export function ParentTable({ data, onRowClick, sorting, onSortingChange }) {
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 })
+
+    const escapePrintHtml = (value) => String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+
+    const handlePrintParents = () => {
+        const parentsForPrint = data || []
+        if (!parentsForPrint.length) {
+            toast.error('No parent records available to print.')
+            return
+        }
+
+        const rowsHtml = parentsForPrint
+            .map((parent, index) => {
+                const fullName = `${parent.first_name || ''} ${parent.last_name || ''}`.trim() || 'Unknown'
+                const childrenNames = (parent.educare_children || [])
+                    .map((child) => `${child.first_name || ''} ${child.last_name || ''}`.trim())
+                    .filter(Boolean)
+                    .join(', ')
+
+                return `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${escapePrintHtml(fullName)}</td>
+                        <td>${escapePrintHtml(parent.phone_number || '-')}</td>
+                        <td>${escapePrintHtml(parent.children_count ?? 0)}</td>
+                        <td>${escapePrintHtml(childrenNames || '-')}</td>
+                    </tr>
+                `
+            })
+            .join('')
+
+        const html = `
+            <!doctype html>
+            <html>
+            <head>
+                <meta charset="utf-8" />
+                <title>Parents & Guardians</title>
+                <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; color: #111; }
+                    h1 { margin: 0 0 12px; }
+                    table { width: 100%; border-collapse: collapse; }
+                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
+                    th { background: #f5f5f5; }
+                </style>
+            </head>
+            <body>
+                <h1>Parents & Guardians</h1>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Children in Educare</th>
+                            <th>Children Names</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rowsHtml}</tbody>
+                </table>
+            </body>
+            </html>
+        `
+
+        const printWindow = window.open('', '_blank')
+        if (!printWindow) {
+            toast.error('Unable to open print window. Please allow pop-ups for this site.')
+            return
+        }
+
+        printWindow.document.write(html)
+        printWindow.document.close()
+        printWindow.focus()
+        printWindow.print()
+    }
 
     const columns = useMemo(
         () => [
@@ -137,6 +217,12 @@ export function ParentTable({ data, onRowClick, sorting, onSortingChange }) {
 
     return (
         <div className="space-y-4">
+            <div className="flex justify-end">
+                <Button variant="outline" size="sm" onClick={handlePrintParents} disabled={!data?.length}>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print Table
+                </Button>
+            </div>
             <div className="rounded-lg border bg-white overflow-hidden shadow-sm border-neutral-200">
                 <div className="overflow-x-auto">
                     <table className="w-full">

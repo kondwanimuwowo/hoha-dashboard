@@ -29,7 +29,7 @@ END $$;
 -- =====================================================
 
 -- This view identifies family units for distribution purposes (Legacy Women + Sibling Groups)
-CREATE VIEW family_groups AS
+CREATE OR REPLACE VIEW family_groups AS
 WITH 
 -- Get all women in legacy program
 legacy_women AS (
@@ -154,7 +154,7 @@ FROM standalone_children sc;
 -- FUNCTION TO GET DISTRIBUTION RECIPIENTS
 -- =====================================================
 
-CREATE FUNCTION get_distribution_recipients()
+CREATE OR REPLACE FUNCTION get_distribution_recipients()
 RETURNS TABLE (
   family_type VARCHAR(50),
   recipient_id UUID,
@@ -188,7 +188,7 @@ CREATE INDEX IF NOT EXISTS idx_food_recipients_family_type ON food_recipients(fa
 -- FUNCTION TO MARK FAMILY AS COLLECTED
 -- =====================================================
 
-CREATE FUNCTION mark_family_collected(recipient_record_id UUID, collector_name VARCHAR)
+CREATE OR REPLACE FUNCTION mark_family_collected(recipient_record_id UUID, collector_name VARCHAR)
 RETURNS VOID AS $$
 BEGIN
   -- Mark the recipient record as collected
@@ -206,7 +206,7 @@ $$ LANGUAGE plpgsql;
 -- VIEW FOR DISTRIBUTION SUMMARY
 -- =====================================================
 
-CREATE VIEW distribution_summary AS
+CREATE OR REPLACE VIEW distribution_summary AS
 SELECT 
   fd.id as distribution_id,
   fd.distribution_date,
