@@ -46,6 +46,35 @@ export function useCreatePerson() {
 
     return useMutation({
         mutationFn: async (personData) => {
+            const firstName = personData.first_name?.trim()
+            const lastName = personData.last_name?.trim()
+            const phoneNumber = personData.phone_number?.trim()
+
+            if (phoneNumber) {
+                const { data: existingByPhone, error: existingByPhoneError } = await supabase
+                    .from('people')
+                    .select('*')
+                    .eq('phone_number', phoneNumber)
+                    .is('deleted_at', null)
+                    .limit(1)
+
+                if (existingByPhoneError) throw existingByPhoneError
+                if (existingByPhone?.length) return existingByPhone[0]
+            }
+
+            if (firstName && lastName) {
+                const { data: existingByName, error: existingByNameError } = await supabase
+                    .from('people')
+                    .select('*')
+                    .ilike('first_name', firstName)
+                    .ilike('last_name', lastName)
+                    .is('deleted_at', null)
+                    .limit(1)
+
+                if (existingByNameError) throw existingByNameError
+                if (existingByName?.length) return existingByName[0]
+            }
+
             const { data, error } = await supabase
                 .from('people')
                 .insert([personData])
