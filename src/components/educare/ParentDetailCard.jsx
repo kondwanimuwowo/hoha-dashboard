@@ -29,7 +29,7 @@ import {
 } from 'lucide-react'
 import { useUpdatePerson, useDeletePerson } from '@/hooks/usePeople'
 import { useStudents } from '@/hooks/useStudents'
-import { useCreateRelationship } from '@/hooks/useRelationships'
+import { useCreateRelationship, useDeleteRelationship } from '@/hooks/useRelationships'
 import { toast } from 'sonner'
 import { RELATIONSHIP_TYPES } from '@/lib/constants'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -51,6 +51,7 @@ export function ParentDetailCard({ parent, isOpen, onClose }) {
     const updatePerson = useUpdatePerson()
     const deletePerson = useDeletePerson()
     const createRelationship = useCreateRelationship()
+    const deleteRelationship = useDeleteRelationship()
     const { data: students } = useStudents({ search: searchTerm })
 
     if (!parent) return null
@@ -283,16 +284,15 @@ export function ParentDetailCard({ parent, isOpen, onClose }) {
                                 <div className="space-y-2">
                                     {parent.educare_children?.length > 0 ? (
                                         parent.educare_children.map(child => (
-                                            <button
-                                                key={child.id}
-                                                type="button"
-                                                className="w-full text-left flex items-center justify-between p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
-                                                onClick={() => {
-                                                    onClose()
-                                                    navigate(`/educare/students/${child.id}`)
-                                                }}
-                                            >
-                                                <div className="flex items-center gap-3">
+                                            <div key={child.id} className="w-full flex items-center justify-between p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
+                                                <button
+                                                    type="button"
+                                                    className="flex-1 text-left flex items-center gap-3"
+                                                    onClick={() => {
+                                                        onClose()
+                                                        navigate(`/educare/students/${child.id}`)
+                                                    }}
+                                                >
                                                     <PersonAvatar
                                                         firstName={child.first_name}
                                                         lastName={child.last_name}
@@ -302,11 +302,34 @@ export function ParentDetailCard({ parent, isOpen, onClose }) {
                                                         <p className="text-sm font-medium">{child.first_name} {child.last_name}</p>
                                                         <p className="text-xs text-muted-foreground">{child.relationship}</p>
                                                     </div>
+                                                </button>
+                                                <div className="flex items-center gap-2">
+                                                    <Badge variant={child.status === 'Active' ? 'success' : 'secondary'}>
+                                                        {child.status}
+                                                    </Badge>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                                                        onClick={async (e) => {
+                                                            e.stopPropagation()
+                                                            if (window.confirm(`Unlink ${child.first_name} from this parent?`)) {
+                                                                try {
+                                                                    await deleteRelationship.mutateAsync({
+                                                                        personId: parent.id,
+                                                                        relatedPersonId: child.id
+                                                                    })
+                                                                    toast.success('Child unlinked successfully')
+                                                                } catch (err) {
+                                                                    toast.error('Failed to unlink: ' + err.message)
+                                                                }
+                                                            }
+                                                        }}
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
                                                 </div>
-                                                <Badge variant={child.status === 'Active' ? 'success' : 'secondary'}>
-                                                    {child.status}
-                                                </Badge>
-                                            </button>
+                                            </div>
                                         ))
                                     ) : (
                                         <div className="text-sm text-center py-4 text-muted-foreground border border-dashed rounded-lg">

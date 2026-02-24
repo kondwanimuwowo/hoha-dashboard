@@ -124,6 +124,7 @@ export function useUpdatePerson() {
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['people'] })
             queryClient.invalidateQueries({ queryKey: ['person', variables.id] })
+            queryClient.invalidateQueries({ queryKey: ['parents'] })
         },
     })
 }

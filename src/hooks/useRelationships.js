@@ -61,3 +61,28 @@ export function useStudentGuardians(studentId) {
         enabled: !!studentId,
     })
 }
+
+export function useDeleteRelationship() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ personId, relatedPersonId }) => {
+            const { error } = await supabase
+                .from('relationships')
+                .delete()
+                .eq('person_id', personId)
+                .eq('related_person_id', relatedPersonId)
+
+            if (error) throw error
+            return { personId, relatedPersonId }
+        },
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['relationships'] })
+            queryClient.invalidateQueries({ queryKey: ['student-guardians'] })
+            queryClient.invalidateQueries({ queryKey: ['parents'] })
+            queryClient.invalidateQueries({ queryKey: ['students'] })
+            queryClient.invalidateQueries({ queryKey: ['person', variables.personId] })
+            queryClient.invalidateQueries({ queryKey: ['people'] })
+        },
+    })
+}

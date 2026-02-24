@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useStudents } from '@/hooks/useStudents'
 import { useMarkAttendance, useAttendance, useMonthlyAttendanceReport, useTermlyAttendanceReport } from '@/hooks/useAttendance'
 import { PageHeader } from '@/components/shared/PageHeader'

@@ -110,6 +110,7 @@ export function useCreateStudent() {
             queryClient.invalidateQueries({ queryKey: ['students'] })
             queryClient.invalidateQueries({ queryKey: ['educare-stats'] })
             queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+            queryClient.invalidateQueries({ queryKey: ['parents'] })
         },
     })
 }
@@ -122,7 +123,7 @@ export function useUpdateStudent() {
             const personFields = [
                 'first_name', 'last_name', 'date_of_birth', 'gender', 'phone_number',
                 'address', 'compound_area', 'photo_url', 'notes',
-                'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relationship'
+                'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relationship',
             ]
             const enrollmentFields = ['grade_level', 'government_school_id', 'enrollment_date', 'current_status']
 
@@ -159,6 +160,7 @@ export function useUpdateStudent() {
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['students'] })
             queryClient.invalidateQueries({ queryKey: ['student', variables.id] })
+            queryClient.invalidateQueries({ queryKey: ['parents'] })
         },
     })
 }

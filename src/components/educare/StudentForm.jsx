@@ -97,35 +97,35 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
 
     useEffect(() => {
         if (initialData) {
-            setValue('first_name', initialData.first_name)
-            setValue('last_name', initialData.last_name)
-            setValue('date_of_birth', initialData.date_of_birth)
-            setValue('gender', initialData.gender)
-            setValue('address', initialData.address)
-            setValue('photo_url', initialData.photo_url)
-            setValue('notes', initialData.notes)
-            setValue('emergency_contact_name', initialData.emergency_contact_name)
-            setValue('emergency_contact_phone', initialData.emergency_contact_phone)
-            setValue('emergency_contact_relationship', initialData.emergency_contact_relationship)
+            setValue('first_name', initialData.first_name || '')
+            setValue('last_name', initialData.last_name || '')
+            setValue('date_of_birth', initialData.date_of_birth || '')
+            setValue('gender', initialData.gender || '')
+            setValue('address', initialData.address || '')
+            setValue('photo_url', initialData.photo_url || '')
+            setValue('notes', initialData.notes || '')
+            setValue('emergency_contact_name', initialData.emergency_contact_name || '')
+            setValue('emergency_contact_phone', initialData.emergency_contact_phone || '')
+            setValue('emergency_contact_relationship', initialData.emergency_contact_relationship || '')
 
             if (initialData.educare_enrollment?.[0]) {
                 const enrollment = initialData.educare_enrollment[0]
-                setValue('grade_level', enrollment.grade_level)
-                setValue('government_school_id', enrollment.government_school_id)
-                setValue('enrollment_date', enrollment.enrollment_date)
+                setValue('grade_level', enrollment.grade_level || '')
+                setValue('government_school_id', enrollment.government_school_id || '')
+                setValue('enrollment_date', enrollment.enrollment_date || '')
                 setValue('current_status', enrollment.current_status || 'Active')
             }
 
         }
-    }, [initialData, setValue])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [initialData?.id, setValue])
 
     const selectedGrade = useWatch({ control, name: 'grade_level' })
     const photoUrl = useWatch({ control, name: 'photo_url' })
     const governmentSchoolId = useWatch({ control, name: 'government_school_id' })
     const emergencyRelationship = useWatch({ control, name: 'emergency_contact_relationship' })
     const showSchoolSelect = selectedGrade &&
-        selectedGrade !== 'Early Childhood Program' &&
-        selectedGrade !== 'Preparatory Program'
+        !['Early Childhood Program', 'Preparatory Program'].includes(selectedGrade)
 
     const addGuardian = () => {
         setGuardians([...guardians, { first_name: '', last_name: '', phone_number: '', relationship: 'Father', linked_person_id: null }])
