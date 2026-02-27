@@ -86,3 +86,27 @@ export function useDeleteRelationship() {
         },
     })
 }
+
+export function useUpdateRelationship() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, ...updates }) => {
+            const { data, error } = await supabase
+                .from('relationships')
+                .update(updates)
+                .eq('id', id)
+                .select()
+                .single()
+
+            if (error) throw error
+            return data
+        },
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: ['relationships'] })
+            queryClient.invalidateQueries({ queryKey: ['student-guardians', data.related_person_id] })
+            queryClient.invalidateQueries({ queryKey: ['parents'] })
+            queryClient.invalidateQueries({ queryKey: ['students'] })
+        },
+    })
+}

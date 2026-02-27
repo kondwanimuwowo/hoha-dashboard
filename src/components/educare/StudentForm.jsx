@@ -2,8 +2,8 @@ import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { useCreateStudent, useUpdateStudent } from '@/hooks/useStudents'
-import { useCreatePerson, usePeople } from '@/hooks/usePeople'
-import { useCreateRelationship } from '@/hooks/useRelationships'
+import { useCreatePerson, usePeople, useUpdatePerson } from '@/hooks/usePeople'
+import { useCreateRelationship, useDeleteRelationship, useUpdateRelationship } from '@/hooks/useRelationships'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,6 +16,7 @@ import { GRADE_LEVELS, RELATIONSHIP_TYPES } from '@/lib/constants'
 import { PhotoUpload } from '@/components/shared/PhotoUpload'
 import { SchoolDropdown } from '@/components/shared/SchoolDropdown'
 import { useState, useEffect } from 'react'
+import { toast } from 'sonner'
 
 
 const studentSchema = z.object({
@@ -70,7 +71,6 @@ function getInitialGuardians(initialData) {
 export function StudentForm({ onSuccess, onCancel, initialData }) {
     const [error, setError] = useState('')
     const [guardians, setGuardians] = useState(() => getInitialGuardians(initialData))
-    const [sameAsParent] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [showSuggestions, setShowSuggestions] = useState(false)
     const [activeGuardianIndex, setActiveGuardianIndex] = useState(0)
@@ -78,7 +78,10 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
     const createStudent = useCreateStudent()
     const updateStudent = useUpdateStudent()
     const createPerson = useCreatePerson()
+    const updatePerson = useUpdatePerson()
     const createRelationship = useCreateRelationship()
+    const updateRelationship = useUpdateRelationship()
+    const deleteRelationship = useDeleteRelationship()
     const { data: searchResults } = usePeople(searchTerm)
 
     const {
@@ -111,7 +114,8 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
             if (initialData.educare_enrollment?.[0]) {
                 const enrollment = initialData.educare_enrollment[0]
                 setValue('grade_level', enrollment.grade_level || '')
-                setValue('government_school_id', enrollment.government_school_id || '')
+                // Use null explicitly — empty string is invalid for UUID columns
+                setValue('government_school_id', enrollment.government_school_id || null)
                 setValue('enrollment_date', enrollment.enrollment_date || '')
                 setValue('current_status', enrollment.current_status || 'Active')
             }
@@ -145,14 +149,52 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
         setShowSuggestions(false)
     }
 
-    const unlinkGuardian = (index) => {
-        const shouldUnlink = window.confirm('Unlink this parent/guardian from this form entry?')
-        if (!shouldUnlink) return
+    const unlinkGuardian = async (index) => {
+        const guardian = guardians[index]
+        const isExisting = !!guardian.relationship_id
 
+        const confirmMsg = isExisting
+            ? `Permanently remove the relationship between this student and ${guardian.first_name}?`
+            : 'Unlink this parent/guardian from this form entry?'
+
+        if (!window.confirm(confirmMsg)) return
+
+        if (isExisting) {
+            try {
+                await deleteRelationship.mutateAsync({
+                    personId: guardian.linked_person_id,
+                    relatedPersonId: initialData.id
+                })
+                toast.success('Relationship removed')
+            } catch (err) {
+                toast.error('Failed to remove relationship: ' + err.message)
+                return
+            }
+        }
+
+        const updated = [...guardians]
+        if (isExisting) {
+            // Remove from list if it was a DB record
+            updated.splice(index, 1)
+            if (updated.length === 0) {
+                updated.push({ first_name: '', last_name: '', phone_number: '', relationship: 'Mother', linked_person_id: null })
+            }
+        } else {
+            // Just clear link for staged entries
+            updated[index] = {
+                ...updated[index],
+                linked_person_id: null,
+                is_editing: false
+            }
+        }
+        setGuardians(updated)
+    }
+
+    const toggleEditGuardian = (index) => {
         const updated = [...guardians]
         updated[index] = {
             ...updated[index],
-            linked_person_id: null
+            is_editing: !updated[index].is_editing
         }
         setGuardians(updated)
     }
@@ -168,16 +210,6 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
         updated[index][field] = value
         setGuardians(updated)
 
-        // If "same as parent" is checked and this is the first guardian, update emergency contact
-        if (sameAsParent && index === 0) {
-            if (field === 'first_name' || field === 'last_name') {
-                setValue('emergency_contact_name', `${updated[0].first_name} ${updated[0].last_name}`.trim())
-            } else if (field === 'phone_number') {
-                setValue('emergency_contact_phone', value)
-            } else if (field === 'relationship') {
-                setValue('emergency_contact_relationship', value)
-            }
-        }
     }
 
     const handleEmergencyContactSelection = (index, isChecked) => {
@@ -209,6 +241,8 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                 await updateStudent.mutateAsync({
                     id: initialData.id,
                     ...data,
+                    // Sanitize: empty string is invalid for UUID columns — must be null
+                    government_school_id: data.government_school_id || null,
                     current_status: data.current_status || initialData.educare_enrollment?.[0]?.current_status
                 })
 
@@ -216,6 +250,16 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                 for (const guardian of guardians) {
                     if (guardian.first_name && guardian.last_name) {
                         let guardianId = guardian.linked_person_id
+
+                        // If edited a linked person, update their person record
+                        if (guardianId && guardian.is_editing) {
+                            await updatePerson.mutateAsync({
+                                id: guardianId,
+                                first_name: guardian.first_name,
+                                last_name: guardian.last_name,
+                                phone_number: guardian.phone_number
+                            })
+                        }
 
                         if (!guardianId) {
                             const guardianPerson = await createPerson.mutateAsync({
@@ -226,7 +270,16 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                             guardianId = guardianPerson.id
                         }
 
-                        if (!guardian.relationship_id) {
+                        if (guardian.relationship_id) {
+                            // Update existing relationship (type)
+                            await updateRelationship.mutateAsync({
+                                id: guardian.relationship_id,
+                                relationship_type: guardian.relationship,
+                                is_primary: guardians.indexOf(guardian) === 0,
+                                is_emergency_contact: guardian.is_emergency_contact || false
+                            })
+                        } else {
+                            // Create new relationship
                             await createRelationship.mutateAsync({
                                 person_id: guardianId,
                                 related_person_id: studentId,
@@ -435,24 +488,34 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                         </div>
 
                         {guardian.linked_person_id && (
-                            <Alert className="mb-2 bg-green-500/10 border-green-500/20">
+                            <Alert className="mb-2 bg-blue-500/10 border-blue-500/20">
                                 <div className="flex items-center justify-between gap-3 w-full">
                                     <div className="flex items-center gap-2">
-                                        <Check className="h-4 w-4 text-green-500" />
-                                        <AlertDescription className="text-green-700 dark:text-green-400">
-                                            Linked to existing record
+                                        <Check className="h-4 w-4 text-blue-500" />
+                                        <AlertDescription className="text-blue-700 dark:text-blue-400">
+                                            Linked to existing record {guardian.is_editing && "(Editing)"}
                                         </AlertDescription>
                                     </div>
-                                    {!guardian.relationship_id && (
+                                    <div className="flex gap-2">
                                         <Button
                                             type="button"
                                             variant="outline"
                                             size="sm"
+                                            className="h-7 text-xs"
+                                            onClick={() => toggleEditGuardian(index)}
+                                        >
+                                            {guardian.is_editing ? 'Lock' : 'Edit Info'}
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-7 text-xs text-destructive hover:bg-destructive/10"
                                             onClick={() => unlinkGuardian(index)}
                                         >
-                                            Unlink
+                                            {guardian.relationship_id ? 'Remove' : 'Unlink'}
                                         </Button>
-                                    )}
+                                    </div>
                                 </div>
                             </Alert>
                         )}
@@ -462,13 +525,13 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                                 placeholder="First Name"
                                 value={guardian.first_name}
                                 onChange={(e) => updateGuardian(index, 'first_name', e.target.value)}
-                                disabled={!!guardian.linked_person_id}
+                                disabled={!!guardian.linked_person_id && !guardian.is_editing}
                             />
                             <Input
                                 placeholder="Last Name"
                                 value={guardian.last_name}
                                 onChange={(e) => updateGuardian(index, 'last_name', e.target.value)}
-                                disabled={!!guardian.linked_person_id}
+                                disabled={!!guardian.linked_person_id && !guardian.is_editing}
                             />
                         </div>
 
@@ -477,7 +540,7 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                                 placeholder="Phone Number"
                                 value={guardian.phone_number}
                                 onChange={(e) => updateGuardian(index, 'phone_number', e.target.value)}
-                                disabled={!!guardian.linked_person_id}
+                                disabled={!!guardian.linked_person_id && !guardian.is_editing}
                             />
                             <div className="flex items-center space-x-2">
                                 <Checkbox

@@ -35,7 +35,7 @@ export function useAwardDetail(id) {
                 .from('award_recipients')
                 .select(`
                     *,
-                    student:student_details(
+                    student:student_details!person_id(
                         id,
                         first_name,
                         last_name,
@@ -110,7 +110,8 @@ export function useCreateAward() {
             if (recipients && recipients.length > 0) {
                 const recipientRecords = recipients.map(r => ({
                     award_id: newAward.id,
-                    student_id: r.student_id,
+                    person_id: r.person_id,
+                    student_id: r.student_id, // Keep for backward compatibility
                     attendance_percentage: r.attendance_percentage,
                     grade_level: r.grade_level,
                     notes: r.notes,
@@ -137,9 +138,9 @@ export function useCreateAward() {
 }
 
 // Get student's awards
-export function useStudentAwards(studentId) {
+export function useStudentAwards(personId) {
     return useQuery({
-        queryKey: ['student-awards', studentId],
+        queryKey: ['student-awards', personId],
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('award_recipients')
@@ -147,12 +148,12 @@ export function useStudentAwards(studentId) {
                     *,
                     award:school_awards(*)
                 `)
-                .eq('student_id', studentId)
+                .eq('person_id', personId)
                 .order('created_at', { ascending: false })
 
             if (error) throw error
             return data
         },
-        enabled: !!studentId,
+        enabled: !!personId,
     })
 }

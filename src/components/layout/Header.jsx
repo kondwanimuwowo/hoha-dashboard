@@ -47,12 +47,12 @@ export function Header({ onMenuClick }) {
                 <div className="hidden md:flex items-center">
                     <button
                         onClick={() => setShowSearch(true)}
-                        className="relative w-64 h-10 rounded-lg border border-neutral-200 dark:border-border bg-muted px-3 text-sm flex items-center text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors"
+                        className="group relative w-64 h-9 rounded-full border border-neutral-200 dark:border-neutral-800 bg-neutral-100/50 dark:bg-neutral-900/50 px-4 text-sm flex items-center text-neutral-500 hover:border-neutral-300 dark:hover:border-neutral-700 hover:bg-white dark:hover:bg-neutral-900 transition-all shadow-sm hover:shadow-md"
                     >
                         <Search className="h-4 w-4 mr-2" />
-                        <span>Search...</span>
-                        <kbd className="pointer-events-none absolute right-2 top-2 hidden h-6 select-none items-center rounded border bg-white px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100 sm:flex">
-                            Ctrl+K
+                        <span className="flex-1 text-left">Search...</span>
+                        <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 px-1.5 font-sans text-[10px] font-medium text-neutral-500 dark:text-neutral-400 opacity-100 sm:flex group-hover:bg-white dark:group-hover:bg-neutral-900 transition-colors">
+                            <span className="text-xs">⌘</span>K
                         </kbd>
                     </button>
                     <GlobalSearchDialog open={showSearch} onOpenChange={setShowSearch} />
@@ -70,7 +70,6 @@ export function Header({ onMenuClick }) {
                         aria-label="Notifications"
                     >
                         <Bell className="h-5 w-5" />
-                        <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
                     </Button>
                 </NotificationsPopover>
 

@@ -9,7 +9,8 @@ export function useVisits(filters = {}) {
                 .from('clinicare_visits')
                 .select(`
           *,
-          patient:people(*)
+          patient:people(*),
+          facility:medical_facilities(facility_name)
         `)
                 .order('visit_date', { ascending: false })
 
@@ -36,7 +37,20 @@ export function useVisits(filters = {}) {
             const { data, error } = await query
 
             if (error) throw error
-            return data
+
+            let results = data || []
+
+            if (filters.search) {
+                const searchLower = filters.search.toLowerCase()
+                results = results.filter(visit => {
+                    const firstName = (visit.patient?.first_name || '').toLowerCase()
+                    const lastName = (visit.patient?.last_name || '').toLowerCase()
+                    const fullName = `${firstName} ${lastName}`
+                    return fullName.includes(searchLower) || firstName.includes(searchLower) || lastName.includes(searchLower)
+                })
+            }
+
+            return results
         },
     })
 }
@@ -49,7 +63,8 @@ export function useVisit(id) {
                 .from('clinicare_visits')
                 .select(`
           *,
-          patient:people(*)
+          patient:people(*),
+          facility:medical_facilities(facility_name)
         `)
                 .eq('id', id)
                 .single()
@@ -157,35 +172,42 @@ export function useFollowUps() {
         queryFn: async () => {
             const today = new Date().toISOString().split('T')[0]
 
-            // Get upcoming follow-ups
+            const followUpSelect = `*, patient:people(*), facility:medical_facilities(facility_name)`
+
+            // Get upcoming follow-ups (date set, in the future)
             const { data: upcoming, error: upcomingError } = await supabase
                 .from('clinicare_visits')
-                .select(`
-          *,
-          patient:people(*)
-        `)
+                .select(followUpSelect)
                 .eq('follow_up_required', true)
                 .gte('follow_up_date', today)
                 .order('follow_up_date')
 
             if (upcomingError) throw upcomingError
 
-            // Get overdue follow-ups
+            // Get overdue follow-ups (date set, in the past)
             const { data: overdue, error: overdueError } = await supabase
                 .from('clinicare_visits')
-                .select(`
-          *,
-          patient:people(*)
-        `)
+                .select(followUpSelect)
                 .eq('follow_up_required', true)
                 .lt('follow_up_date', today)
                 .order('follow_up_date')
 
             if (overdueError) throw overdueError
 
+            // Get follow-ups with no date scheduled yet
+            const { data: undated, error: undatedError } = await supabase
+                .from('clinicare_visits')
+                .select(followUpSelect)
+                .eq('follow_up_required', true)
+                .is('follow_up_date', null)
+                .order('visit_date', { ascending: false })
+
+            if (undatedError) throw undatedError
+
             return {
                 upcoming: upcoming || [],
                 overdue: overdue || [],
+                undated: undated || [],
             }
         },
     })

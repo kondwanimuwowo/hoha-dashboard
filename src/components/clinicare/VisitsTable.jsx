@@ -61,7 +61,7 @@ export function VisitsTable({ data }) {
                 header: 'Facility',
                 cell: ({ row }) => (
                     <div className="text-sm text-neutral-600 max-w-[200px] truncate">
-                        {row.original.facility_name || '-'}
+                        {row.original.facility?.facility_name || row.original.facility_name || '-'}
                     </div>
                 ),
             },
@@ -152,17 +152,17 @@ export function VisitsTable({ data }) {
 
     return (
         <div className="space-y-4">
-            <div className="rounded-lg border border-neutral-200 bg-white overflow-hidden">
+            <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-card overflow-hidden transition-colors">
                 <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead className="bg-neutral-50 border-b border-neutral-200">
+                        <thead className="bg-neutral-50 dark:bg-neutral-900/50 border-b border-neutral-200 dark:border-neutral-800 transition-colors">
                             {table.getHeaderGroups().map((headerGroup) => (
                                 <tr key={headerGroup.id}>
                                     {headerGroup.headers.map((header) => (
                                         <th
                                             key={header.id}
                                             style={{ width: header.getSize() }}
-                                            className="px-4 py-3 text-left text-sm font-semibold text-neutral-700"
+                                            className="px-4 py-3 text-left text-sm font-semibold text-neutral-700 dark:text-neutral-300"
                                         >
                                             {flexRender(header.column.columnDef.header, header.getContext())}
                                         </th>
@@ -170,17 +170,17 @@ export function VisitsTable({ data }) {
                                 </tr>
                             ))}
                         </thead>
-                        <tbody className="divide-y divide-neutral-100">
+                        <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800/60 transition-colors">
                             {table.getRowModel().rows.map((row, index) => (
                                 <motion.tr
                                     key={row.id}
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     transition={{ duration: 0.2, delay: index * 0.02 }}
-                                    className="hover:bg-neutral-50 transition-colors"
+                                    className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors"
                                 >
                                     {row.getVisibleCells().map((cell) => (
-                                        <td key={cell.id} className="px-4 py-3 text-sm">
+                                        <td key={cell.id} className="px-4 py-3 text-sm text-neutral-700 dark:text-neutral-300">
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                         </td>
                                     ))}
@@ -193,13 +193,14 @@ export function VisitsTable({ data }) {
 
             {/* Pagination */}
             <div className="flex items-center justify-between">
-                <div className="text-sm text-neutral-600">
-                    Showing {table.getRowModel().rows.length} of {data?.length || 0} visits
+                <div className="text-sm text-neutral-600 dark:text-neutral-400">
+                    Showing <span className="font-medium text-neutral-900 dark:text-foreground">{table.getRowModel().rows.length}</span> of <span className="font-medium text-neutral-900 dark:text-foreground">{data?.length || 0}</span> visits
                 </div>
                 <div className="flex items-center space-x-2">
                     <Button
                         variant="outline"
                         size="sm"
+                        className="bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800"
                         onClick={() => table.setPageIndex(0)}
                         disabled={!table.getCanPreviousPage()}
                     >
@@ -208,17 +209,19 @@ export function VisitsTable({ data }) {
                     <Button
                         variant="outline"
                         size="sm"
+                        className="bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800"
                         onClick={() => table.previousPage()}
                         disabled={!table.getCanPreviousPage()}
                     >
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <span className="text-sm text-neutral-600">
+                    <span className="text-sm text-neutral-600 dark:text-neutral-400 px-2">
                         Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
                     </span>
                     <Button
                         variant="outline"
                         size="sm"
+                        className="bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800"
                         onClick={() => table.nextPage()}
                         disabled={!table.getCanNextPage()}
                     >
@@ -227,6 +230,7 @@ export function VisitsTable({ data }) {
                     <Button
                         variant="outline"
                         size="sm"
+                        className="bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800"
                         onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                         disabled={!table.getCanNextPage()}
                     >
@@ -255,4 +259,3 @@ export function VisitsTable({ data }) {
         </div>
     )
 }
-

@@ -57,7 +57,8 @@ export function AwardForm({ onSuccess, onCancel }) {
             setSelectedStudents(selectedStudents.filter(s => s.student_id !== student.student_id))
         } else {
             setSelectedStudents([...selectedStudents, {
-                student_id: student.student_id,
+                student_id: student.student_id, // enrollment_id
+                person_id: student.person_id,
                 attendance_percentage: student.attendance_percentage,
                 grade_level: student.grade_level,
                 first_name: student.first_name,

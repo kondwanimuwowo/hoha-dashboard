@@ -121,7 +121,7 @@ export function ClinicareOverview() {
             </Dialog>
 
             {/* Follow-Up Alerts */}
-            {followUps && (followUps.overdue.length > 0 || followUps.upcoming.length > 0) && (
+            {followUps && (followUps.overdue.length > 0 || followUps.upcoming.length > 0 || followUps.undated?.length > 0) && (
                 <div className="grid gap-6 lg:grid-cols-2">
                     {/* Overdue Follow-Ups */}
                     {followUps.overdue.length > 0 && (
@@ -191,6 +191,37 @@ export function ClinicareOverview() {
                         </motion.div>
                     )}
                 </div>
+            )}
+
+            {/* Follow-Ups With No Date */}
+            {followUps?.undated?.length > 0 && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                    <Card className="border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20 dark:border-yellow-900">
+                        <CardHeader>
+                            <CardTitle className="text-lg flex items-center text-yellow-700 dark:text-yellow-400">
+                                <AlertCircle className="mr-2 h-5 w-5" />
+                                Follow-Ups Without Date ({followUps.undated.length})
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-2">
+                                {followUps.undated.slice(0, 5).map((visit) => (
+                                    <div key={visit.id} className="flex items-center justify-between bg-card rounded-lg p-3 border border-border">
+                                        <div>
+                                            <p className="font-medium text-foreground">
+                                                {visit.patient?.first_name} {visit.patient?.last_name}
+                                            </p>
+                                            <p className="text-sm text-muted-foreground">
+                                                Visit: {formatDate(visit.visit_date)}
+                                            </p>
+                                        </div>
+                                        <Badge variant="outline" className="border-yellow-400 text-yellow-700">No Date Set</Badge>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </motion.div>
             )}
 
             {/* Stats Details */}

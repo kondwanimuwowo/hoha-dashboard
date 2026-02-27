@@ -1,0 +1,55 @@
+# Database Schema vs. Frontend UI/UX Alignment Report
+
+I have analyzed the provided Supabase schema against the current frontend implementation (React hooks and components). Below is a summary of alignment, discrepancies, and recommendations.
+
+## 1. Educare & Student Management
+### **Alignment**
+*   `people`: Well-aligned. Current logic uses fields like `nrc_number`, `is_registered_member`, and `compound_area` correctly.
+*   `educare_enrollment`: Matches the [StudentForm.jsx](file:///c:/Users/kondw/Desktop/repos/hoha-dashboard/src/components/educare/StudentForm.jsx) logic.
+*   `school_awards` & `award_recipients`: Matches [useAwards.js](file:///c:/Users/kondw/Desktop/repos/hoha-dashboard/src/hooks/useAwards.js).
+*   `student_details` (View): The frontend relies heavily on this view for the main table. The schema provided shows the underlying tables, but the view logic (specifically how it joins parent names) is critical for UX.
+
+### **Discrepancies / Observations**
+*   **Missing from Schema:** 
+    *   `student_award_rankings`: A view used in [useStudentRankings](file:///c:/Users/kondw/Desktop/repos/hoha-dashboard/src/hooks/useAwards.js#58-84) to filter by attendance and registration status.
+*   **`award_recipients` constraint:** 
+    ```sql
+    CONSTRAINT award_recipients_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.educare_enrollment(id)
+    ```
+    *   **Finding:** Most hooks use `person_id` (from `people` table) as the primary identifier for students across the system. Ensure `student_id` here refers to the `people.id` to maintain consistency with `clinicare_visits` and `case_notes`.
+
+## 2. ClinicaCare (Medical)
+### **Alignment**
+*   `clinicare_visits`: Highly aligned. The frontend uses `follow_up_required`, `follow_up_date`, and various cost fields (`medical_fees`, `transport_costs`, `other_fees`) for reporting.
+*   `medical_facilities`: Aligned with [useFacilities.js](file:///c:/Users/kondw/Desktop/repos/hoha-dashboard/src/hooks/useFacilities.js).
+
+### **UI/UX Note**
+*   The `emergency_comment`, `transport_comment`, and `followup_comment` fields are excellent additions that align with the "Comments" tab in the ClinicaCare UI.
+
+## 3. Community Outreach
+### **Alignment**
+*   `community_outreach`, `outreach_participants`, and `outreach_expenses`: Perfectly aligned with the multi-step form logic used to record outreach events.
+*   `outreach_locations`: Aligned with the custom location selection UX.
+
+## 4. Food Distribution
+### **Major Discrepancies**
+*   **`food_recipients` complexity:** The frontend expects several fields not present in the base schema or handled via logic:
+    *   `family_member_ids` (ARRAY) and `family_member_names` (ARRAY) are used in the UI to show who is included in a hamper collection.
+    *   `primary_person_id`: Used to distinguish the collector from the family head.
+*   **Missing from Schema:**
+    *   `family_groups`: This table (or view) acts as the "Single Source of Truth" for household management in the frontend. [useAddRecipient](file:///c:/Users/kondw/Desktop/repos/hoha-dashboard/src/hooks/useFoodDistribution.js#110-218) heavily queries it.
+    *   `food_distribution_household_metrics`: A view/table used by [useDistributions](file:///c:/Users/kondw/Desktop/repos/hoha-dashboard/src/hooks/useFoodDistribution.js#4-35) to show "Families Served" statistics.
+
+## 5. System & UX
+### **Alignment**
+*   `user_preferences`: Aligned with the "Settings" page (Compact mode, Theme preference).
+*   `user_profiles`: Aligned with the Auth and "Profile" components.
+
+---
+
+### **Recommendations for Alignment**
+1.  **Standardize Foreign Keys:** Ensure `student_id` in `award_recipients` points consistently to `people.id` if that is the intent, or `educare_enrollment.id` if awards are strictly enrollment-based.
+2.  **Add Missing Views:** Include definitions for `student_details`, `family_groups`, and `household_metrics` to the schema documentation for full context.
+3.  **Audit `tuition_attendance` RPC:** The frontend calls an RPC `upsert_tuition_attendance`. Ensure the signature of this RPC matches the `tuition_attendance` table structure (specifically `schedule_id` and `child_id`).
+
+**Verdict:** The schema is **90% aligned** with the current UI/UX. The primary areas for attention are the **Food Distribution household logic** and ensuring the **Views** match the complex joining logic used in the dashboard tables.

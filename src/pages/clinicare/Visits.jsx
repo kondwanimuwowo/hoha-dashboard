@@ -1,12 +1,12 @@
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useVisits } from '@/hooks/useVisits'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { VisitsTable } from '@/components/clinicare/VisitsTable'
 import { VisitForm } from '@/components/clinicare/VisitForm'
-import { Heart, Plus, Filter } from 'lucide-react'
+import { Heart, Plus, Filter, Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -17,13 +17,21 @@ import { RegistrationFilter } from '@/components/shared/RegistrationFilter'
 export function Visits() {
     const [searchParams, setSearchParams] = useSearchParams()
     const [showAddVisit, setShowAddVisit] = useState(false)
+    const [searchQuery, setSearchQuery] = useState('')
+    const [debouncedQuery, setDebouncedQuery] = useState('')
     const [startDate, setStartDate] = useState('')
     const [endDate, setEndDate] = useState('')
     const [emergencyFilter, setEmergencyFilter] = useState('all')
     const [programFilter, setProgramFilter] = useState('all')
     const [followUpFilter, setFollowUpFilter] = useState(searchParams.get('filter') === 'follow-ups')
 
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedQuery(searchQuery), 300)
+        return () => clearTimeout(timer)
+    }, [searchQuery])
+
     const { data: visits, isLoading } = useVisits({
+        search: debouncedQuery,
         startDate: startDate || undefined,
         endDate: endDate || undefined,
         isEmergency: emergencyFilter === 'yes' ? true : emergencyFilter === 'no' ? false : undefined,
@@ -47,9 +55,19 @@ export function Visits() {
             <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col sm:flex-row gap-4"
+                className="flex flex-col sm:flex-row gap-4 flex-wrap"
             >
-                <div className="grid grid-cols-2 gap-2 flex-1">
+                <div className="relative flex-1 min-w-[200px]">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+                    <Input
+                        placeholder="Search patient name..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9"
+                    />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 w-full sm:w-auto">
                     <Input
                         type="date"
                         placeholder="Start Date"
@@ -93,6 +111,7 @@ export function Visits() {
                 <Button
                     variant="outline"
                     onClick={() => {
+                        setSearchQuery('')
                         setStartDate('')
                         setEndDate('')
                         setEmergencyFilter('all')

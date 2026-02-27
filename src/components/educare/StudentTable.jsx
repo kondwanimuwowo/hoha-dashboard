@@ -110,11 +110,11 @@ function EditableRow({ row, onSave, onValuesChange, isSaving, schools, parentOpt
             }
         }
         setValues(newValues)
-        onValuesChange?.(row.id, newValues, initialParentId, hasChanges || field !== values[field])
+        onValuesChange?.(row.person_id, newValues, initialParentId, hasChanges || field !== values[field])
     }
 
     const handleSave = () => {
-        onSave(row.id, values, initialParentId)
+        onSave(row.person_id, values, initialParentId)
     }
 
     const selectedParent = values.parent_id !== '__none__'
@@ -331,13 +331,18 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
     }
 
     const saveSingleStudent = async (studentId, values, originalParentId) => {
+        // studentId MUST be person_id (people.id), not enrollment id.
+        // The update hook uses .eq('child_id', id) so passing enrollment.id would find nothing.
         await updateStudent.mutateAsync({
             id: studentId,
             first_name: values.first_name,
             last_name: values.last_name,
             date_of_birth: values.date_of_birth,
             grade_level: values.grade_level,
-            government_school_id: values.government_school_id === '__none__' ? null : values.government_school_id
+            // Sanitize: empty string is invalid for UUID columns — must be null
+            government_school_id: (values.government_school_id === '__none__' || !values.government_school_id)
+                ? null
+                : values.government_school_id
         })
 
         const nextParentId = values.parent_id === '__none__' ? null : values.parent_id
@@ -494,10 +499,6 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
                 setDirtyRows({})
             } else {
                 toast.error(`Saved ${successCount} changes, but ${failCount} failed`)
-                // Only clear the ones that succeeded if we tracked them individually
-                // For simplicity, we'll keep the dirty state since we don't know which failed here without more granular tracking
-                // But let's assume if it throws it didn't save. 
-                // Better yet, let's refresh the whole data if any partial success occurred
             }
         } catch {
             toast.error('An error occurred while saving all changes')
@@ -882,11 +883,11 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
                                 // Render editable rows when Quick Edit is ON
                                 table.getRowModel().rows.map((row) => (
                                     <EditableRow
-                                        key={row.original.id}
+                                        key={row.original.person_id}
                                         row={row.original}
                                         onSave={handleSaveRow}
                                         onValuesChange={handleValuesChange}
-                                        isSaving={savingRowId === row.original.id}
+                                        isSaving={savingRowId === row.original.person_id}
                                         schools={schools}
                                         parentOptions={parents}
                                     />
