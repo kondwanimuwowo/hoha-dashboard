@@ -22,7 +22,7 @@ export function useStudents(filters = {}) {
             }
 
             if (filters.school) {
-                if (filters.school === 'HOHA Only') {
+                if (filters.school === 'On Site') {
                     query = query.is('government_school', null)
                 } else {
                     query = query.eq('government_school', filters.school)
@@ -66,7 +66,7 @@ export function useStudent(id) {
                 .from('people')
                 .select(`
           *,
-          educare_enrollment(*)
+          educare_enrollment(*, government_school:government_schools!government_school_id(id, school_name, location))
         `)
                 .eq('id', id)
                 .single()

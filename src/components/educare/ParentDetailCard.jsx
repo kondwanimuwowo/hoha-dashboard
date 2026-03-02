@@ -107,7 +107,7 @@ export function ParentDetailCard({ parent, isOpen, onClose }) {
         try {
             await createRelationship.mutateAsync({
                 person_id: parent.id,
-                related_person_id: selectedStudent.id,
+                related_person_id: selectedStudent.person_id,
                 relationship_type: relationshipType,
                 is_primary: false,
                 is_emergency_contact: isEmergencyContact
@@ -130,6 +130,9 @@ export function ParentDetailCard({ parent, isOpen, onClose }) {
                             <Users className="h-5 w-5 text-primary" />
                             Parent Details
                         </DialogTitle>
+                        <DialogDescription>
+                            View and manage details for {parent.first_name} {parent.last_name}.
+                        </DialogDescription>
                     </DialogHeader>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-4">

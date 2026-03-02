@@ -27,7 +27,7 @@ export function useCreateRelationship() {
         mutationFn: async (relationshipData) => {
             const { data, error } = await supabase
                 .from('relationships')
-                .insert([relationshipData])
+                .upsert([relationshipData], { onConflict: 'person_id,related_person_id', ignoreDuplicates: false })
                 .select()
 
             if (error) throw error

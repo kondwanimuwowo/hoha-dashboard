@@ -189,7 +189,7 @@ function EditableRow({ row, onSave, onValuesChange, isSaving, schools, parentOpt
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="__none__">HOHA Only</SelectItem>
+                        <SelectItem value="__none__">On Site</SelectItem>
                         {(schools || []).map((school) => (
                             <SelectItem key={school.id} value={school.id}>
                                 {school.school_name}
@@ -618,7 +618,7 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
                 ),
                 cell: ({ row }) => (
                     <div className="text-sm text-neutral-600 max-w-[200px] truncate">
-                        {row.original.government_school || 'HOHA Only'}
+                        {row.original.government_school || 'On Site'}
                     </div>
                 ),
             },
@@ -680,7 +680,7 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
             .map((student, index) => {
                 const fullName = `${student.first_name || ''} ${student.last_name || ''}`.trim() || 'Unknown'
                 const parentName = student.parent_name || 'Not linked'
-                const schoolName = student.government_school || 'HOHA Only'
+                const schoolName = student.government_school || 'On Site'
                 const age = calculateAge(student.date_of_birth)
 
                 return `

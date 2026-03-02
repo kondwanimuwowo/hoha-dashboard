@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStudents } from '@/hooks/useStudents'
 import { useParents } from '@/hooks/usePeople'
-import { useSchools } from '@/hooks/useSchools'
+import { useSchools, useDeleteSchool } from '@/hooks/useSchools'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -11,11 +11,12 @@ import { StudentForm } from '@/components/educare/StudentForm'
 import { ParentTable } from '@/components/educare/ParentTable'
 import { ParentForm } from '@/components/educare/ParentForm'
 import { ParentDetailCard } from '@/components/educare/ParentDetailCard'
-import { UserPlus, Users, GraduationCap, Home } from 'lucide-react'
+import { UserPlus, Users, GraduationCap, Home, Settings2, Trash2, Loader2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { toast } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { GRADE_LEVELS, ENROLLMENT_STATUS } from '@/lib/constants'
 import { Search, Filter, Printer } from 'lucide-react'
@@ -34,6 +35,20 @@ export function Students() {
     const [sorting, setSorting] = useState([{ id: 'first_name', desc: false }])
     const [activeTab, setActiveTab] = useState('students')
     const [selectedParent, setSelectedParent] = useState(null)
+    const [showManageSchools, setShowManageSchools] = useState(false)
+    const [schoolToDelete, setSchoolToDelete] = useState(null)
+
+    const deleteSchool = useDeleteSchool()
+
+    const handleDeleteSchool = async (school) => {
+        try {
+            await deleteSchool.mutateAsync(school.id)
+            toast.success(`"${school.school_name}" removed`)
+            setSchoolToDelete(null)
+        } catch (error) {
+            toast.error('Failed to remove school: ' + error.message)
+        }
+    }
 
     useEffect(() => {
         const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 300)
@@ -126,21 +141,32 @@ export function Students() {
                                     </SelectContent>
                                 </Select>
 
-                                <Select value={schoolFilter} onValueChange={setSchoolFilter}>
-                                    <SelectTrigger className="w-[160px]">
-                                        <GraduationCap className="mr-2 h-4 w-4" />
-                                        <SelectValue placeholder="School" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All Schools</SelectItem>
-                                        <SelectItem value="HOHA Only">HOHA Only</SelectItem>
-                                        {schools?.map((school) => (
-                                            <SelectItem key={school.id} value={school.school_name}>
-                                                {school.school_name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <div className="flex items-center gap-1">
+                                    <Select value={schoolFilter} onValueChange={setSchoolFilter}>
+                                        <SelectTrigger className="w-[160px]">
+                                            <GraduationCap className="mr-2 h-4 w-4" />
+                                            <SelectValue placeholder="School" />
+                                        </SelectTrigger>
+                                        <SelectContent className="max-h-64 overflow-y-auto">
+                                            <SelectItem value="all">All Schools</SelectItem>
+                                            <SelectItem value="On Site">On Site</SelectItem>
+                                            {schools?.map((school) => (
+                                                <SelectItem key={school.id} value={school.school_name}>
+                                                    {school.school_name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-9 w-9 shrink-0"
+                                        title="Manage schools"
+                                        onClick={() => setShowManageSchools(true)}
+                                    >
+                                        <Settings2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
 
                                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                                     <SelectTrigger className="w-[130px]">
@@ -242,6 +268,66 @@ export function Students() {
                 isOpen={!!selectedParent}
                 onClose={() => setSelectedParent(null)}
             />
+
+            {/* Manage Schools Dialog */}
+            <Dialog open={showManageSchools} onOpenChange={setShowManageSchools}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <GraduationCap className="h-5 w-5 text-primary" />
+                            Manage Schools
+                        </DialogTitle>
+                        <DialogDescription>
+                            Remove government schools that are no longer needed. Students assigned to a removed school will retain their existing assignment.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-2 max-h-80 overflow-y-auto py-2">
+                        {schools?.length === 0 && (
+                            <p className="text-sm text-center text-muted-foreground py-4">No schools added yet.</p>
+                        )}
+                        {schools?.map((school) => (
+                            <div key={school.id} className="flex items-center justify-between rounded-lg border px-3 py-2">
+                                <div>
+                                    <p className="text-sm font-medium">{school.school_name}</p>
+                                    {school.location && (
+                                        <p className="text-xs text-muted-foreground">{school.location}</p>
+                                    )}
+                                </div>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                                    onClick={() => setSchoolToDelete(school)}
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Confirm Delete School Dialog */}
+            <Dialog open={!!schoolToDelete} onOpenChange={(open) => { if (!open) setSchoolToDelete(null) }}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Remove School?</DialogTitle>
+                        <DialogDescription>
+                            Remove <strong>{schoolToDelete?.school_name}</strong> from the schools list? It will be hidden from filters and new student forms.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setSchoolToDelete(null)}>Cancel</Button>
+                        <Button
+                            variant="destructive"
+                            disabled={deleteSchool.isPending}
+                            onClick={() => handleDeleteSchool(schoolToDelete)}
+                        >
+                            {deleteSchool.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Remove'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

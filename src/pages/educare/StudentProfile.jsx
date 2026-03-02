@@ -233,10 +233,13 @@ export function StudentProfile() {
                                         <p className="font-medium text-foreground">{enrollment?.grade_level}</p>
                                     </div>
                                     <div>
-                                        <p className="text-sm text-muted-foreground">Government School</p>
+                                        <p className="text-sm text-muted-foreground">School</p>
                                         <p className="font-medium text-foreground">
-                                            {enrollment?.government_school_id ? 'Assigned' : 'HOHA Only (Baby/Reception)'}
+                                            {enrollment?.government_school?.school_name || 'On Site'}
                                         </p>
+                                        {enrollment?.government_school?.location && (
+                                            <p className="text-xs text-muted-foreground">{enrollment.government_school.location}</p>
+                                        )}
                                     </div>
                                     <div>
                                         <p className="text-sm text-muted-foreground">Enrollment Date</p>

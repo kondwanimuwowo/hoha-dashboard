@@ -114,7 +114,7 @@ export function SchoolAwards() {
                                 <div
                                     key={student.student_id}
                                     className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors cursor-pointer"
-                                    onClick={() => navigate(`/educare/students/${student.student_id}`)}
+                                    onClick={() => navigate(`/educare/students/${student.person_id}`)}
                                 >
                                     <div className="flex items-center gap-4 flex-1">
                                         {/* Rank Badge */}

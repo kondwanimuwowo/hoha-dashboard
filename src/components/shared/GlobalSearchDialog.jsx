@@ -88,7 +88,7 @@ export function GlobalSearchDialog({ open, onOpenChange }) {
             id: `student-${student.person_id}`,
             type: 'student',
             title: `${student.first_name} ${student.last_name}`,
-            subtitle: `${student.grade_level || 'Unknown Grade'} • ${student.government_school || 'HOHA Only'}`,
+            subtitle: `${student.grade_level || 'Unknown Grade'} • ${student.government_school || 'On Site'}`,
             icon: GraduationCap,
             path: `/educare/students/${student.person_id}`
         }))

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Settings, Tool, Clock, Mail } from 'lucide-react'
+import { Settings, Clock, Mail } from 'lucide-react'
 
 export function MaintenanceMode() {
     return (

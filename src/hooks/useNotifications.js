@@ -88,7 +88,7 @@ async function fetchUpcomingDistributionsWithUncollected() {
 
     const { data: distributions, error: distError } = await supabase
         .from('food_distribution')
-        .select(`id, distribution_date, name`)
+        .select(`id, distribution_date, quarter, year, distribution_location`)
         .gte('distribution_date', today)
         .order('distribution_date')
 
@@ -225,7 +225,7 @@ function buildNotifications({ followUps, educareEnrollments, legacyEnrollments, 
             key,
             type: 'food_distribution',
             title: 'Distribution has uncollected hampers',
-            message: `"${dist.name || dist.distribution_date}" has ${dist.uncollected_count} uncollected hamper${dist.uncollected_count !== 1 ? 's' : ''}.`,
+            message: `"${dist.distribution_location || `${dist.quarter} ${dist.year}`}" has ${dist.uncollected_count} uncollected hamper${dist.uncollected_count !== 1 ? 's' : ''}.`,
             link: `/food/distributions/${dist.id}`,
             createdAt: new Date(dist.distribution_date),
             read: readKeys.has(key),

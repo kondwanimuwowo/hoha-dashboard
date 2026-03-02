@@ -36,3 +36,22 @@ export function useCreateSchool() {
         },
     })
 }
+
+export function useDeleteSchool() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (schoolId) => {
+            const { error } = await supabase
+                .from('government_schools')
+                .update({ is_active: false })
+                .eq('id', schoolId)
+
+            if (error) throw error
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['schools'] })
+            queryClient.invalidateQueries({ queryKey: ['students'] })
+        },
+    })
+}
