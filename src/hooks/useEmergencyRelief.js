@@ -56,6 +56,48 @@ export function useCreateEmergencyDistribution() {
     })
 }
 
+export function useEmergencyDistribution(id) {
+    return useQuery({
+        queryKey: ['emergency-distribution', id],
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from('emergency_relief_distributions')
+                .select(`
+                    *,
+                    recipients:emergency_relief_recipients(
+                        *,
+                        family_head:people!family_head_id(*)
+                    )
+                `)
+                .eq('id', id)
+                .single()
+
+            if (error) throw error
+            return data
+        },
+        enabled: !!id,
+    })
+}
+
+export function useMarkEmergencyCollected() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ recipientId, collected }) => {
+            const { error } = await supabase
+                .from('emergency_relief_recipients')
+                .update({ collected, is_collected: collected })
+                .eq('id', recipientId)
+
+            if (error) throw error
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['emergency-distribution'] })
+            queryClient.invalidateQueries({ queryKey: ['emergency-distributions'] })
+        },
+    })
+}
+
 export function useRecipientHistory(personId) {
     return useQuery({
         queryKey: ['recipient-history', personId],

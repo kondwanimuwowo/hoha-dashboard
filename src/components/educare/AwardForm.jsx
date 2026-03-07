@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { useCreateAward } from '@/hooks/useAwards'
-import { useStudentRankings } from '@/hooks/useAwards'
+import { useCreateAward, useStudentRankings, useAwardResourceTypes, useCreateResourceType, useDeleteResourceType } from '@/hooks/useAwards'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import { Loader2, Search } from 'lucide-react'
+import { Loader2, Search, ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react'
 
 const awardSchema = z.object({
     award_date: z.string().min(1, 'Date is required'),
@@ -28,9 +27,41 @@ export function AwardForm({ onSuccess, onCancel }) {
     const [error, setError] = useState('')
     const [selectedStudents, setSelectedStudents] = useState([])
     const [searchQuery, setSearchQuery] = useState('')
+    const [selectedResources, setSelectedResources] = useState([])
+    const [showManageResources, setShowManageResources] = useState(false)
+    const [newResourceName, setNewResourceName] = useState('')
 
     const createAward = useCreateAward()
     const { data: rankings } = useStudentRankings()
+    const { data: resourceTypes } = useAwardResourceTypes()
+    const createResourceType = useCreateResourceType()
+    const deleteResourceType = useDeleteResourceType()
+
+    const toggleResource = (id) => {
+        setSelectedResources(prev =>
+            prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id]
+        )
+    }
+
+    const handleAddResourceType = async () => {
+        const name = newResourceName.trim()
+        if (!name) return
+        try {
+            await createResourceType.mutateAsync(name)
+            setNewResourceName('')
+        } catch (err) {
+            setError('Failed to add resource type: ' + err.message)
+        }
+    }
+
+    const handleDeleteResourceType = async (id) => {
+        try {
+            await deleteResourceType.mutateAsync(id)
+            setSelectedResources(prev => prev.filter(r => r !== id))
+        } catch (err) {
+            setError('Failed to remove resource type: ' + err.message)
+        }
+    }
 
     const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
         resolver: zodResolver(awardSchema),
@@ -64,8 +95,16 @@ export function AwardForm({ onSuccess, onCancel }) {
                 first_name: student.first_name,
                 last_name: student.last_name,
                 notes: '',
+                received_resources: true,
             }])
         }
+    }
+
+    // Toggle received_resources for a selected student
+    const toggleStudentResources = (studentId) => {
+        setSelectedStudents(selectedStudents.map(s =>
+            s.student_id === studentId ? { ...s, received_resources: !s.received_resources } : s
+        ))
     }
 
     // Update student notes
@@ -87,6 +126,7 @@ export function AwardForm({ onSuccess, onCancel }) {
             await createAward.mutateAsync({
                 award: data,
                 recipients: selectedStudents,
+                resources: selectedResources,
             })
             onSuccess?.()
         } catch (err) {
@@ -160,6 +200,83 @@ export function AwardForm({ onSuccess, onCancel }) {
                     rows={2}
                 />
             </div>
+
+            {/* Resources Being Distributed */}
+            <Card>
+                <CardContent className="p-4 space-y-4">
+                    <div>
+                        <Label>Resources Being Distributed</Label>
+                        <p className="text-sm text-muted-foreground mb-3">
+                            Select which resources will be given to recipients in this award event.
+                        </p>
+                        <div className="flex flex-wrap gap-3">
+                            {resourceTypes?.map((rt) => (
+                                <label key={rt.id} className="flex items-center gap-2 cursor-pointer">
+                                    <Checkbox
+                                        checked={selectedResources.includes(rt.id)}
+                                        onCheckedChange={() => toggleResource(rt.id)}
+                                    />
+                                    <span className="text-sm">{rt.name}</span>
+                                </label>
+                            ))}
+                            {(!resourceTypes || resourceTypes.length === 0) && (
+                                <p className="text-sm text-muted-foreground">No resource types configured. Add one below.</p>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Manage resource types */}
+                    <div className="border-t pt-3">
+                        <button
+                            type="button"
+                            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                            onClick={() => setShowManageResources(!showManageResources)}
+                        >
+                            {showManageResources ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                            Manage resource types
+                        </button>
+
+                        {showManageResources && (
+                            <div className="mt-3 space-y-2">
+                                {resourceTypes?.map((rt) => (
+                                    <div key={rt.id} className="flex items-center justify-between py-1">
+                                        <span className="text-sm">{rt.name}</span>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                                            onClick={() => handleDeleteResourceType(rt.id)}
+                                            disabled={deleteResourceType.isPending}
+                                        >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                        </Button>
+                                    </div>
+                                ))}
+                                <div className="flex items-center gap-2 pt-1">
+                                    <Input
+                                        placeholder="New resource name..."
+                                        value={newResourceName}
+                                        onChange={(e) => setNewResourceName(e.target.value)}
+                                        className="h-8 text-sm"
+                                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddResourceType())}
+                                    />
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-8"
+                                        onClick={handleAddResourceType}
+                                        disabled={!newResourceName.trim() || createResourceType.isPending}
+                                    >
+                                        <Plus className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
 
             {/* Student Selection */}
             <Card>
@@ -237,8 +354,8 @@ export function AwardForm({ onSuccess, onCancel }) {
                             </Label>
                             <div className="space-y-2">
                                 {selectedStudents.map((student) => (
-                                    <div key={student.student_id} className="flex items-center gap-2">
-                                        <span className="text-sm flex-1">
+                                    <div key={student.student_id} className="flex items-center gap-2 flex-wrap">
+                                        <span className="text-sm flex-1 min-w-[120px]">
                                             {student.first_name} {student.last_name} ({student.attendance_percentage.toFixed(1)}%)
                                         </span>
                                         <Input
@@ -247,6 +364,15 @@ export function AwardForm({ onSuccess, onCancel }) {
                                             onChange={(e) => updateStudentNotes(student.student_id, e.target.value)}
                                             className="flex-1 text-sm"
                                         />
+                                        {selectedResources.length > 0 && (
+                                            <label className="flex items-center gap-1.5 text-sm cursor-pointer shrink-0">
+                                                <Checkbox
+                                                    checked={!student.received_resources}
+                                                    onCheckedChange={() => toggleStudentResources(student.student_id)}
+                                                />
+                                                <span className="text-muted-foreground">No resources</span>
+                                            </label>
+                                        )}
                                     </div>
                                 ))}
                             </div>

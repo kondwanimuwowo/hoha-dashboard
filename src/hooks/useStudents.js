@@ -36,7 +36,10 @@ export function useStudents(filters = {}) {
             }
 
             if (filters.search) {
-                query = query.or(`first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%,phone_number.ilike.%${filters.search}%`)
+                const terms = filters.search.split(/\s+/).filter(Boolean)
+                for (const term of terms) {
+                    query = query.or(`first_name.ilike.%${term}%,last_name.ilike.%${term}%,phone_number.ilike.%${term}%`)
+                }
             }
 
             if (filters.isRegistered !== undefined) {

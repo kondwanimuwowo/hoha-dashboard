@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useStudents } from '@/hooks/useStudents'
 import { useParents } from '@/hooks/usePeople'
 import { useSchools, useDeleteSchool } from '@/hooks/useSchools'
@@ -24,19 +24,37 @@ import { RegistrationFilter } from '@/components/shared/RegistrationFilter'
 
 export function Students() {
     const navigate = useNavigate()
-    const [search, setSearch] = useState('')
-    const [debouncedSearch, setDebouncedSearch] = useState('')
-    const [gradeFilter, setGradeFilter] = useState('all')
-    const [statusFilter, setStatusFilter] = useState('Active')
-    const [schoolFilter, setSchoolFilter] = useState('all')
-    const [registrationFilter, setRegistrationFilter] = useState('all')
+    const [searchParams, setSearchParams] = useSearchParams()
+
+    // Persist filter state in URL params
+    const activeTab = searchParams.get('tab') ?? 'students'
+    const gradeFilter = searchParams.get('grade') ?? 'all'
+    const statusFilter = searchParams.get('status') ?? 'Active'
+    const schoolFilter = searchParams.get('school') ?? 'all'
+    const registrationFilter = searchParams.get('reg') ?? 'all'
+
+    // Local state for search input (debounced writes to URL)
+    const [searchInput, setSearchInput] = useState(searchParams.get('search') ?? '')
+    const [debouncedSearch, setDebouncedSearch] = useState(searchParams.get('search') ?? '')
+
     const [showAddStudent, setShowAddStudent] = useState(false)
     const [showAddParent, setShowAddParent] = useState(false)
     const [sorting, setSorting] = useState([{ id: 'first_name', desc: false }])
-    const [activeTab, setActiveTab] = useState('students')
     const [selectedParent, setSelectedParent] = useState(null)
     const [showManageSchools, setShowManageSchools] = useState(false)
     const [schoolToDelete, setSchoolToDelete] = useState(null)
+
+    const setParam = (key, val) => setSearchParams(prev => {
+        const p = new URLSearchParams(prev)
+        p.set(key, val)
+        return p
+    }, { replace: true })
+
+    const setActiveTab = (val) => setParam('tab', val)
+    const setGradeFilter = (val) => setParam('grade', val)
+    const setStatusFilter = (val) => setParam('status', val)
+    const setSchoolFilter = (val) => setParam('school', val)
+    const setRegistrationFilter = (val) => setParam('reg', val)
 
     const deleteSchool = useDeleteSchool()
 
@@ -51,9 +69,17 @@ export function Students() {
     }
 
     useEffect(() => {
-        const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 300)
+        const timer = window.setTimeout(() => {
+            const trimmed = searchInput.trim()
+            setDebouncedSearch(trimmed)
+            setSearchParams(prev => {
+                const p = new URLSearchParams(prev)
+                trimmed ? p.set('search', trimmed) : p.delete('search')
+                return p
+            }, { replace: true })
+        }, 300)
         return () => window.clearTimeout(timer)
-    }, [search])
+    }, [searchInput])
 
     const { data: schools } = useSchools()
     const { data: students, isLoading: isLoadingStudents } = useStudents({
@@ -113,8 +139,8 @@ export function Students() {
                             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
                             <Input
                                 placeholder={activeTab === 'students' ? "Search by name..." : "Search parents..."}
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
+                                value={searchInput}
+                                onChange={(e) => setSearchInput(e.target.value)}
                                 className="pl-9"
                             />
                         </div>

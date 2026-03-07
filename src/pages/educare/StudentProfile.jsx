@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useStudent, useDeleteStudent } from '@/hooks/useStudents'
 import { useAttendanceSummary } from '@/hooks/useAttendance'
 import { useStudentGuardians } from '@/hooks/useRelationships'
+import { useStudentDocuments } from '@/hooks/useRecords'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,6 +13,7 @@ import { formatDate, calculateAge } from '@/lib/utils'
 import { PersonAvatar } from '@/components/shared/PersonAvatar'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { StudentForm } from '@/components/educare/StudentForm'
+import { ParentDetailCard } from '@/components/educare/ParentDetailCard'
 import { useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
@@ -39,8 +41,12 @@ export function StudentProfile() {
         new Date().toISOString()
     )
 
+    const { data: documents } = useStudentDocuments(id)
+    const reportCardsCount = documents?.filter(d => d.document_type === 'Report Card').length ?? 0
+
     const [isEditing, setIsEditing] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
+    const [selectedParentForDetail, setSelectedParentForDetail] = useState(null)
 
     if (isLoading) return <LoadingSpinner />
     if (isError || !student) return <div>Student not found</div>
@@ -206,6 +212,10 @@ export function StudentProfile() {
                                         <p className="font-medium text-foreground">{student.gender}</p>
                                     </div>
                                     <div>
+                                        <p className="text-sm text-muted-foreground">Phone Number</p>
+                                        <p className="font-medium text-foreground">{student.phone_number || 'Not provided'}</p>
+                                    </div>
+                                    <div>
                                         <p className="text-sm text-muted-foreground">Address</p>
                                         <p className="font-medium text-foreground">{student.address || 'Not provided'}</p>
                                     </div>
@@ -288,6 +298,13 @@ export function StudentProfile() {
                                     ) : (
                                         <p className="text-sm text-neutral-500">No attendance records</p>
                                     )}
+                                    <div className="pt-3 mt-3 border-t flex items-center justify-between text-sm">
+                                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                                            <FileText className="h-4 w-4" />
+                                            <span>Report Cards</span>
+                                        </div>
+                                        <span className="font-semibold">{reportCardsCount}</span>
+                                    </div>
                                 </CardContent>
                             </Card>
                         </motion.div>
@@ -311,7 +328,11 @@ export function StudentProfile() {
                                     {relationships && relationships.length > 0 ? (
                                         <div className="space-y-3">
                                             {relationships.map((rel) => (
-                                                <div key={rel.id} className="flex items-center justify-between rounded-lg border border-border p-3">
+                                                <div
+                                                    key={rel.id}
+                                                    className="flex items-center justify-between rounded-lg border border-border p-3 cursor-pointer hover:bg-accent transition-colors"
+                                                    onClick={() => setSelectedParentForDetail(rel.person)}
+                                                >
                                                     <div>
                                                         <p className="font-medium text-foreground">
                                                             {rel.person?.first_name} {rel.person?.last_name}
@@ -408,6 +429,14 @@ export function StudentProfile() {
                     <StudentDocuments studentId={id} />
                 </TabsContent>
             </Tabs>
+
+            {selectedParentForDetail && (
+                <ParentDetailCard
+                    parent={selectedParentForDetail}
+                    isOpen={!!selectedParentForDetail}
+                    onClose={() => setSelectedParentForDetail(null)}
+                />
+            )}
         </div>
     )
 }

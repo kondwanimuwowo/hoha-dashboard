@@ -31,6 +31,7 @@ const DistributionDetail = lazy(() => import('@/pages/food/DistributionDetail').
 const FoodHistory = lazy(() => import('@/pages/food/FoodHistory').then((m) => ({ default: m.FoodHistory })))
 
 const EmergencyReliefOverview = lazy(() => import('@/pages/emergency-relief/EmergencyReliefOverview'))
+const EmergencyReliefDetail = lazy(() => import('@/pages/emergency-relief/EmergencyReliefDetail').then((m) => ({ default: m.EmergencyReliefDetail })))
 const ReliefHistory = lazy(() => import('@/pages/emergency-relief/ReliefHistory').then((m) => ({ default: m.ReliefHistory })))
 
 const CommunityOutreachOverview = lazy(() => import('@/pages/community-outreach/CommunityOutreachOverview').then((m) => ({ default: m.CommunityOutreachOverview })))
@@ -160,6 +161,7 @@ function App() {
 
             <Route path="emergency-relief">
               <Route index element={<EmergencyReliefOverview />} />
+              <Route path=":id" element={<EmergencyReliefDetail />} />
               <Route path="history" element={<ReliefHistory />} />
             </Route>
 

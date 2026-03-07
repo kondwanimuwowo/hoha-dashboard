@@ -6,29 +6,53 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { VisitsTable } from '@/components/clinicare/VisitsTable'
 import { VisitForm } from '@/components/clinicare/VisitForm'
-import { Heart, Plus, Filter, Search } from 'lucide-react'
+import { Heart, Plus, Filter, Search, Printer } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useSearchParams } from 'react-router-dom'
 import { RegistrationFilter } from '@/components/shared/RegistrationFilter'
+import { formatDate } from '@/lib/utils'
 
 export function Visits() {
     const [searchParams, setSearchParams] = useSearchParams()
     const [showAddVisit, setShowAddVisit] = useState(false)
-    const [searchQuery, setSearchQuery] = useState('')
-    const [debouncedQuery, setDebouncedQuery] = useState('')
-    const [startDate, setStartDate] = useState('')
-    const [endDate, setEndDate] = useState('')
-    const [emergencyFilter, setEmergencyFilter] = useState('all')
-    const [programFilter, setProgramFilter] = useState('all')
-    const [followUpFilter, setFollowUpFilter] = useState(searchParams.get('filter') === 'follow-ups')
+
+    // Persist all filter state in URL params
+    const emergencyFilter = searchParams.get('type') ?? 'all'
+    const programFilter = searchParams.get('program') ?? 'all'
+    const followUpFilter = searchParams.get('filter') === 'follow-ups'
+    const startDate = searchParams.get('from') ?? ''
+    const endDate = searchParams.get('to') ?? ''
+
+    const [searchInput, setSearchInput] = useState(searchParams.get('search') ?? '')
+    const [debouncedQuery, setDebouncedQuery] = useState(searchParams.get('search') ?? '')
+
+    const setParam = (key, val) => setSearchParams(prev => {
+        const p = new URLSearchParams(prev)
+        val ? p.set(key, val) : p.delete(key)
+        return p
+    }, { replace: true })
+
+    const setEmergencyFilter = (val) => setParam('type', val === 'all' ? '' : val)
+    const setProgramFilter = (val) => setParam('program', val === 'all' ? '' : val)
+    const setStartDate = (val) => setParam('from', val)
+    const setEndDate = (val) => setParam('to', val)
+    const setFollowUpFilter = (on) => setParam('filter', on ? 'follow-ups' : '')
 
     useEffect(() => {
-        const timer = setTimeout(() => setDebouncedQuery(searchQuery), 300)
+        const timer = setTimeout(() => {
+            const trimmed = searchInput.trim()
+            setDebouncedQuery(trimmed)
+            setSearchParams(prev => {
+                const p = new URLSearchParams(prev)
+                trimmed ? p.set('search', trimmed) : p.delete('search')
+                return p
+            }, { replace: true })
+        }, 300)
         return () => clearTimeout(timer)
-    }, [searchQuery])
+    }, [searchInput])
 
     const { data: visits, isLoading } = useVisits({
         search: debouncedQuery,
@@ -39,17 +63,56 @@ export function Visits() {
         followUpRequired: followUpFilter || undefined,
     })
 
+    const handlePrint = () => {
+        const rows = (visits || []).map((v, i) => {
+            const patient = v.patient ? `${v.patient.first_name || ''} ${v.patient.last_name || ''}`.trim() : 'Unknown'
+            return `<tr>
+                <td>${i + 1}</td>
+                <td>${formatDate(v.visit_date) || '-'}</td>
+                <td>${patient}</td>
+                <td>${v.is_emergency ? 'Emergency' : 'Regular'}</td>
+                <td>${v.facility?.facility_name || v.facility_name || '-'}</td>
+                <td>${v.diagnosis || '-'}</td>
+            </tr>`
+        }).join('')
+
+        const html = `<!doctype html><html><head><meta charset="utf-8"/>
+            <title>Medical Visits</title>
+            <style>body{font-family:Arial,sans-serif;padding:20px;color:#111;}h1{margin-bottom:4px;}
+            .meta{color:#555;font-size:13px;margin-bottom:16px;}
+            table{width:100%;border-collapse:collapse;}
+            th,td{border:1px solid #ddd;padding:8px;text-align:left;}
+            th{background:#f5f5f5;}</style></head>
+            <body><h1>Medical Visits</h1>
+            <div class="meta">Generated ${new Date().toLocaleDateString()} · ${(visits || []).length} visits</div>
+            <table><thead><tr><th>#</th><th>Date</th><th>Patient</th><th>Type</th><th>Facility</th><th>Diagnosis</th></tr></thead>
+            <tbody>${rows}</tbody></table></body></html>`
+
+        const win = window.open('', '_blank')
+        if (!win) return
+        win.document.write(html)
+        win.document.close()
+        win.focus()
+        win.print()
+    }
+
     if (isLoading) return <LoadingSpinner />
 
     return (
         <div className="space-y-6">
-            <PageHeader
-                title="Medical Visits"
-                description={`${visits?.length || 0} total visits recorded`}
-                action={() => setShowAddVisit(true)}
-                actionLabel="Record Visit"
-                actionIcon={Plus}
-            />
+            <div className="flex items-center justify-between">
+                <PageHeader
+                    title="Medical Visits"
+                    description={`${visits?.length || 0} total visits recorded`}
+                    action={() => setShowAddVisit(true)}
+                    actionLabel="Record Visit"
+                    actionIcon={Plus}
+                />
+                <Button variant="outline" onClick={handlePrint} className="shrink-0">
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print List
+                </Button>
+            </div>
 
             {/* Filters */}
             <motion.div
@@ -61,8 +124,8 @@ export function Visits() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
                     <Input
                         placeholder="Search patient name..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
                         className="pl-9"
                     />
                 </div>
@@ -111,13 +174,8 @@ export function Visits() {
                 <Button
                     variant="outline"
                     onClick={() => {
-                        setSearchQuery('')
-                        setStartDate('')
-                        setEndDate('')
-                        setEmergencyFilter('all')
-                        setProgramFilter('all')
-                        setFollowUpFilter(false)
-                        setSearchParams({})
+                        setSearchInput('')
+                        setSearchParams({}, { replace: true })
                     }}
                 >
                     Reset

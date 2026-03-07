@@ -3,7 +3,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Package, Users, Calendar, Plus, History, Search } from 'lucide-react'
+import { Package, Users, Calendar, Plus, History, Search, Printer } from 'lucide-react'
 import { useEmergencyDistributions } from '@/hooks/useEmergencyRelief'
 import { usePeople } from '@/hooks/usePeople'
 import { EmergencyDistributionForm } from '@/components/emergency-relief/EmergencyDistributionForm'
@@ -46,6 +46,39 @@ export default function EmergencyReliefOverview() {
     const totalDistributions = filteredDistributions?.length || 0
     const totalFamiliesHelped = filteredDistributions?.reduce((sum, d) => sum + (d.recipients?.length || 0), 0) || 0
 
+    const handlePrint = () => {
+        const rows = filteredDistributions.map((dist, i) => {
+            const collected = dist.recipients?.filter(r => r.collected).length || 0
+            const total = dist.recipients?.length || 0
+            return `<tr>
+                <td>${i + 1}</td>
+                <td>${new Date(dist.distribution_date).toLocaleDateString()}</td>
+                <td>${dist.reason || 'Emergency relief distribution'}</td>
+                <td>${total}</td>
+                <td>${collected}</td>
+            </tr>`
+        }).join('')
+
+        const html = `<!doctype html><html><head><meta charset="utf-8"/>
+            <title>Emergency Relief Distributions</title>
+            <style>body{font-family:Arial,sans-serif;padding:20px;color:#111;}h1{margin-bottom:4px;}
+            .meta{color:#555;font-size:13px;margin-bottom:16px;}
+            table{width:100%;border-collapse:collapse;}
+            th,td{border:1px solid #ddd;padding:8px;text-align:left;}
+            th{background:#f5f5f5;}</style></head>
+            <body><h1>Emergency Relief Distributions</h1>
+            <div class="meta">Generated ${new Date().toLocaleDateString()} · ${filteredDistributions.length} distributions</div>
+            <table><thead><tr><th>#</th><th>Date</th><th>Reason</th><th>Families</th><th>Collected</th></tr></thead>
+            <tbody>${rows}</tbody></table></body></html>`
+
+        const win = window.open('', '_blank')
+        if (!win) return
+        win.document.write(html)
+        win.document.close()
+        win.focus()
+        win.print()
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -61,6 +94,10 @@ export default function EmergencyReliefOverview() {
                         onChange={setRegistrationFilter}
                     />
                     <div className="flex items-center gap-2">
+                        <Button variant="outline" onClick={handlePrint}>
+                            <Printer className="mr-2 h-4 w-4" />
+                            Print
+                        </Button>
                         <Button variant="outline" onClick={() => setShowHistorySearch(true)}>
                             <History className="mr-2 h-4 w-4" />
                             History
@@ -130,7 +167,8 @@ export default function EmergencyReliefOverview() {
                             {recentDistributions.map((dist) => (
                                 <div
                                     key={dist.id}
-                                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                                    onClick={() => navigate(`/emergency-relief/${dist.id}`)}
                                 >
                                     <div>
                                         <div className="font-medium">

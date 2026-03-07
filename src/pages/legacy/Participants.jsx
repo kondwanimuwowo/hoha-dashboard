@@ -1,32 +1,54 @@
 import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useWomen } from '@/hooks/useWomen'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { WomenTable } from '@/components/legacy/WomenTable'
 import { WomenForm } from '@/components/legacy/WomenForm'
-import { UserPlus, Users } from 'lucide-react'
+import { UserPlus, Users, Printer } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { LEGACY_STAGES, LEGACY_STATUS } from '@/lib/constants'
 import { Search, Filter } from 'lucide-react'
+import { formatDate } from '@/lib/utils'
 
 export function Participants() {
     const navigate = useNavigate()
-    const [search, setSearch] = useState('')
-    const [debouncedSearch, setDebouncedSearch] = useState('')
-    const [stageFilter, setStageFilter] = useState('all')
-    const [statusFilter, setStatusFilter] = useState('Active')
+    const [searchParams, setSearchParams] = useSearchParams()
+
+    const stageFilter = searchParams.get('stage') ?? 'all'
+    const statusFilter = searchParams.get('status') ?? 'Active'
+
+    const [searchInput, setSearchInput] = useState(searchParams.get('search') ?? '')
+    const [debouncedSearch, setDebouncedSearch] = useState(searchParams.get('search') ?? '')
     const [showAddWoman, setShowAddWoman] = useState(false)
     const [sorting, setSorting] = useState([{ id: 'enrollment_date', desc: true }])
 
+    const setParam = (key, val) => setSearchParams(prev => {
+        const p = new URLSearchParams(prev)
+        p.set(key, val)
+        return p
+    }, { replace: true })
+
+    const setStageFilter = (val) => setParam('stage', val)
+    const setStatusFilter = (val) => setParam('status', val)
+
     useEffect(() => {
-        const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 300)
+        const timer = window.setTimeout(() => {
+            const trimmed = searchInput.trim()
+            setDebouncedSearch(trimmed)
+            setSearchParams(prev => {
+                const p = new URLSearchParams(prev)
+                trimmed ? p.set('search', trimmed) : p.delete('search')
+                return p
+            }, { replace: true })
+        }, 300)
         return () => window.clearTimeout(timer)
-    }, [search])
+    }, [searchInput])
 
     const { data: women, isLoading } = useWomen({
         search: debouncedSearch,
@@ -36,17 +58,54 @@ export function Participants() {
         sortOrder: sorting[0]?.desc ? 'desc' : 'asc'
     })
 
+    const handlePrint = () => {
+        const rows = (women || []).map((w, i) => `
+            <tr>
+                <td>${i + 1}</td>
+                <td>${(w.first_name || '')} ${(w.last_name || '')}</td>
+                <td>${w.stage || '-'}</td>
+                <td>${w.status || '-'}</td>
+                <td>${formatDate(w.enrollment_date) || '-'}</td>
+            </tr>
+        `).join('')
+
+        const html = `<!doctype html><html><head><meta charset="utf-8"/>
+            <title>Legacy Participants</title>
+            <style>body{font-family:Arial,sans-serif;padding:20px;color:#111;}h1{margin-bottom:4px;}
+            .meta{color:#555;font-size:13px;margin-bottom:16px;}
+            table{width:100%;border-collapse:collapse;}
+            th,td{border:1px solid #ddd;padding:8px;text-align:left;}
+            th{background:#f5f5f5;}</style></head>
+            <body><h1>Legacy Women's Program — Participants</h1>
+            <div class="meta">Generated ${new Date().toLocaleDateString()} · ${(women || []).length} participants</div>
+            <table><thead><tr><th>#</th><th>Name</th><th>Stage</th><th>Status</th><th>Enrollment Date</th></tr></thead>
+            <tbody>${rows}</tbody></table></body></html>`
+
+        const win = window.open('', '_blank')
+        if (!win) return
+        win.document.write(html)
+        win.document.close()
+        win.focus()
+        win.print()
+    }
+
     if (isLoading) return <LoadingSpinner />
 
     return (
         <div className="space-y-6">
-            <PageHeader
-                title="Participants"
-                description={`${women?.length || 0} women in Legacy Women's Program`}
-                action={() => setShowAddWoman(true)}
-                actionLabel="Register Woman"
-                actionIcon={UserPlus}
-            />
+            <div className="flex items-center justify-between">
+                <PageHeader
+                    title="Participants"
+                    description={`${women?.length || 0} women in Legacy Women's Program`}
+                    action={() => setShowAddWoman(true)}
+                    actionLabel="Register Woman"
+                    actionIcon={UserPlus}
+                />
+                <Button variant="outline" onClick={handlePrint} className="shrink-0">
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print List
+                </Button>
+            </div>
 
             {/* Filters */}
             <motion.div
@@ -58,8 +117,8 @@ export function Participants() {
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
                     <Input
                         placeholder="Search by name or phone..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
                         className="pl-9"
                     />
                 </div>

@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { Trophy, Plus, Award, TrendingUp } from 'lucide-react'
+import { Trophy, Plus, Award, TrendingUp, FileText } from 'lucide-react'
 import { AwardForm } from '@/components/educare/AwardForm'
 
 const GRADE_LEVELS = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12']
@@ -20,7 +20,7 @@ export function SchoolAwards() {
     const [showCreate, setShowCreate] = useState(false)
     const [gradeFilter, setGradeFilter] = useState('all')
     const [registrationFilter, setRegistrationFilter] = useState('all')
-    const [sortBy, setSortBy] = useState('attendance') // attendance, grade, name, awards
+    const [sortBy, setSortBy] = useState('attendance') // attendance, grade, name, awards, report_cards
 
     const { data: rankings, isLoading } = useStudentRankings({
         gradeLevel: gradeFilter !== 'all' ? gradeFilter : undefined,
@@ -40,6 +40,8 @@ export function SchoolAwards() {
                 return `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`)
             case 'awards':
                 return b.total_awards_received - a.total_awards_received
+            case 'report_cards':
+                return (b.report_cards_count || 0) - (a.report_cards_count || 0)
             default:
                 return 0
         }
@@ -88,6 +90,7 @@ export function SchoolAwards() {
                                 <SelectItem value="grade">Grade Level</SelectItem>
                                 <SelectItem value="name">Name (A-Z)</SelectItem>
                                 <SelectItem value="awards">Total Awards</SelectItem>
+                                <SelectItem value="report_cards">Report Cards</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -147,6 +150,12 @@ export function SchoolAwards() {
                                                     <span className="flex items-center gap-1">
                                                         <Award className="h-3 w-3" />
                                                         {student.total_awards_received} award{student.total_awards_received !== 1 ? 's' : ''}
+                                                    </span>
+                                                )}
+                                                {student.report_cards_count > 0 && (
+                                                    <span className="flex items-center gap-1">
+                                                        <FileText className="h-3 w-3" />
+                                                        {student.report_cards_count} report card{student.report_cards_count !== 1 ? 's' : ''}
                                                     </span>
                                                 )}
                                             </div>

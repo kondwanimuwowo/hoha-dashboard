@@ -1,0 +1,32 @@
+# Ignore node modules and build output
+node_modules/
+.next/
+out/
+dist/
+
+# Ignore environment and secrets
+.env
+.env.*
+
+# Ignore logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore Prisma generated files
+prisma/dev.db
+prisma/migrations_dev/
+
+# Ignore test and coverage
+coverage/
+*.test.*
+
+# Ignore IDE/editor config
+.vscode/
+.idea/
+*.swp

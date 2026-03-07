@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -103,6 +104,7 @@ export function ReliefHistory() {
 }
 
 function DistributionCard({ distribution, isExpanded, onToggle }) {
+    const navigate = useNavigate()
     const collectedCount = distribution.recipients?.filter(r => r.collected).length || 0
     const totalCount = distribution.recipients?.length || 0
 
@@ -111,7 +113,7 @@ function DistributionCard({ distribution, isExpanded, onToggle }) {
             <CardContent className="p-0">
                 {/* Header - Clickable */}
                 <button
-                    onClick={onToggle}
+                    onClick={() => navigate(`/emergency-relief/${distribution.id}`)}
                     className="w-full p-6 text-left hover:bg-neutral-50 dark:hover:bg-accent transition-colors"
                 >
                     <div className="flex items-start justify-between">

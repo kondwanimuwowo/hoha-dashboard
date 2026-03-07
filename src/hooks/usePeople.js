@@ -13,7 +13,10 @@ export function usePeople(search = '') {
                 .order('first_name')
 
             if (search) {
-                query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%,phone_number.ilike.%${search}%`)
+                const terms = search.split(/\s+/).filter(Boolean)
+                for (const term of terms) {
+                    query = query.or(`first_name.ilike.%${term}%,last_name.ilike.%${term}%,phone_number.ilike.%${term}%`)
+                }
             }
 
             const { data, error } = await query
@@ -177,7 +180,10 @@ export function useParents(search = '') {
                 .order('first_name')
 
             if (search) {
-                query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%,phone_number.ilike.%${search}%`)
+                const terms = search.split(/\s+/).filter(Boolean)
+                for (const term of terms) {
+                    query = query.or(`first_name.ilike.%${term}%,last_name.ilike.%${term}%,phone_number.ilike.%${term}%`)
+                }
             }
 
             const { data, error } = await query

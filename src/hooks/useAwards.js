@@ -87,7 +87,7 @@ export function useCreateAward() {
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: async ({ award, recipients }) => {
+        mutationFn: async ({ award, recipients, resources }) => {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) throw new Error('You must be logged in to create awards.')
 
@@ -115,6 +115,7 @@ export function useCreateAward() {
                     attendance_percentage: r.attendance_percentage,
                     grade_level: r.grade_level,
                     notes: r.notes,
+                    received_resources: r.received_resources !== false,
                 }))
 
                 const { error: recipientsError } = await supabase
@@ -122,6 +123,20 @@ export function useCreateAward() {
                     .insert(recipientRecords)
 
                 if (recipientsError) throw recipientsError
+            }
+
+            // Create event resources
+            if (resources && resources.length > 0) {
+                const resourceRecords = resources.map(resourceTypeId => ({
+                    award_id: newAward.id,
+                    resource_type_id: resourceTypeId,
+                }))
+
+                const { error: resourcesError } = await supabase
+                    .from('award_event_resources')
+                    .insert(resourceRecords)
+
+                if (resourcesError) throw resourcesError
             }
 
             return newAward
@@ -133,6 +148,63 @@ export function useCreateAward() {
         },
         onError: (error) => {
             toast.error(`Failed to record award: ${error.message}`)
+        },
+    })
+}
+
+// Fetch all active resource types
+export function useAwardResourceTypes() {
+    return useQuery({
+        queryKey: ['award-resource-types'],
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from('award_resource_types')
+                .select('*')
+                .eq('is_active', true)
+                .order('sort_order')
+
+            if (error) throw error
+            return data
+        },
+    })
+}
+
+// Create a new resource type
+export function useCreateResourceType() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (name) => {
+            const { data, error } = await supabase
+                .from('award_resource_types')
+                .insert({ name, sort_order: 99 })
+                .select()
+                .single()
+
+            if (error) throw error
+            return data
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['award-resource-types'] })
+        },
+    })
+}
+
+// Soft-delete (deactivate) a resource type
+export function useDeleteResourceType() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id) => {
+            const { error } = await supabase
+                .from('award_resource_types')
+                .update({ is_active: false })
+                .eq('id', id)
+
+            if (error) throw error
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['award-resource-types'] })
         },
     })
 }

@@ -8,7 +8,7 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { Heart, DollarSign, MapPin, Users, Plus } from 'lucide-react'
+import { Heart, DollarSign, MapPin, Users, Plus, Printer } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { OutreachForm } from '@/components/community-outreach/OutreachForm'
 
@@ -22,6 +22,35 @@ export function CommunityOutreachOverview() {
 
     const { data: events, isLoading: eventsLoading } = useOutreachEvents()
     const { data: stats, isLoading: statsLoading } = useOutreachStats(startOfYear, today)
+
+    const handlePrint = () => {
+        const rows = (events || []).map((ev, i) => `<tr>
+            <td>${i + 1}</td>
+            <td>${formatDate(ev.outreach_date)}</td>
+            <td>${ev.location?.name || ev.location_name || '-'}</td>
+            <td>${ev.total_participants || 0}</td>
+            <td>${formatCurrency(ev.total_expenses || 0)}</td>
+        </tr>`).join('')
+
+        const html = `<!doctype html><html><head><meta charset="utf-8"/>
+            <title>Community Outreach Events</title>
+            <style>body{font-family:Arial,sans-serif;padding:20px;color:#111;}h1{margin-bottom:4px;}
+            .meta{color:#555;font-size:13px;margin-bottom:16px;}
+            table{width:100%;border-collapse:collapse;}
+            th,td{border:1px solid #ddd;padding:8px;text-align:left;}
+            th{background:#f5f5f5;}</style></head>
+            <body><h1>Community Outreach Events</h1>
+            <div class="meta">Generated ${new Date().toLocaleDateString()} · ${(events || []).length} events</div>
+            <table><thead><tr><th>#</th><th>Date</th><th>Location</th><th>Participants</th><th>Expenses</th></tr></thead>
+            <tbody>${rows}</tbody></table></body></html>`
+
+        const win = window.open('', '_blank')
+        if (!win) return
+        win.document.write(html)
+        win.document.close()
+        win.focus()
+        win.print()
+    }
 
     if (eventsLoading || statsLoading) return <LoadingSpinner />
 
@@ -72,6 +101,10 @@ export function CommunityOutreachOverview() {
                 >
                     <Plus className="mr-2 h-4 w-4" />
                     Record Outreach
+                </Button>
+                <Button variant="outline" onClick={handlePrint}>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print List
                 </Button>
             </div>
 
