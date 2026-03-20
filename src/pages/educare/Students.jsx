@@ -121,96 +121,97 @@ export function Students() {
             />
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-                    <TabsList>
-                        <TabsTrigger value="students" className="gap-2">
-                            <Users className="h-4 w-4" />
-                            All Students
-                        </TabsTrigger>
-                        <TabsTrigger value="parents" className="gap-2">
-                            <Home className="h-4 w-4" />
-                            Parents & Guardians
-                        </TabsTrigger>
-                    </TabsList>
-
-                    {/* Filters - Always show search, show others only for students */}
-                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                        <div className="relative flex-1 sm:w-64">
-                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
-                            <Input
-                                placeholder={activeTab === 'students' ? "Search by name..." : "Search parents..."}
-                                value={searchInput}
-                                onChange={(e) => setSearchInput(e.target.value)}
-                                className="pl-9"
-                            />
-                        </div>
-
-                        {activeTab === 'students' && (
-                            <div className="flex gap-2 flex-wrap">
-                                <RegistrationFilter
-                                    value={registrationFilter}
-                                    onChange={setRegistrationFilter}
-                                />
-
-                                <Select value={gradeFilter} onValueChange={setGradeFilter}>
-                                    <SelectTrigger className="w-[140px]">
-                                        <Filter className="mr-2 h-4 w-4" />
-                                        <SelectValue placeholder="Grade" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All Grades</SelectItem>
-                                        {GRADE_LEVELS.map((grade) => (
-                                            <SelectItem key={grade} value={grade}>
-                                                {grade}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-
-                                <div className="flex items-center gap-1">
-                                    <Select value={schoolFilter} onValueChange={setSchoolFilter}>
-                                        <SelectTrigger className="w-[160px]">
-                                            <GraduationCap className="mr-2 h-4 w-4" />
-                                            <SelectValue placeholder="School" />
-                                        </SelectTrigger>
-                                        <SelectContent className="max-h-64 overflow-y-auto">
-                                            <SelectItem value="all">All Schools</SelectItem>
-                                            <SelectItem value="On Site">On Site</SelectItem>
-                                            {schools?.map((school) => (
-                                                <SelectItem key={school.id} value={school.school_name}>
-                                                    {school.school_name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-9 w-9 shrink-0"
-                                        title="Manage schools"
-                                        onClick={() => setShowManageSchools(true)}
-                                    >
-                                        <Settings2 className="h-4 w-4" />
-                                    </Button>
-                                </div>
-
-                                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                    <SelectTrigger className="w-[130px]">
-                                        <SelectValue placeholder="Status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All Status</SelectItem>
-                                        {Object.values(ENROLLMENT_STATUS).map((status) => (
-                                            <SelectItem key={status} value={status}>
-                                                {status}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-
-                            </div>
-                        )}
+                <div className="space-y-4 mb-6">
+                    {/* Row 1: Tabs + Print */}
+                    <div className="flex items-center justify-between">
+                        <TabsList>
+                            <TabsTrigger value="students" className="gap-2">
+                                <Users className="h-4 w-4" />
+                                All Students
+                            </TabsTrigger>
+                            <TabsTrigger value="parents" className="gap-2">
+                                <Home className="h-4 w-4" />
+                                Parents & Guardians
+                            </TabsTrigger>
+                        </TabsList>
                     </div>
+
+                    {/* Row 2: Search — always full width */}
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+                        <Input
+                            placeholder={activeTab === 'students' ? "Search by name, phone..." : "Search parents..."}
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                            className="pl-9"
+                        />
+                    </div>
+
+                    {/* Row 3: Filters (students tab only) */}
+                    {activeTab === 'students' && (
+                        <div className="flex flex-wrap gap-2">
+                            <RegistrationFilter
+                                value={registrationFilter}
+                                onChange={setRegistrationFilter}
+                            />
+
+                            <Select value={gradeFilter} onValueChange={setGradeFilter}>
+                                <SelectTrigger className="w-full sm:w-[160px]">
+                                    <Filter className="mr-2 h-4 w-4" />
+                                    <SelectValue placeholder="Grade" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Grades</SelectItem>
+                                    {GRADE_LEVELS.map((grade) => (
+                                        <SelectItem key={grade} value={grade}>
+                                            {grade}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+
+                            <div className="flex items-center gap-1">
+                                <Select value={schoolFilter} onValueChange={setSchoolFilter}>
+                                    <SelectTrigger className="w-full sm:w-[170px]">
+                                        <GraduationCap className="mr-2 h-4 w-4" />
+                                        <SelectValue placeholder="School" />
+                                    </SelectTrigger>
+                                    <SelectContent className="max-h-64 overflow-y-auto">
+                                        <SelectItem value="all">All Schools</SelectItem>
+                                        <SelectItem value="On Site">On Site</SelectItem>
+                                        {schools?.map((school) => (
+                                            <SelectItem key={school.id} value={school.school_name}>
+                                                {school.school_name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-9 w-9 shrink-0"
+                                    title="Manage schools"
+                                    onClick={() => setShowManageSchools(true)}
+                                >
+                                    <Settings2 className="h-4 w-4" />
+                                </Button>
+                            </div>
+
+                            <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                <SelectTrigger className="w-full sm:w-[140px]">
+                                    <SelectValue placeholder="Status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Status</SelectItem>
+                                    {Object.values(ENROLLMENT_STATUS).map((status) => (
+                                        <SelectItem key={status} value={status}>
+                                            {status}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
                 </div>
 
                 <TabsContent value="students" className="mt-0 space-y-4">

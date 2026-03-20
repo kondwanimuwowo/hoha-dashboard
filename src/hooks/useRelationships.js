@@ -38,6 +38,7 @@ export function useCreateRelationship() {
             queryClient.invalidateQueries({ queryKey: ['student-guardians', variables.related_person_id] })
             queryClient.invalidateQueries({ queryKey: ['parents'] })
             queryClient.invalidateQueries({ queryKey: ['students'] })
+            queryClient.invalidateQueries({ queryKey: ['woman'] })
         },
     })
 }

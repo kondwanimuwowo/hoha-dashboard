@@ -7,7 +7,7 @@ import { StatsCard } from '@/components/shared/StatsCard'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Users, CheckCircle, Clock, UserPlus, ClipboardList, Trophy } from 'lucide-react'
+import { Users, CheckCircle, Clock, UserPlus, ClipboardList, Trophy, HeartPulse } from 'lucide-react'
 import { GRADE_LEVELS } from '@/lib/constants'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { StudentForm } from '@/components/educare/StudentForm'
@@ -75,7 +75,7 @@ export function EducareOverview() {
 
             {/* Quick Actions */}
             {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <Button
                     className="w-full"
                     onClick={() => navigate('/educare/students')}
@@ -98,6 +98,14 @@ export function EducareOverview() {
                 >
                     <Trophy className="mr-2 h-4 w-4" />
                     School Awards
+                </Button>
+
+                <Button
+                    className="w-full"
+                    onClick={() => navigate('/educare/health')}
+                >
+                    <HeartPulse className="mr-2 h-4 w-4" />
+                    Health & Deworming
                 </Button>
 
                 <Button

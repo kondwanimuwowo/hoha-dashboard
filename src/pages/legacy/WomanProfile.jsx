@@ -5,16 +5,33 @@ import { useLegacyAttendanceSummary } from '@/hooks/useLegacyAttendance'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { formatDate, calculateAge } from '@/lib/utils'
+import { formatDate, calculateAge, cn } from '@/lib/utils'
 import { PersonAvatar } from '@/components/shared/PersonAvatar'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Edit, Phone, Calendar, Award, Users as UsersIcon, Trash2, Printer, ClipboardList } from 'lucide-react'
+import {
+    ArrowLeft, Edit, Phone, Calendar, Award, Users as UsersIcon,
+    Trash2, Printer, MapPin, ChevronRight, Clock
+} from 'lucide-react'
 import { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { WomenForm } from '@/components/legacy/WomenForm'
 import { toast } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CaseNotes } from '@/components/records/CaseNotes'
+
+function InfoRow({ icon: Icon, label, value, iconClass }) {
+    return (
+        <div className="flex items-start gap-3 py-2">
+            <div className={cn('mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', iconClass || 'bg-neutral-100 text-neutral-500')}>
+                <Icon className="h-4 w-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+                <p className="mt-0.5 font-medium text-foreground">{value || 'Not provided'}</p>
+            </div>
+        </div>
+    )
+}
 
 export function WomanProfile() {
     const { id } = useParams()
@@ -24,7 +41,6 @@ export function WomanProfile() {
     const [isEditing, setIsEditing] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
 
-    // Get attendance for last 60 days
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - 60)
     const { data: attendanceData } = useLegacyAttendanceSummary(
@@ -52,69 +68,62 @@ export function WomanProfile() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <Button
-                    variant="ghost"
-                    onClick={() => navigate('/legacy/participants')}
-                >
+            {/* Top bar */}
+            <div className="flex items-center justify-between no-print">
+                <Button variant="ghost" onClick={() => navigate('/legacy/participants')}>
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to Participants
                 </Button>
-                <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => window.print()}>
-                        <Printer className="mr-2 h-4 w-4" />
-                        Print Record
-                    </Button>
-                </div>
+                <Button variant="outline" onClick={() => window.print()}>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print
+                </Button>
             </div>
 
-            {/* Header Card */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-            >
-                <Card>
+            {/* ── Hero Header ── */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                <Card className="overflow-hidden">
+                    <div className="h-2 bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600" />
                     <CardContent className="p-6">
-                        <div className="flex items-start justify-between">
-                            <div className="flex items-center space-x-4">
+                        <div className="flex flex-col sm:flex-row items-start justify-between gap-6">
+                            <div className="flex items-center gap-5">
                                 <PersonAvatar
                                     photoUrl={woman.photo_url}
                                     gender="Female"
                                     firstName={woman.first_name}
                                     lastName={woman.last_name}
-                                    className="h-20 w-20 border-2 border-purple-100"
+                                    className="h-20 w-20 border-2 border-purple-100 shadow-sm"
                                 />
                                 <div>
-                                    <h1 className="text-2xl font-bold text-foreground">
+                                    <h1 className="text-2xl font-bold text-foreground tracking-tight">
                                         {woman.first_name} {woman.last_name}
                                     </h1>
-                                    <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                                        {age && (
-                                            <span className="flex items-center">
-                                                <Calendar className="mr-1 h-4 w-4" />
+                                    <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                                        {age != null && (
+                                            <span className="flex items-center gap-1">
+                                                <Calendar className="h-3.5 w-3.5" />
                                                 {age} years old
                                             </span>
                                         )}
-                                        <span className="flex items-center">
-                                            <Award className="mr-1 h-4 w-4" />
+                                        <span className="flex items-center gap-1">
+                                            <Award className="h-3.5 w-3.5" />
                                             {enrollment.stage}
                                         </span>
                                     </div>
-                                    <div className="mt-2">
+                                    <div className="mt-2.5">
                                         <Badge variant={enrollment.status === 'Active' ? 'success' : 'secondary'}>
                                             {enrollment.status}
                                         </Badge>
                                     </div>
                                 </div>
                             </div>
-                            <div className="flex flex-col gap-2">
-                                <Button onClick={() => setIsEditing(true)} className="w-full">
+                            <div className="flex gap-2 no-print shrink-0">
+                                <Button onClick={() => setIsEditing(true)}>
                                     <Edit className="mr-2 h-4 w-4" />
-                                    Edit Profile
+                                    Edit
                                 </Button>
-                                <Button variant="destructive" onClick={() => setIsDeleting(true)} className="w-full">
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Delete Record
+                                <Button variant="destructive" size="icon" onClick={() => setIsDeleting(true)}>
+                                    <Trash2 className="h-4 w-4" />
                                 </Button>
                             </div>
                         </div>
@@ -122,7 +131,7 @@ export function WomanProfile() {
                 </Card>
             </motion.div>
 
-            {/* Delete Confirmation Dialog */}
+            {/* Delete Confirmation */}
             <Dialog open={isDeleting} onOpenChange={setIsDeleting}>
                 <DialogContent>
                     <DialogHeader>
@@ -166,196 +175,174 @@ export function WomanProfile() {
                 </TabsList>
 
                 <TabsContent value="overview" className="space-y-6">
-                    {/* Details Grid */}
-                    <div className="grid gap-6 lg:grid-cols-3">
-                        {/* Personal Information */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.1 }}
-                        >
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-lg">Personal Information</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Date of Birth</p>
-                                        <p className="font-medium text-foreground">{formatDate(woman.date_of_birth)}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Phone Number</p>
-                                        <p className="font-medium text-foreground">{woman.phone_number || 'Not provided'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Address</p>
-                                        <p className="font-medium text-foreground">{woman.address || 'Not provided'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Compound Area</p>
-                                        <p className="font-medium text-foreground">{woman.compound_area || 'Not provided'}</p>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </motion.div>
 
-                        {/* Program Information */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2 }}
-                        >
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-lg">Program Details</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Current Stage</p>
-                                        <p className="font-medium text-foreground">{enrollment.stage}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Enrollment Date</p>
-                                        <p className="font-medium text-foreground">{formatDate(enrollment.enrollment_date)}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Status</p>
-                                        <Badge variant={enrollment.status === 'Active' ? 'success' : 'secondary'}>
-                                            {enrollment.status}
-                                        </Badge>
-                                    </div>
-                                    {enrollment.completion_date && (
-                                        <div>
-                                            <p className="text-sm text-muted-foreground">Completion Date</p>
-                                            <p className="font-medium text-foreground">{formatDate(enrollment.completion_date)}</p>
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        </motion.div>
-
-                        {/* Attendance Summary */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.3 }}
-                        >
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-lg">Attendance (Last 60 Days)</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    {attendanceData ? (
-                                        <div className="space-y-4">
-                                            <div className="text-center">
-                                                <div className="text-4xl font-bold text-purple-600 dark:text-purple-400">
-                                                    {attendanceData.summary.percentage}%
-                                                </div>
-                                                <p className="text-sm text-muted-foreground">Attendance Rate</p>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-4 text-sm">
-                                                <div>
-                                                    <p className="text-muted-foreground">Present</p>
-                                                    <p className="font-semibold text-green-600 dark:text-green-400">{attendanceData.summary.present}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-muted-foreground">Absent</p>
-                                                    <p className="font-semibold text-red-600 dark:text-red-400">{attendanceData.summary.absent}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <p className="text-sm text-neutral-500">No attendance records</p>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        </motion.div>
-                    </div>
-
-                    {/* Children & Skills */}
+                    {/* ── Two-column detail grid ── */}
                     <div className="grid gap-6 lg:grid-cols-2">
-                        {/* Children in Educare */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.4 }}
-                        >
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-lg flex items-center">
-                                        <UsersIcon className="mr-2 h-5 w-5" />
-                                        Children in Educare
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    {womanData.children && womanData.children.length > 0 ? (
-                                        <div className="space-y-3">
-                                            {womanData.children.map((rel) => (
-                                                <div key={rel.id} className="flex items-center justify-between rounded-lg border border-border p-3">
-                                                    <div className="flex items-center space-x-3">
-                                                        <PersonAvatar
-                                                            photoUrl={rel.child?.photo_url}
-                                                            gender={rel.child?.gender}
-                                                            firstName={rel.child?.first_name}
-                                                            lastName={rel.child?.last_name}
+
+                        {/* Left column */}
+                        <div className="space-y-6">
+                            {/* Personal Information */}
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-lg">Personal Information</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-1 pt-0">
+                                        <InfoRow icon={Calendar} label="Date of Birth" value={age ? `${formatDate(woman.date_of_birth)} (${age} yrs)` : formatDate(woman.date_of_birth)} iconClass="bg-purple-50 text-purple-500" />
+                                        <InfoRow icon={Phone} label="Phone" value={woman.phone_number} iconClass="bg-green-50 text-green-500" />
+                                        <InfoRow icon={MapPin} label="Address" value={woman.address} iconClass="bg-orange-50 text-orange-500" />
+                                        <InfoRow icon={MapPin} label="Compound Area" value={woman.compound_area} iconClass="bg-teal-50 text-teal-500" />
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+
+                            {/* Program Details */}
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-lg">Program Details</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-1 pt-0">
+                                        <InfoRow icon={Award} label="Current Stage" value={enrollment.stage} iconClass="bg-indigo-50 text-indigo-500" />
+                                        <InfoRow icon={Calendar} label="Enrolled" value={formatDate(enrollment.enrollment_date)} iconClass="bg-sky-50 text-sky-500" />
+                                        {enrollment.completion_date && (
+                                            <InfoRow icon={Clock} label="Completed" value={formatDate(enrollment.completion_date)} iconClass="bg-green-50 text-green-500" />
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        </div>
+
+                        {/* Right column */}
+                        <div className="space-y-6">
+
+                            {/* Attendance */}
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-lg">Attendance (Last 60 Days)</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {attendanceData ? (
+                                            <div className="flex items-center gap-4">
+                                                <div className="relative h-20 w-20 shrink-0">
+                                                    <svg className="h-20 w-20 -rotate-90" viewBox="0 0 36 36">
+                                                        <path
+                                                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            strokeWidth="3"
+                                                            className="text-neutral-100"
                                                         />
-                                                        <div>
-                                                            <p className="font-medium text-foreground">
-                                                                {rel.child?.first_name} {rel.child?.last_name}
-                                                            </p>
-                                                            <p className="text-sm text-muted-foreground">
-                                                                {calculateAge(rel.child?.date_of_birth)} years old
-                                                            </p>
-                                                        </div>
+                                                        <path
+                                                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            strokeWidth="3"
+                                                            strokeDasharray={`${attendanceData.summary.percentage}, 100`}
+                                                            strokeLinecap="round"
+                                                            className="text-purple-500"
+                                                        />
+                                                    </svg>
+                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                        <span className="text-lg font-bold">{attendanceData.summary.percentage}%</span>
                                                     </div>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm flex-1">
+                                                    <div>
+                                                        <p className="text-muted-foreground">Present</p>
+                                                        <p className="text-lg font-semibold text-green-600">{attendanceData.summary.present}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-muted-foreground">Absent</p>
+                                                        <p className="text-lg font-semibold text-red-600">{attendanceData.summary.absent}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <p className="text-sm text-muted-foreground">No attendance records</p>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+
+                            {/* Children in Educare */}
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2 text-lg">
+                                            <UsersIcon className="h-5 w-5 text-indigo-500" />
+                                            Children in Educare
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {womanData.children && womanData.children.length > 0 ? (
+                                            <div className="space-y-2">
+                                                {womanData.children.map((rel) => (
+                                                    <button
+                                                        key={rel.id}
+                                                        type="button"
+                                                        className="flex w-full items-center justify-between rounded-lg border border-border p-3 text-left transition-colors hover:bg-accent group"
                                                         onClick={() => navigate(`/educare/students/${rel.child?.id}`)}
                                                     >
-                                                        View Profile
-                                                    </Button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <p className="text-sm text-neutral-500">No children linked in Educare</p>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        </motion.div>
+                                                        <div className="flex items-center gap-3">
+                                                            <PersonAvatar
+                                                                photoUrl={rel.child?.photo_url}
+                                                                gender={rel.child?.gender}
+                                                                firstName={rel.child?.first_name}
+                                                                lastName={rel.child?.last_name}
+                                                                className="h-10 w-10"
+                                                            />
+                                                            <div>
+                                                                <p className="font-medium text-foreground">
+                                                                    {rel.child?.first_name} {rel.child?.last_name}
+                                                                </p>
+                                                                <p className="text-xs text-muted-foreground">
+                                                                    {calculateAge(rel.child?.date_of_birth)} years old
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-sm text-muted-foreground">No children linked in Educare</p>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
 
-                        {/* Skills Learned */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.5 }}
-                        >
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-lg">Skills & Progress</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    {enrollment.skills_learned ? (
-                                        <p className="text-foreground whitespace-pre-wrap">{enrollment.skills_learned}</p>
-                                    ) : (
-                                        <p className="text-sm text-muted-foreground">No skills documented yet</p>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        </motion.div>
+                            {/* Skills & Progress */}
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-lg">Skills & Progress</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {enrollment.skills_learned ? (
+                                            <p className="text-foreground whitespace-pre-wrap">{enrollment.skills_learned}</p>
+                                        ) : (
+                                            <p className="text-sm text-muted-foreground">No skills documented yet</p>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        </div>
                     </div>
 
                     {/* Notes */}
                     {enrollment.notes && (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg">Program Notes</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-foreground whitespace-pre-wrap">{enrollment.notes}</p>
-                            </CardContent>
-                        </Card>
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-lg">Program Notes</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-foreground whitespace-pre-wrap">{enrollment.notes}</p>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
                     )}
                 </TabsContent>
 
@@ -366,4 +353,3 @@ export function WomanProfile() {
         </div>
     )
 }
-

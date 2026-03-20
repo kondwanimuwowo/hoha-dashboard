@@ -123,8 +123,8 @@ export function WomenForm({ onSuccess, onCancel, initialData }) {
             // Link children if any
             for (const child of linkedChildren) {
                 await createRelationship.mutateAsync({
-                    person_id: child.id,
-                    related_person_id: womanId,
+                    person_id: womanId,
+                    related_person_id: child.id,
                     relationship_type: 'Mother',
                     is_primary: true,
                 })

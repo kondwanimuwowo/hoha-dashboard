@@ -14,6 +14,7 @@ const Students = lazy(() => import('@/pages/educare/Students').then((m) => ({ de
 const StudentProfile = lazy(() => import('@/pages/educare/StudentProfile').then((m) => ({ default: m.StudentProfile })))
 const Attendance = lazy(() => import('@/pages/educare/Attendance').then((m) => ({ default: m.Attendance })))
 const SchoolAwards = lazy(() => import('@/pages/educare/SchoolAwards').then((m) => ({ default: m.SchoolAwards })))
+const Health = lazy(() => import('@/pages/educare/Health').then((m) => ({ default: m.Health })))
 
 const LegacyOverview = lazy(() => import('@/pages/legacy/LegacyOverview').then((m) => ({ default: m.LegacyOverview })))
 const Participants = lazy(() => import('@/pages/legacy/Participants').then((m) => ({ default: m.Participants })))
@@ -136,6 +137,7 @@ function App() {
               <Route path="students/:id" element={<StudentProfile />} />
               <Route path="attendance" element={<Attendance />} />
               <Route path="awards" element={<SchoolAwards />} />
+              <Route path="health" element={<Health />} />
             </Route>
 
             <Route path="legacy">

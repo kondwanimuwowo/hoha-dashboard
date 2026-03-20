@@ -33,6 +33,9 @@ const studentSchema = z.object({
     emergency_contact_phone: z.string().nullable().optional(),
     emergency_contact_relationship: z.string().nullable().optional(),
     current_status: z.string().default('Active'),
+    weight_kg: z.union([z.number(), z.nan()]).nullable().optional(),
+    height_cm: z.union([z.number(), z.nan()]).nullable().optional(),
+    last_deworming_date: z.string().nullable().optional(),
     notes: z.string().nullable().optional(),
 })
 
@@ -118,6 +121,9 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                 setValue('government_school_id', enrollment.government_school_id || null)
                 setValue('enrollment_date', enrollment.enrollment_date || '')
                 setValue('current_status', enrollment.current_status || 'Active')
+                setValue('weight_kg', enrollment.weight_kg ?? null)
+                setValue('height_cm', enrollment.height_cm ?? null)
+                setValue('last_deworming_date', enrollment.last_deworming_date || '')
             }
 
         }
@@ -236,6 +242,10 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
 
     const onSubmit = async (data) => {
         setError('')
+        // Sanitize health fields: NaN → null
+        const weight_kg = (data.weight_kg != null && !isNaN(data.weight_kg)) ? data.weight_kg : null
+        const height_cm = (data.height_cm != null && !isNaN(data.height_cm)) ? data.height_cm : null
+        const last_deworming_date = data.last_deworming_date || null
         try {
             if (initialData) {
                 await updateStudent.mutateAsync({
@@ -243,7 +253,10 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                     ...data,
                     // Sanitize: empty string is invalid for UUID columns — must be null
                     government_school_id: data.government_school_id || null,
-                    current_status: data.current_status || initialData.educare_enrollment?.[0]?.current_status
+                    current_status: data.current_status || initialData.educare_enrollment?.[0]?.current_status,
+                    weight_kg,
+                    height_cm,
+                    last_deworming_date,
                 })
 
                 const studentId = initialData.id
@@ -757,6 +770,44 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
             </div>
 
 
+
+            {/* Health Information */}
+            <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Health Information</h3>
+
+                <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="weight_kg">Weight (kg)</Label>
+                        <Input
+                            id="weight_kg"
+                            type="number"
+                            step="0.01"
+                            {...register('weight_kg', { valueAsNumber: true })}
+                            placeholder="e.g. 25.5"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="height_cm">Height (cm)</Label>
+                        <Input
+                            id="height_cm"
+                            type="number"
+                            step="0.1"
+                            {...register('height_cm', { valueAsNumber: true })}
+                            placeholder="e.g. 120.5"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="last_deworming_date">Last Deworming Date</Label>
+                        <Input
+                            id="last_deworming_date"
+                            type="date"
+                            {...register('last_deworming_date')}
+                        />
+                    </div>
+                </div>
+            </div>
 
             {/* Notes */}
             <div className="space-y-2">

@@ -128,7 +128,7 @@ export function useUpdateStudent() {
                 'address', 'compound_area', 'photo_url', 'notes',
                 'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relationship',
             ]
-            const enrollmentFields = ['grade_level', 'government_school_id', 'enrollment_date', 'current_status']
+            const enrollmentFields = ['grade_level', 'government_school_id', 'enrollment_date', 'current_status', 'weight_kg', 'height_cm', 'last_deworming_date']
 
             const personUpdates = {}
             const enrollmentUpdates = {}
