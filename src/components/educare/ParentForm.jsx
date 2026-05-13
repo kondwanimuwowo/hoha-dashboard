@@ -75,7 +75,7 @@ export function ParentForm({ onSuccess, onCancel }) {
                 for (const student of linkedStudents) {
                     await createRelationship.mutateAsync({
                         person_id: parent.id,
-                        related_person_id: student.id,
+                        related_person_id: student.person_id ?? student.id,
                         relationship_type: student.relationship_type,
                         is_primary: linkedStudents.indexOf(student) === 0, // Mark first as primary by default
                         is_emergency_contact: student.is_emergency

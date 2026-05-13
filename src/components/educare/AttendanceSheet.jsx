@@ -22,8 +22,9 @@ export function AttendanceSheet({ students, date, gradeLabel, existingAttendance
     useEffect(() => {
         const records = {}
         students.forEach((student) => {
-            const existing = existingAttendance?.find((a) => a.child_id === student.id)
-            records[student.id] = {
+            const personId = student.person_id ?? student.id
+            const existing = existingAttendance?.find((a) => a.child_id === personId)
+            records[personId] = {
                 status: existing?.status || '',
                 note: existing?.notes || '',
             }
@@ -69,7 +70,8 @@ export function AttendanceSheet({ students, date, gradeLabel, existingAttendance
     const markAllPresent = () => {
         const records = {}
         students.forEach((student) => {
-            records[student.id] = { status: ATTENDANCE_STATUS.PRESENT, note: '' }
+            const personId = student.person_id ?? student.id
+            records[personId] = { status: ATTENDANCE_STATUS.PRESENT, note: '' }
         })
         setAttendanceRecords(records)
     }
@@ -208,7 +210,8 @@ export function AttendanceSheet({ students, date, gradeLabel, existingAttendance
                     <div className="divide-y divide-neutral-100">
                         <AnimatePresence>
                             {filteredStudents.map((student, index) => {
-                                const record = attendanceRecords[student.id] || { status: '', note: '' }
+                                const personId = student.person_id ?? student.id
+                                const record = attendanceRecords[personId] || { status: '', note: '' }
                                 const status = record.status
                                 const age = calculateAge(student.date_of_birth)
 
@@ -257,7 +260,7 @@ export function AttendanceSheet({ students, date, gradeLabel, existingAttendance
                                                 <Button
                                                     variant={status === ATTENDANCE_STATUS.PRESENT ? 'default' : 'outline'}
                                                     size="sm"
-                                                    onClick={() => markStatus(student.id, ATTENDANCE_STATUS.PRESENT)}
+                                                    onClick={() => markStatus(personId, ATTENDANCE_STATUS.PRESENT)}
                                                     className={cn(
                                                         status === ATTENDANCE_STATUS.PRESENT && 'bg-green-600 hover:bg-green-700'
                                                     )}
@@ -269,7 +272,7 @@ export function AttendanceSheet({ students, date, gradeLabel, existingAttendance
                                                 <Button
                                                     variant={status === ATTENDANCE_STATUS.ABSENT ? 'default' : 'outline'}
                                                     size="sm"
-                                                    onClick={() => markStatus(student.id, ATTENDANCE_STATUS.ABSENT)}
+                                                    onClick={() => markStatus(personId, ATTENDANCE_STATUS.ABSENT)}
                                                     className={cn(
                                                         status === ATTENDANCE_STATUS.ABSENT && 'bg-red-600 hover:bg-red-700'
                                                     )}
@@ -281,7 +284,7 @@ export function AttendanceSheet({ students, date, gradeLabel, existingAttendance
                                                 <Button
                                                     variant={status === ATTENDANCE_STATUS.LATE ? 'default' : 'outline'}
                                                     size="sm"
-                                                    onClick={() => markStatus(student.id, ATTENDANCE_STATUS.LATE)}
+                                                    onClick={() => markStatus(personId, ATTENDANCE_STATUS.LATE)}
                                                     className={cn(
                                                         status === ATTENDANCE_STATUS.LATE && 'bg-orange-600 hover:bg-orange-700'
                                                     )}
@@ -293,7 +296,7 @@ export function AttendanceSheet({ students, date, gradeLabel, existingAttendance
                                                 <Button
                                                     variant={status === ATTENDANCE_STATUS.EXCUSED ? 'default' : 'outline'}
                                                     size="sm"
-                                                    onClick={() => markStatus(student.id, ATTENDANCE_STATUS.EXCUSED)}
+                                                    onClick={() => markStatus(personId, ATTENDANCE_STATUS.EXCUSED)}
                                                     className={cn(
                                                         status === ATTENDANCE_STATUS.EXCUSED && 'bg-blue-600 hover:bg-blue-700'
                                                     )}
@@ -308,7 +311,7 @@ export function AttendanceSheet({ students, date, gradeLabel, existingAttendance
                                             <div className="mt-3 max-w-md">
                                                 <Input
                                                     value={record.note || ''}
-                                                    onChange={(e) => setExcusedNote(student.id, e.target.value)}
+                                                    onChange={(e) => setExcusedNote(personId, e.target.value)}
                                                     placeholder="Reason for excused absence..."
                                                 />
                                             </div>
