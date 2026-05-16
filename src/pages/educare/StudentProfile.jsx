@@ -86,7 +86,7 @@ export function StudentProfile() {
     const { data: relationships } = useStudentGuardians(student?.id)
     const deleteStudent = useDeleteStudent()
 
-    const { data: attendanceData } = useAttendanceSummary(student?.person_id)
+    const { data: attendanceData } = useAttendanceSummary(student?.id)
 
     const { data: documents } = useStudentDocuments(id)
     const reportCardsCount = documents?.filter(d => d.document_type === 'Report Card').length ?? 0
