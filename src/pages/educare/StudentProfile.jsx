@@ -540,7 +540,10 @@ export function StudentProfile() {
                                                 </div>
                                             ))
                                         ) : (
-                                            <p className="py-8 text-center text-sm text-muted-foreground">No records for this month.</p>
+                                            <div className="py-8 text-center space-y-1">
+                                                <p className="text-sm text-muted-foreground">No records for this month.</p>
+                                                <p className="text-xs text-muted-foreground/70">Use the arrows above to navigate to earlier months.</p>
+                                            </div>
                                         )}
                                     </div>
                                 </DialogContent>
