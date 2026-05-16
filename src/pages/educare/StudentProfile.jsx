@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import {
     ArrowLeft, Edit, Phone, MapPin, Calendar, School, Users as UsersIcon,
     Trash2, Printer, FileText, Heart, Weight, Ruler, Pill,
-    AlertTriangle, ChevronRight, ChevronLeft, ShieldCheck, Clock, Check, X, AlertCircle
+    AlertTriangle, ChevronRight, ShieldCheck
 } from 'lucide-react'
 import { formatDate, calculateAge } from '@/lib/utils'
 import { PersonAvatar } from '@/components/shared/PersonAvatar'
@@ -86,13 +86,7 @@ export function StudentProfile() {
     const { data: relationships } = useStudentGuardians(student?.id)
     const deleteStudent = useDeleteStudent()
 
-    const startDate = new Date()
-    startDate.setDate(startDate.getDate() - 30)
-    const { data: attendanceData } = useAttendanceSummary(
-        student?.person_id,
-        startDate.toISOString(),
-        new Date().toISOString()
-    )
+    const { data: attendanceData } = useAttendanceSummary(student?.person_id)
 
     const { data: documents } = useStudentDocuments(id)
     const reportCardsCount = documents?.filter(d => d.document_type === 'Report Card').length ?? 0
@@ -100,22 +94,6 @@ export function StudentProfile() {
     const [isEditing, setIsEditing] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
     const [selectedParentForDetail, setSelectedParentForDetail] = useState(null)
-    const [showAttendanceHistory, setShowAttendanceHistory] = useState(false)
-    const [historyDate, setHistoryDate] = useState(() => new Date())
-
-    const historyStart = new Date(historyDate.getFullYear(), historyDate.getMonth(), 1)
-    const historyEnd = new Date(historyDate.getFullYear(), historyDate.getMonth() + 1, 0)
-    const { data: historyData, isLoading: historyLoading } = useAttendanceSummary(
-        showAttendanceHistory ? student?.person_id : null,
-        historyStart.toISOString(),
-        historyEnd.toISOString()
-    )
-
-    const shiftMonth = (delta) => {
-        setHistoryDate(prev => new Date(prev.getFullYear(), prev.getMonth() + delta, 1))
-    }
-    const isCurrentMonth = historyDate.getMonth() === new Date().getMonth() &&
-        historyDate.getFullYear() === new Date().getFullYear()
 
     if (isLoading) return <LoadingSpinner />
     if (isError || !student) return <div>Student not found</div>
@@ -407,147 +385,70 @@ export function StudentProfile() {
                                 transition={{ delay: 0.25 }}
                             >
                                 <Card>
-                                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                        <CardTitle className="text-lg">Attendance (Last 30 Days)</CardTitle>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="text-xs text-muted-foreground"
-                                            onClick={() => setShowAttendanceHistory(true)}
-                                        >
-                                            View Full History
-                                            <ChevronRight className="ml-1 h-3 w-3" />
-                                        </Button>
+                                    <CardHeader className="pb-2">
+                                        <div className="flex items-center justify-between">
+                                            <CardTitle className="text-lg">Attendance</CardTitle>
+                                            {attendanceData?.summary?.total > 0 && (
+                                                <span className="text-sm font-semibold text-primary-600">
+                                                    {attendanceData.summary.percentage}% attendance
+                                                </span>
+                                            )}
+                                        </div>
                                     </CardHeader>
-                                    <CardContent>
-                                        {attendanceData ? (
-                                            <div className="space-y-4">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="relative h-20 w-20 shrink-0">
-                                                        <svg className="h-20 w-20 -rotate-90" viewBox="0 0 36 36">
-                                                            <path
-                                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                                                fill="none"
-                                                                stroke="currentColor"
-                                                                strokeWidth="3"
-                                                                className="text-neutral-100"
-                                                            />
-                                                            <path
-                                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                                                fill="none"
-                                                                stroke="currentColor"
-                                                                strokeWidth="3"
-                                                                strokeDasharray={`${attendanceData.summary.percentage}, 100`}
-                                                                strokeLinecap="round"
-                                                                className="text-primary-500"
-                                                            />
-                                                        </svg>
-                                                        <div className="absolute inset-0 flex items-center justify-center">
-                                                            <span className="text-lg font-bold">{attendanceData.summary.percentage}%</span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm flex-1">
-                                                        <div>
-                                                            <p className="text-muted-foreground">Present</p>
-                                                            <p className="text-lg font-semibold text-green-600">{attendanceData.summary.present}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-muted-foreground">Absent</p>
-                                                            <p className="text-lg font-semibold text-red-600">{attendanceData.summary.absent}</p>
-                                                        </div>
-                                                    </div>
+                                    <CardContent className="pt-0">
+                                        {attendanceData?.summary?.total > 0 && (
+                                            <div className="grid grid-cols-4 gap-2 mb-3 rounded-lg bg-muted/40 p-3 text-center text-xs">
+                                                <div>
+                                                    <p className="font-semibold text-green-600 text-base">{attendanceData.summary.present}</p>
+                                                    <p className="text-muted-foreground">Present</p>
+                                                </div>
+                                                <div>
+                                                    <p className="font-semibold text-red-600 text-base">{attendanceData.summary.absent}</p>
+                                                    <p className="text-muted-foreground">Absent</p>
+                                                </div>
+                                                <div>
+                                                    <p className="font-semibold text-orange-600 text-base">{attendanceData.summary.late}</p>
+                                                    <p className="text-muted-foreground">Late</p>
+                                                </div>
+                                                <div>
+                                                    <p className="font-semibold text-blue-600 text-base">{attendanceData.summary.excused}</p>
+                                                    <p className="text-muted-foreground">Excused</p>
                                                 </div>
                                             </div>
-                                        ) : (
-                                            <p className="text-sm text-muted-foreground">No attendance records</p>
                                         )}
+                                        <div className="max-h-64 overflow-y-auto divide-y divide-neutral-100">
+                                            {attendanceData?.data?.length > 0 ? (
+                                                attendanceData.data.map((record) => (
+                                                    <div key={record.id} className="flex items-center justify-between py-2.5 px-1">
+                                                        <span className="text-sm text-muted-foreground">
+                                                            {new Date(record.attendance_date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                                                        </span>
+                                                        <div className="flex items-center gap-2">
+                                                            {record.notes && (
+                                                                <span className="text-xs text-muted-foreground italic max-w-[100px] truncate">{record.notes}</span>
+                                                            )}
+                                                            <Badge
+                                                                variant="secondary"
+                                                                className={cn(
+                                                                    'text-xs',
+                                                                    record.status === 'Present' && 'bg-green-100 text-green-700',
+                                                                    record.status === 'Absent' && 'bg-red-100 text-red-700',
+                                                                    record.status === 'Late' && 'bg-orange-100 text-orange-700',
+                                                                    record.status === 'Excused' && 'bg-blue-100 text-blue-700',
+                                                                )}
+                                                            >
+                                                                {record.status}
+                                                            </Badge>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <p className="py-8 text-center text-sm text-muted-foreground">No attendance records</p>
+                                            )}
+                                        </div>
                                     </CardContent>
                                 </Card>
                             </motion.div>
-
-                            {/* Attendance History Dialog */}
-                            <Dialog open={showAttendanceHistory} onOpenChange={setShowAttendanceHistory}>
-                                <DialogContent className="max-w-lg">
-                                    <DialogHeader>
-                                        <DialogTitle>Attendance History</DialogTitle>
-                                        <DialogDescription>
-                                            {student?.first_name} {student?.last_name}
-                                        </DialogDescription>
-                                    </DialogHeader>
-
-                                    {/* Month navigator */}
-                                    <div className="flex items-center justify-between py-1">
-                                        <Button variant="ghost" size="icon" onClick={() => shiftMonth(-1)}>
-                                            <ChevronLeft className="h-4 w-4" />
-                                        </Button>
-                                        <span className="font-semibold">
-                                            {historyDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
-                                        </span>
-                                        <Button variant="ghost" size="icon" onClick={() => shiftMonth(1)} disabled={isCurrentMonth}>
-                                            <ChevronRight className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-
-                                    {/* Monthly summary */}
-                                    {historyData?.summary && historyData.summary.total > 0 && (
-                                        <div className="grid grid-cols-4 gap-2 rounded-lg bg-muted/40 p-3 text-center text-xs">
-                                            <div>
-                                                <p className="font-semibold text-green-600 text-base">{historyData.summary.present}</p>
-                                                <p className="text-muted-foreground">Present</p>
-                                            </div>
-                                            <div>
-                                                <p className="font-semibold text-red-600 text-base">{historyData.summary.absent}</p>
-                                                <p className="text-muted-foreground">Absent</p>
-                                            </div>
-                                            <div>
-                                                <p className="font-semibold text-orange-600 text-base">{historyData.summary.late}</p>
-                                                <p className="text-muted-foreground">Late</p>
-                                            </div>
-                                            <div>
-                                                <p className="font-semibold text-blue-600 text-base">{historyData.summary.excused}</p>
-                                                <p className="text-muted-foreground">Excused</p>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Records list */}
-                                    <div className="max-h-80 overflow-y-auto divide-y divide-neutral-100">
-                                        {historyLoading ? (
-                                            <p className="py-8 text-center text-sm text-muted-foreground">Loading...</p>
-                                        ) : historyData?.data?.length > 0 ? (
-                                            historyData.data.map((record) => (
-                                                <div key={record.id} className="flex items-center justify-between py-2.5 px-1">
-                                                    <span className="text-sm text-muted-foreground">
-                                                        {new Date(record.attendance_date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
-                                                    </span>
-                                                    <div className="flex items-center gap-2">
-                                                        {record.notes && (
-                                                            <span className="text-xs text-muted-foreground italic max-w-[120px] truncate">{record.notes}</span>
-                                                        )}
-                                                        <Badge
-                                                            variant="secondary"
-                                                            className={cn(
-                                                                'text-xs',
-                                                                record.status === 'Present' && 'bg-green-100 text-green-700',
-                                                                record.status === 'Absent' && 'bg-red-100 text-red-700',
-                                                                record.status === 'Late' && 'bg-orange-100 text-orange-700',
-                                                                record.status === 'Excused' && 'bg-blue-100 text-blue-700',
-                                                            )}
-                                                        >
-                                                            {record.status}
-                                                        </Badge>
-                                                    </div>
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <div className="py-8 text-center space-y-1">
-                                                <p className="text-sm text-muted-foreground">No records for this month.</p>
-                                                <p className="text-xs text-muted-foreground/70">Use the arrows above to navigate to earlier months.</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </DialogContent>
-                            </Dialog>
 
                             {/* Family */}
                             <motion.div
