@@ -160,7 +160,7 @@ export function EducareOverview() {
                                             <span className="text-xs text-muted-foreground ml-1">({pct.toFixed(0)}%)</span>
                                         </span>
                                     </div>
-                                    <div className="h-px w-full rounded-full bg-muted overflow-hidden">
+                                    <div className="h-0.5 w-full rounded-full bg-muted overflow-hidden">
                                         <motion.div
                                             initial={{ width: 0 }}
                                             animate={{ width: `${pct}%` }}
