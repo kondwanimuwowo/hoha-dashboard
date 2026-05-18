@@ -24,7 +24,7 @@ export function EducareOverview() {
     const totalStudents = students?.length || 0
     const activeStudents = students?.filter(s => s.current_status === 'Active').length || 0
     const earlyChildhood = students?.filter(s =>
-        s.grade_level === 'Baby Class' || s.grade_level === 'Reception'
+        s.grade_level === 'Early Childhood Program' || s.grade_level === 'Preparatory Program'
     ).length || 0
     const primarySecondary = totalStudents - earlyChildhood
 
@@ -60,7 +60,7 @@ export function EducareOverview() {
                 <StatsCard
                     title="Early Childhood"
                     value={earlyChildhood}
-                    subtitle="Baby Class & Reception"
+                    subtitle="Early Childhood & Preparatory"
                     icon={Users}
                     colorClass="bg-purple-50 text-purple-600"
                 />
