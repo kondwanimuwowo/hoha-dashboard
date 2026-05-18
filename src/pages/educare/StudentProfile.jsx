@@ -94,6 +94,7 @@ export function StudentProfile() {
     const [isEditing, setIsEditing] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
     const [selectedParentForDetail, setSelectedParentForDetail] = useState(null)
+    const [dayFilter, setDayFilter] = useState('')
 
     if (isLoading) return <LoadingSpinner />
     if (isError || !student) return <div>Student not found</div>
@@ -416,9 +417,36 @@ export function StudentProfile() {
                                                 </div>
                                             </div>
                                         )}
+                                        {attendanceData?.data?.length > 0 && (
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <input
+                                                    type="date"
+                                                    value={dayFilter}
+                                                    onChange={e => setDayFilter(e.target.value)}
+                                                    className="flex-1 h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground"
+                                                />
+                                                {dayFilter && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setDayFilter('')}
+                                                        className="text-xs text-muted-foreground hover:text-foreground underline"
+                                                    >
+                                                        Clear
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
                                         <div className="max-h-64 overflow-y-auto divide-y divide-neutral-100">
-                                            {attendanceData?.data?.length > 0 ? (
-                                                attendanceData.data.map((record) => (
+                                            {(() => {
+                                                const records = dayFilter
+                                                    ? (attendanceData?.data || []).filter(r => r.attendance_date === dayFilter)
+                                                    : (attendanceData?.data || [])
+                                                if (records.length === 0) {
+                                                    return <p className="py-8 text-center text-sm text-muted-foreground">
+                                                        {dayFilter ? 'No record found for this date.' : 'No attendance records'}
+                                                    </p>
+                                                }
+                                                return records.map((record) => (
                                                     <div key={record.id} className="flex items-center justify-between py-2.5 px-1">
                                                         <span className="text-sm text-muted-foreground">
                                                             {new Date(record.attendance_date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
@@ -442,9 +470,7 @@ export function StudentProfile() {
                                                         </div>
                                                     </div>
                                                 ))
-                                            ) : (
-                                                <p className="py-8 text-center text-sm text-muted-foreground">No attendance records</p>
-                                            )}
+                                            })()}
                                         </div>
                                     </CardContent>
                                 </Card>
