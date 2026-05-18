@@ -85,7 +85,18 @@ export function ParentForm({ onSuccess, onCancel }) {
 
             onSuccess?.()
         } catch (err) {
-            setError(err.message || 'Failed to create parent record')
+            const raw = err.message || ''
+            let msg = 'Something went wrong. Please try again.'
+            if (raw.includes('duplicate key') || raw.includes('unique constraint')) {
+                msg = 'A parent record with these details already exists.'
+            } else if (raw.includes('violates foreign key')) {
+                msg = 'A linked record could not be found. Please refresh and try again.'
+            } else if (raw.includes('not-null constraint') || raw.includes('violates not-null')) {
+                msg = 'A required field is missing. Please fill in all required fields.'
+            } else if (raw) {
+                msg = raw
+            }
+            setError(msg)
         }
     }
 

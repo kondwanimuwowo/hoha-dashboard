@@ -14,8 +14,10 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, Search, Save } from 'lucide-react'
 
+const emptyToNull = z.preprocess(v => (v === '' ? null : v), z.string().nullable().optional())
+
 const visitSchema = z.object({
-    patient_id: z.string().min(1, 'Patient is required'),
+    patient_id: z.string().min(1, 'Please select a patient'),
     visit_date: z.string().min(1, 'Visit date is required'),
     facility_id: z.string().optional().nullable(),
     reason_for_visit: z.string().optional().nullable(),
@@ -31,7 +33,7 @@ const visitSchema = z.object({
     transport_cost: z.any().optional(),
     transport_comment: z.string().optional().nullable(),
     follow_up_required: z.boolean().default(false),
-    follow_up_date: z.string().optional().nullable(),
+    follow_up_date: emptyToNull,
     followup_comment: z.string().optional().nullable(),
     in_hoha_program: z.boolean().default(true),
     notes: z.string().optional().nullable(),
@@ -117,7 +119,20 @@ export function VisitForm({ initialData, onSuccess, onCancel }) {
             }
             onSuccess?.()
         } catch (err) {
-            setError(err.message || 'Failed to record visit')
+            const raw = err.message || ''
+            let msg = 'Something went wrong. Please try again.'
+            if (raw.includes('invalid input syntax for type date')) {
+                msg = 'One or more date fields contain an invalid value. Please check all date fields.'
+            } else if (raw.includes('duplicate key') || raw.includes('unique constraint')) {
+                msg = 'A visit record with these details already exists.'
+            } else if (raw.includes('violates foreign key')) {
+                msg = 'A linked record could not be found. Please refresh and try again.'
+            } else if (raw.includes('not-null constraint') || raw.includes('violates not-null')) {
+                msg = 'A required field is missing. Please fill in all required fields.'
+            } else if (raw) {
+                msg = raw
+            }
+            setError(msg)
         }
     }
 

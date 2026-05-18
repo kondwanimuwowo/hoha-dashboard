@@ -18,6 +18,8 @@ import { NRCInput } from '@/components/shared/NRCInput'
 import { RichTextEditor } from '@/components/shared/RichTextEditor'
 import { useEffect } from 'react'
 
+const emptyToNull = z.preprocess(v => (v === '' ? null : v), z.string().nullable().optional())
+
 const womanSchema = z.object({
     // If existing person
     woman_id: z.string().nullable().optional(),
@@ -25,7 +27,7 @@ const womanSchema = z.object({
     // If new person
     first_name: z.string().nullable().optional(),
     last_name: z.string().nullable().optional(),
-    date_of_birth: z.string().nullable().optional(),
+    date_of_birth: emptyToNull,
     phone_number: z.string().nullable().optional(),
     address: z.string().nullable().optional(),
     compound_area: z.string().nullable().optional(),
@@ -34,8 +36,8 @@ const womanSchema = z.object({
     case_notes: z.string().nullable().optional(),
 
     // Program enrollment
-    stage: z.string().min(1, 'Stage is required'),
-    enrollment_date: z.string().nullable().optional(),
+    stage: z.string().min(1, 'Please select a stage'),
+    enrollment_date: emptyToNull,
     status: z.string().default('Active'),
     notes: z.string().nullable().optional(),
 })
@@ -132,7 +134,20 @@ export function WomenForm({ onSuccess, onCancel, initialData }) {
 
             onSuccess?.()
         } catch (err) {
-            setError(err.message || 'Failed to save participant')
+            const raw = err.message || ''
+            let msg = 'Something went wrong. Please try again.'
+            if (raw.includes('invalid input syntax for type date')) {
+                msg = 'One or more date fields contain an invalid value. Please check all date fields.'
+            } else if (raw.includes('duplicate key') || raw.includes('unique constraint')) {
+                msg = 'A participant with these details already exists.'
+            } else if (raw.includes('violates foreign key')) {
+                msg = 'A linked record could not be found. Please refresh and try again.'
+            } else if (raw.includes('not-null constraint') || raw.includes('violates not-null')) {
+                msg = 'A required field is missing. Please fill in all required fields.'
+            } else if (raw) {
+                msg = raw
+            }
+            setError(msg)
         }
     }
     const onError = (errors) => {
