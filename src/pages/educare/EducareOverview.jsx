@@ -38,7 +38,7 @@ export function EducareOverview() {
         <div className="space-y-6">
             <PageHeader
                 title="Educare Africa"
-                description="Education and care program for children from Baby Class to Grade 12"
+                description="Education and care program for children from Early Childhood to Grade 12"
             />
 
             {/* Stats Grid */}
