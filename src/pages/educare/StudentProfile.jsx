@@ -103,6 +103,17 @@ export function StudentProfile() {
     const age = calculateAge(student.date_of_birth)
     const dewormingStatus = getDewormingStatus(enrollment?.last_deworming_date)
 
+    const allAttendanceRecords = attendanceData?.data || []
+    const filteredRecords = dayFilter
+        ? allAttendanceRecords.filter(r => r.attendance_date === dayFilter)
+        : allAttendanceRecords
+    const filteredTotal = filteredRecords.length
+    const filteredPresent = filteredRecords.filter(r => r.status === 'Present').length
+    const filteredAbsent = filteredRecords.filter(r => r.status === 'Absent').length
+    const filteredLate = filteredRecords.filter(r => r.status === 'Late').length
+    const filteredExcused = filteredRecords.filter(r => r.status === 'Excused').length
+    const filteredPct = filteredTotal > 0 ? (((filteredPresent + filteredLate) / filteredTotal) * 100).toFixed(1) : 0
+
     const handleDelete = async () => {
         try {
             await deleteStudent.mutateAsync(id)
@@ -389,35 +400,35 @@ export function StudentProfile() {
                                     <CardHeader className="pb-2">
                                         <div className="flex items-center justify-between">
                                             <CardTitle className="text-lg">Attendance</CardTitle>
-                                            {attendanceData?.summary?.total > 0 && (
+                                            {filteredTotal > 0 && (
                                                 <span className="text-sm font-semibold text-primary-600">
-                                                    {attendanceData.summary.percentage}% attendance
+                                                    {filteredPct}% attendance
                                                 </span>
                                             )}
                                         </div>
                                     </CardHeader>
                                     <CardContent className="pt-0">
-                                        {attendanceData?.summary?.total > 0 && (
+                                        {filteredTotal > 0 && (
                                             <div className="grid grid-cols-4 gap-2 mb-3 rounded-lg bg-muted/40 p-3 text-center text-xs">
                                                 <div>
-                                                    <p className="font-semibold text-green-600 text-base">{attendanceData.summary.present}</p>
+                                                    <p className="font-semibold text-green-600 text-base">{filteredPresent}</p>
                                                     <p className="text-muted-foreground">Present</p>
                                                 </div>
                                                 <div>
-                                                    <p className="font-semibold text-red-600 text-base">{attendanceData.summary.absent}</p>
+                                                    <p className="font-semibold text-red-600 text-base">{filteredAbsent}</p>
                                                     <p className="text-muted-foreground">Absent</p>
                                                 </div>
                                                 <div>
-                                                    <p className="font-semibold text-orange-600 text-base">{attendanceData.summary.late}</p>
+                                                    <p className="font-semibold text-orange-600 text-base">{filteredLate}</p>
                                                     <p className="text-muted-foreground">Late</p>
                                                 </div>
                                                 <div>
-                                                    <p className="font-semibold text-blue-600 text-base">{attendanceData.summary.excused}</p>
+                                                    <p className="font-semibold text-blue-600 text-base">{filteredExcused}</p>
                                                     <p className="text-muted-foreground">Excused</p>
                                                 </div>
                                             </div>
                                         )}
-                                        {attendanceData?.data?.length > 0 && (
+                                        {allAttendanceRecords.length > 0 && (
                                             <div className="flex items-center gap-2 mb-2">
                                                 <input
                                                     type="date"
@@ -437,40 +448,34 @@ export function StudentProfile() {
                                             </div>
                                         )}
                                         <div className="max-h-64 overflow-y-auto divide-y divide-neutral-100">
-                                            {(() => {
-                                                const records = dayFilter
-                                                    ? (attendanceData?.data || []).filter(r => r.attendance_date === dayFilter)
-                                                    : (attendanceData?.data || [])
-                                                if (records.length === 0) {
-                                                    return <p className="py-8 text-center text-sm text-muted-foreground">
-                                                        {dayFilter ? 'No record found for this date.' : 'No attendance records'}
-                                                    </p>
-                                                }
-                                                return records.map((record) => (
-                                                    <div key={record.id} className="flex items-center justify-between py-2.5 px-1">
-                                                        <span className="text-sm text-muted-foreground">
-                                                            {new Date(record.attendance_date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
-                                                        </span>
-                                                        <div className="flex items-center gap-2">
-                                                            {record.notes && (
-                                                                <span className="text-xs text-muted-foreground italic max-w-[100px] truncate">{record.notes}</span>
+                                            {filteredRecords.length === 0 ? (
+                                                <p className="py-8 text-center text-sm text-muted-foreground">
+                                                    {dayFilter ? 'No record found for this date.' : 'No attendance records'}
+                                                </p>
+                                            ) : filteredRecords.map((record) => (
+                                                <div key={record.id} className="flex items-center justify-between py-2.5 px-1">
+                                                    <span className="text-sm text-muted-foreground">
+                                                        {new Date(record.attendance_date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                                                    </span>
+                                                    <div className="flex items-center gap-2">
+                                                        {record.notes && (
+                                                            <span className="text-xs text-muted-foreground italic max-w-[100px] truncate">{record.notes}</span>
+                                                        )}
+                                                        <Badge
+                                                            variant="secondary"
+                                                            className={cn(
+                                                                'text-xs',
+                                                                record.status === 'Present' && 'bg-green-100 text-green-700',
+                                                                record.status === 'Absent' && 'bg-red-100 text-red-700',
+                                                                record.status === 'Late' && 'bg-orange-100 text-orange-700',
+                                                                record.status === 'Excused' && 'bg-blue-100 text-blue-700',
                                                             )}
-                                                            <Badge
-                                                                variant="secondary"
-                                                                className={cn(
-                                                                    'text-xs',
-                                                                    record.status === 'Present' && 'bg-green-100 text-green-700',
-                                                                    record.status === 'Absent' && 'bg-red-100 text-red-700',
-                                                                    record.status === 'Late' && 'bg-orange-100 text-orange-700',
-                                                                    record.status === 'Excused' && 'bg-blue-100 text-blue-700',
-                                                                )}
-                                                            >
-                                                                {record.status}
-                                                            </Badge>
-                                                        </div>
+                                                        >
+                                                            {record.status}
+                                                        </Badge>
                                                     </div>
-                                                ))
-                                            })()}
+                                                </div>
+                                            ))}
                                         </div>
                                     </CardContent>
                                 </Card>
