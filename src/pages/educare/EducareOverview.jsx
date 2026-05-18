@@ -143,35 +143,33 @@ export function EducareOverview() {
                     <CardTitle>Students by Grade Level</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="space-y-3">
-                        {gradeDistribution.map((item, index) => (
-                            <motion.div
-                                key={item.grade}
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ duration: 0.3, delay: index * 0.05 }}
-                                className="flex items-center justify-between"
-                            >
-                                <div className="flex items-center space-x-3">
-                                    <div className="w-32 text-sm font-medium text-muted-foreground">
-                                        {item.grade}
+                    <div className="space-y-2.5">
+                        {gradeDistribution.map((item, index) => {
+                            const pct = totalStudents > 0 ? (item.count / totalStudents) * 100 : 0
+                            return (
+                                <motion.div
+                                    key={item.grade}
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                                >
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="text-sm font-medium text-foreground">{item.grade}</span>
+                                        <span className="text-sm tabular-nums text-muted-foreground">
+                                            {item.count} <span className="text-xs">({pct.toFixed(0)}%)</span>
+                                        </span>
                                     </div>
-                                    <div className="flex-1">
-                                        <div className="h-2 w-full max-w-xs rounded-full bg-muted overflow-hidden">
-                                            <motion.div
-                                                initial={{ width: 0 }}
-                                                animate={{ width: `${totalStudents > 0 ? (item.count / totalStudents) * 100 : 0}%` }}
-                                                transition={{ duration: 0.5, delay: index * 0.05 }}
-                                                className="h-full bg-primary-500"
-                                            />
-                                        </div>
+                                    <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                                        <motion.div
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${pct}%` }}
+                                            transition={{ duration: 0.5, delay: index * 0.05 }}
+                                            className="h-full bg-primary-500 rounded-full"
+                                        />
                                     </div>
-                                </div>
-                                <div className="ml-4 text-sm font-semibold text-foreground">
-                                    {item.count}
-                                </div>
-                            </motion.div>
-                        ))}
+                                </motion.div>
+                            )
+                        })}
                     </div>
                 </CardContent>
             </Card>
