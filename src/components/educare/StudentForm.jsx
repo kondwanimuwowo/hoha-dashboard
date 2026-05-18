@@ -19,23 +19,28 @@ import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 
 
+const emptyToNull = z.preprocess(v => (v === '' ? null : v), z.string().nullable().optional())
+
 const studentSchema = z.object({
-    first_name: z.string().min(2, 'First name is required'),
-    last_name: z.string().min(2, 'Last name is required'),
-    date_of_birth: z.string().min(1, 'Date of birth is required'),
-    gender: z.enum(['Male', 'Female']),
+    first_name: z.string().min(2, 'First name must be at least 2 characters'),
+    last_name: z.string().min(2, 'Last name must be at least 2 characters'),
+    date_of_birth: z.string().min(1, 'Date of birth is required').refine(
+        v => !isNaN(new Date(v).getTime()),
+        'Please enter a valid date of birth'
+    ),
+    gender: z.enum(['Male', 'Female'], { errorMap: () => ({ message: 'Please select a gender' }) }),
     address: z.string().nullable().optional(),
     photo_url: z.string().nullable().optional(),
-    grade_level: z.string().min(1, 'Grade level is required'),
+    grade_level: z.string().min(1, 'Please select a grade level'),
     government_school_id: z.string().nullable().optional(),
-    enrollment_date: z.string().nullable().optional(),
+    enrollment_date: emptyToNull,
     emergency_contact_name: z.string().nullable().optional(),
     emergency_contact_phone: z.string().nullable().optional(),
     emergency_contact_relationship: z.string().nullable().optional(),
     current_status: z.string().default('Active'),
     weight_kg: z.union([z.number(), z.nan()]).nullable().optional(),
     height_cm: z.union([z.number(), z.nan()]).nullable().optional(),
-    last_deworming_date: z.string().nullable().optional(),
+    last_deworming_date: emptyToNull,
     notes: z.string().nullable().optional(),
 })
 
@@ -338,7 +343,20 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
 
             onSuccess?.()
         } catch (err) {
-            setError(err.message || 'Failed to save student')
+            const raw = err.message || ''
+            let msg = 'Something went wrong. Please try again.'
+            if (raw.includes('invalid input syntax for type date')) {
+                msg = 'One or more date fields contain an invalid value. Please check all date fields and try again.'
+            } else if (raw.includes('duplicate key') || raw.includes('unique constraint')) {
+                msg = 'A student with these details already exists.'
+            } else if (raw.includes('violates foreign key')) {
+                msg = 'A linked record could not be found. Please refresh and try again.'
+            } else if (raw.includes('not-null constraint') || raw.includes('violates not-null')) {
+                msg = 'A required field is missing. Please fill in all required fields.'
+            } else if (raw) {
+                msg = raw
+            }
+            setError(msg)
         }
     }
     const onError = (errors) => {
