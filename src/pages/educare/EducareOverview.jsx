@@ -155,11 +155,12 @@ export function EducareOverview() {
                                 >
                                     <div className="flex items-center justify-between mb-1">
                                         <span className="text-sm font-medium text-foreground">{item.grade}</span>
-                                        <span className="text-sm tabular-nums text-muted-foreground">
-                                            {item.count} <span className="text-xs">({pct.toFixed(0)}%)</span>
+                                        <span className="text-sm tabular-nums">
+                                            <span className="font-semibold text-foreground">{item.count}</span>
+                                            <span className="text-xs text-muted-foreground ml-1">({pct.toFixed(0)}%)</span>
                                         </span>
                                     </div>
-                                    <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                                    <div className="h-px w-full rounded-full bg-muted overflow-hidden">
                                         <motion.div
                                             initial={{ width: 0 }}
                                             animate={{ width: `${pct}%` }}
