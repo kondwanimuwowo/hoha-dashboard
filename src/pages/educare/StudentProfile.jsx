@@ -94,7 +94,8 @@ export function StudentProfile() {
     const [isEditing, setIsEditing] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
     const [selectedParentForDetail, setSelectedParentForDetail] = useState(null)
-    const [dayFilter, setDayFilter] = useState('')
+    const [dateFrom, setDateFrom] = useState('')
+    const [dateTo, setDateTo] = useState('')
 
     if (isLoading) return <LoadingSpinner />
     if (isError || !student) return <div>Student not found</div>
@@ -104,9 +105,11 @@ export function StudentProfile() {
     const dewormingStatus = getDewormingStatus(enrollment?.last_deworming_date)
 
     const allAttendanceRecords = attendanceData?.data || []
-    const filteredRecords = dayFilter
-        ? allAttendanceRecords.filter(r => r.attendance_date === dayFilter)
-        : allAttendanceRecords
+    const filteredRecords = allAttendanceRecords.filter(r => {
+        if (dateFrom && r.attendance_date < dateFrom) return false
+        if (dateTo && r.attendance_date > dateTo) return false
+        return true
+    })
     const filteredTotal = filteredRecords.length
     const filteredPresent = filteredRecords.filter(r => r.status === 'Present').length
     const filteredAbsent = filteredRecords.filter(r => r.status === 'Absent').length
@@ -432,15 +435,24 @@ export function StudentProfile() {
                                             <div className="flex items-center gap-2 mb-2">
                                                 <input
                                                     type="date"
-                                                    value={dayFilter}
-                                                    onChange={e => setDayFilter(e.target.value)}
+                                                    value={dateFrom}
+                                                    onChange={e => setDateFrom(e.target.value)}
                                                     className="flex-1 h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground"
+                                                    placeholder="From"
                                                 />
-                                                {dayFilter && (
+                                                <span className="text-xs text-muted-foreground shrink-0">to</span>
+                                                <input
+                                                    type="date"
+                                                    value={dateTo}
+                                                    onChange={e => setDateTo(e.target.value)}
+                                                    className="flex-1 h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground"
+                                                    placeholder="To"
+                                                />
+                                                {(dateFrom || dateTo) && (
                                                     <button
                                                         type="button"
-                                                        onClick={() => setDayFilter('')}
-                                                        className="text-xs text-muted-foreground hover:text-foreground underline"
+                                                        onClick={() => { setDateFrom(''); setDateTo('') }}
+                                                        className="text-xs text-muted-foreground hover:text-foreground underline shrink-0"
                                                     >
                                                         Clear
                                                     </button>
@@ -450,7 +462,7 @@ export function StudentProfile() {
                                         <div className="max-h-64 overflow-y-auto divide-y divide-neutral-100">
                                             {filteredRecords.length === 0 ? (
                                                 <p className="py-8 text-center text-sm text-muted-foreground">
-                                                    {dayFilter ? 'No record found for this date.' : 'No attendance records'}
+                                                    {(dateFrom || dateTo) ? 'No records in this date range.' : 'No attendance records'}
                                                 </p>
                                             ) : filteredRecords.map((record) => (
                                                 <div key={record.id} className="flex items-center justify-between py-2.5 px-1">
