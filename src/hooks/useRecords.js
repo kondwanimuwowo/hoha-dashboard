@@ -176,6 +176,84 @@ export function useDeleteStudentDocument() {
 }
 
 // =====================================================
+// PERSON DOCUMENTS HOOKS (for women, parents, etc.)
+// =====================================================
+
+export function usePersonDocuments(personId) {
+    return useQuery({
+        queryKey: ['personDocuments', personId],
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from('person_documents')
+                .select('*')
+                .eq('person_id', personId)
+                .order('upload_date', { ascending: false })
+
+            if (error) throw error
+            return data
+        },
+        enabled: !!personId,
+    })
+}
+
+export function useCreatePersonDocument() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (documentData) => {
+            const { data: { user } } = await supabase.auth.getUser()
+
+            const { data, error } = await supabase
+                .from('person_documents')
+                .insert([{
+                    person_id: documentData.person_id,
+                    document_type: documentData.document_type || 'Other',
+                    document_name: documentData.document_name,
+                    document_url: documentData.document_url,
+                    file_size: documentData.file_size,
+                    mime_type: documentData.mime_type,
+                    notes: documentData.notes,
+                    uploaded_by: user.id,
+                }])
+                .select()
+                .single()
+
+            if (error) throw error
+            return data
+        },
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['personDocuments', variables.person_id] })
+        },
+    })
+}
+
+export function useDeletePersonDocument() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, personId, documentUrl }) => {
+            if (documentUrl) {
+                const urlParts = documentUrl.split('/person-documents/')
+                if (urlParts[1]) {
+                    await supabase.storage.from('person-documents').remove([urlParts[1]])
+                }
+            }
+
+            const { error } = await supabase
+                .from('person_documents')
+                .delete()
+                .eq('id', id)
+
+            if (error) throw error
+            return personId
+        },
+        onSuccess: (personId) => {
+            queryClient.invalidateQueries({ queryKey: ['personDocuments', personId] })
+        },
+    })
+}
+
+// =====================================================
 // PARENT EMERGENCY CONTACTS HOOKS
 // =====================================================
 

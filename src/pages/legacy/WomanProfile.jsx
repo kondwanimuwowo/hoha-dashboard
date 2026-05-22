@@ -18,6 +18,7 @@ import { WomenForm } from '@/components/legacy/WomenForm'
 import { toast } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CaseNotes } from '@/components/records/CaseNotes'
+import { PersonDocuments } from '@/components/records/PersonDocuments'
 
 function InfoRow({ icon: Icon, label, value, iconClass }) {
     return (
@@ -40,13 +41,13 @@ export function WomanProfile() {
     const deleteWoman = useDeleteWoman()
     const [isEditing, setIsEditing] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
+    const [dateFrom, setDateFrom] = useState('')
+    const [dateTo, setDateTo] = useState('')
 
-    const startDate = new Date()
-    startDate.setDate(startDate.getDate() - 60)
     const { data: attendanceData } = useLegacyAttendanceSummary(
         id,
-        startDate.toISOString(),
-        new Date().toISOString()
+        dateFrom ? dateFrom : undefined,
+        dateTo ? dateTo : undefined
     )
 
     if (isLoading) return <LoadingSpinner />
@@ -169,9 +170,10 @@ export function WomanProfile() {
             </Dialog>
 
             <Tabs defaultValue="overview" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsList className="grid w-full grid-cols-3 mb-6">
                     <TabsTrigger value="overview">Overview</TabsTrigger>
                     <TabsTrigger value="case-notes">Case Notes</TabsTrigger>
+                    <TabsTrigger value="documents">Documents</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="space-y-6">
@@ -219,49 +221,86 @@ export function WomanProfile() {
                             {/* Attendance */}
                             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
                                 <Card>
-                                    <CardHeader>
-                                        <CardTitle className="text-lg">Attendance (Last 60 Days)</CardTitle>
+                                    <CardHeader className="pb-2">
+                                        <div className="flex items-center justify-between">
+                                            <CardTitle className="text-lg">Attendance</CardTitle>
+                                            {attendanceData?.summary.total > 0 && (
+                                                <span className="text-sm font-semibold text-purple-600">
+                                                    {attendanceData.summary.percentage}% attendance
+                                                </span>
+                                            )}
+                                        </div>
                                     </CardHeader>
-                                    <CardContent>
-                                        {attendanceData ? (
-                                            <div className="flex items-center gap-4">
-                                                <div className="relative h-20 w-20 shrink-0">
-                                                    <svg className="h-20 w-20 -rotate-90" viewBox="0 0 36 36">
-                                                        <path
-                                                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                                            fill="none"
-                                                            stroke="currentColor"
-                                                            strokeWidth="3"
-                                                            className="text-neutral-100"
-                                                        />
-                                                        <path
-                                                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                                            fill="none"
-                                                            stroke="currentColor"
-                                                            strokeWidth="3"
-                                                            strokeDasharray={`${attendanceData.summary.percentage}, 100`}
-                                                            strokeLinecap="round"
-                                                            className="text-purple-500"
-                                                        />
-                                                    </svg>
-                                                    <div className="absolute inset-0 flex items-center justify-center">
-                                                        <span className="text-lg font-bold">{attendanceData.summary.percentage}%</span>
-                                                    </div>
+                                    <CardContent className="pt-0">
+                                        {attendanceData?.summary.total > 0 && (
+                                            <div className="grid grid-cols-3 gap-2 mb-3 rounded-lg bg-muted/40 p-3 text-center text-xs">
+                                                <div>
+                                                    <p className="font-semibold text-green-600 text-base">{attendanceData.summary.present}</p>
+                                                    <p className="text-muted-foreground">Present</p>
                                                 </div>
-                                                <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm flex-1">
-                                                    <div>
-                                                        <p className="text-muted-foreground">Present</p>
-                                                        <p className="text-lg font-semibold text-green-600">{attendanceData.summary.present}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-muted-foreground">Absent</p>
-                                                        <p className="text-lg font-semibold text-red-600">{attendanceData.summary.absent}</p>
-                                                    </div>
+                                                <div>
+                                                    <p className="font-semibold text-red-600 text-base">{attendanceData.summary.absent}</p>
+                                                    <p className="text-muted-foreground">Absent</p>
+                                                </div>
+                                                <div>
+                                                    <p className="font-semibold text-blue-600 text-base">{attendanceData.summary.excused}</p>
+                                                    <p className="text-muted-foreground">Excused</p>
                                                 </div>
                                             </div>
-                                        ) : (
-                                            <p className="text-sm text-muted-foreground">No attendance records</p>
                                         )}
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <input
+                                                type="date"
+                                                value={dateFrom}
+                                                onChange={e => setDateFrom(e.target.value)}
+                                                className="flex-1 h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground"
+                                            />
+                                            <span className="text-xs text-muted-foreground shrink-0">to</span>
+                                            <input
+                                                type="date"
+                                                value={dateTo}
+                                                onChange={e => setDateTo(e.target.value)}
+                                                className="flex-1 h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground"
+                                            />
+                                            {(dateFrom || dateTo) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => { setDateFrom(''); setDateTo('') }}
+                                                    className="text-xs text-muted-foreground hover:text-foreground underline shrink-0"
+                                                >
+                                                    Clear
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="max-h-64 overflow-y-auto divide-y divide-neutral-100">
+                                            {!attendanceData?.data?.length ? (
+                                                <p className="py-8 text-center text-sm text-muted-foreground">
+                                                    {(dateFrom || dateTo) ? 'No records in this date range.' : 'No attendance records'}
+                                                </p>
+                                            ) : attendanceData.data.map((record) => (
+                                                <div key={record.id} className="flex items-center justify-between py-2.5 px-1">
+                                                    <div>
+                                                        <span className="text-sm text-muted-foreground">
+                                                            {new Date(record.session_date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                                                        </span>
+                                                        {record.session_type && (
+                                                            <span className="ml-2 text-xs text-muted-foreground/60">{record.session_type}</span>
+                                                        )}
+                                                    </div>
+                                                    <Badge
+                                                        variant="secondary"
+                                                        className={cn(
+                                                            'text-xs',
+                                                            record.status === 'Present' && 'bg-green-100 text-green-700',
+                                                            record.status === 'Absent' && 'bg-red-100 text-red-700',
+                                                            record.status === 'Excused' && 'bg-blue-100 text-blue-700',
+                                                        )}
+                                                    >
+                                                        {record.status}
+                                                    </Badge>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </CardContent>
                                 </Card>
                             </motion.div>
@@ -348,6 +387,10 @@ export function WomanProfile() {
 
                 <TabsContent value="case-notes">
                     <CaseNotes personId={id} />
+                </TabsContent>
+
+                <TabsContent value="documents">
+                    <PersonDocuments personId={id} />
                 </TabsContent>
             </Tabs>
         </div>

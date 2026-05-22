@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react'
-import { useStudentDocuments, useCreateStudentDocument, useDeleteStudentDocument } from '@/hooks/useRecords'
+import { usePersonDocuments, useCreatePersonDocument, useDeletePersonDocument } from '@/hooks/useRecords'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
@@ -12,16 +12,17 @@ import { Plus, Trash2, FileText, Download, Upload, Loader2, FileCode, FileImage,
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 
-export function StudentDocuments({ studentId }) {
+const DOCUMENT_TYPES = ['Certificate', 'ID/Passport', 'Medical', 'Program Record', 'Agreement', 'Other']
+
+export function PersonDocuments({ personId }) {
     const { user, profile } = useAuth()
-    const { data: documents, isLoading } = useStudentDocuments(studentId)
-    const createDocument = useCreateStudentDocument()
-    const deleteDocument = useDeleteStudentDocument()
+    const { data: documents, isLoading } = usePersonDocuments(personId)
+    const createDocument = useCreatePersonDocument()
+    const deleteDocument = useDeletePersonDocument()
 
     const [isUploading, setIsUploading] = useState(false)
     const [isDeleting, setIsDeleting] = useState(null)
-
-    const [docType, setDocType] = useState('Report Card')
+    const [docType, setDocType] = useState('Certificate')
     const [docNotes, setDocNotes] = useState('')
     const [selectedFile, setSelectedFile] = useState(null)
     const fileInputRef = useRef(null)
@@ -37,26 +38,26 @@ export function StudentDocuments({ studentId }) {
         setIsUploading(true)
         try {
             const fileExt = selectedFile.name.split('.').pop()
-            const fileName = `${studentId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+            const fileName = `${personId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
 
             const { error: uploadError } = await supabase.storage
-                .from('student-documents')
+                .from('person-documents')
                 .upload(fileName, selectedFile)
 
             if (uploadError) throw uploadError
 
             const { data: { publicUrl } } = supabase.storage
-                .from('student-documents')
+                .from('person-documents')
                 .getPublicUrl(fileName)
 
             await createDocument.mutateAsync({
-                student_id: studentId,
+                person_id: personId,
                 document_type: docType,
                 document_name: selectedFile.name,
                 document_url: publicUrl,
                 file_size: selectedFile.size,
                 mime_type: selectedFile.type,
-                notes: docNotes
+                notes: docNotes,
             })
 
             toast.success('Document uploaded successfully')
@@ -75,8 +76,8 @@ export function StudentDocuments({ studentId }) {
         try {
             await deleteDocument.mutateAsync({
                 id: isDeleting.id,
-                studentId,
-                documentUrl: isDeleting.document_url
+                personId,
+                documentUrl: isDeleting.document_url,
             })
             toast.success('Document deleted')
             setIsDeleting(null)
@@ -99,22 +100,20 @@ export function StudentDocuments({ studentId }) {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
     }
 
-    const DOCUMENT_TYPES = ['Result', 'Report Card', 'Medical', 'Certificate', 'ID/Birth Certificate', 'Other']
-
-    if (isLoading) return <div className="space-y-4">
-        {[1, 2].map(i => <div key={i} className="h-20 bg-muted animate-pulse rounded-lg" />)}
-    </div>
+    if (isLoading) return (
+        <div className="space-y-4">
+            {[1, 2].map(i => <div key={i} className="h-20 bg-muted animate-pulse rounded-lg" />)}
+        </div>
+    )
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h3 className="text-lg font-semibold flex items-center gap-2">
-                        <Upload className="h-5 w-5 text-primary" />
-                        Academic & Legal Documents
-                    </h3>
-                    <p className="text-sm text-muted-foreground">Store and manage important student files</p>
-                </div>
+            <div>
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Upload className="h-5 w-5 text-primary" />
+                    Documents
+                </h3>
+                <p className="text-sm text-muted-foreground">Store certificates, IDs, and program records</p>
             </div>
 
             {/* Upload Section */}
@@ -201,7 +200,7 @@ export function StudentDocuments({ studentId }) {
                                         <span>Uploaded {formatDate(doc.upload_date)}</span>
                                     </div>
                                     {doc.notes && (
-                                        <p className="text-xs text-muted-foreground mt-2 italic">“{doc.notes}”</p>
+                                        <p className="text-xs text-muted-foreground mt-2 italic">"{doc.notes}"</p>
                                     )}
                                 </div>
                                 <div className="flex items-center gap-1 ml-4">
@@ -232,8 +231,8 @@ export function StudentDocuments({ studentId }) {
                 ) : (
                     <div className="text-center py-12 rounded-xl border-2 border-dashed border-muted">
                         <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-20" />
-                        <p className="text-muted-foreground font-medium">No documents found</p>
-                        <p className="text-sm text-muted-foreground/60">Upload results, medical reports, or certificates</p>
+                        <p className="text-muted-foreground font-medium">No documents yet</p>
+                        <p className="text-sm text-muted-foreground/60">Upload certificates, IDs, or program records</p>
                     </div>
                 )}
             </div>
@@ -244,7 +243,7 @@ export function StudentDocuments({ studentId }) {
                     <DialogHeader>
                         <DialogTitle>Delete Document?</DialogTitle>
                         <DialogDescription>
-                            This will permanently remove the document from the student's record and storage.
+                            This will permanently remove the document from this participant's record.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
