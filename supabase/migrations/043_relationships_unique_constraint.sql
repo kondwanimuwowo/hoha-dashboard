@@ -3,8 +3,8 @@
 -- First remove any duplicate rows (keep the earliest one per pair).
 
 delete from public.relationships
-where id not in (
-    select min(id)
+where ctid not in (
+    select min(ctid)
     from public.relationships
     group by person_id, related_person_id
 );
