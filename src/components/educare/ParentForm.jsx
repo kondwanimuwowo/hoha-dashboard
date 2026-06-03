@@ -14,6 +14,7 @@ import { Loader2, Search, Check, X, Users, UserPlus } from 'lucide-react'
 import { RELATIONSHIP_TYPES } from '@/lib/constants'
 import { useState } from 'react'
 import { PersonAvatar } from '@/components/shared/PersonAvatar'
+import { toast } from 'sonner'
 
 const parentSchema = z.object({
     first_name: z.string().min(2, 'First name is required'),
@@ -83,6 +84,11 @@ export function ParentForm({ onSuccess, onCancel }) {
                 }
             }
 
+            toast.success(
+                linkedStudents.length > 0
+                    ? `${parent.first_name} ${parent.last_name} registered and linked to ${linkedStudents.length} child${linkedStudents.length !== 1 ? 'ren' : ''}.`
+                    : `${parent.first_name} ${parent.last_name} registered. Open the Parents tab and search for them to link children.`
+            )
             onSuccess?.()
         } catch (err) {
             const raw = err.message || ''

@@ -59,7 +59,7 @@ export function LegacyAttendance() {
     const [selectedYear, setSelectedYear] = useState(currentYear.toString())
     const [selectedTerm, setSelectedTerm] = useState('1')
     const [selectedStage, setSelectedStage] = useState(persistedFilters?.selectedStage || '')
-    const [selectedSessionType, setSelectedSessionType] = useState(persistedFilters?.selectedSessionType || '')
+    const [selectedSessionType, setSelectedSessionType] = useState(persistedFilters?.selectedSessionType || SESSION_TYPES[0])
     const [success, setSuccess] = useState('')
     const [error, setError] = useState('')
 
@@ -207,7 +207,7 @@ export function LegacyAttendance() {
                                         onClick={() => {
                                             setSelectedDate(today)
                                             setSelectedStage('')
-                                            setSelectedSessionType('')
+                                            setSelectedSessionType(SESSION_TYPES[0])
                                         }}
                                         variant="outline"
                                         className="w-full"

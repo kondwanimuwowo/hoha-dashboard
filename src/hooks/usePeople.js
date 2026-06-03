@@ -169,7 +169,7 @@ export function useParents(search = '') {
                             id,
                             first_name,
                             last_name,
-                            educare_enrollment!inner (
+                            educare_enrollment (
                                 id,
                                 current_status
                             )
@@ -190,18 +190,16 @@ export function useParents(search = '') {
 
             if (error) throw error
 
-            // Filter out people who don't have any children in educare
-            // and format the data
             return data
                 .filter(person => person.relationships && person.relationships.length > 0)
                 .map(person => {
                     const educareChildren = person.relationships
-                        .filter(rel => rel.student && rel.student.educare_enrollment.length > 0)
+                        .filter(rel => rel.student)
                         .map(rel => ({
                             id: rel.student.id,
                             first_name: rel.student.first_name,
                             last_name: rel.student.last_name,
-                            status: rel.student.educare_enrollment[0].current_status,
+                            status: rel.student.educare_enrollment?.[0]?.current_status ?? null,
                             relationship: rel.relationship_type
                         }))
 
@@ -211,7 +209,6 @@ export function useParents(search = '') {
                         children_count: educareChildren.length
                     }
                 })
-                .filter(person => person.children_count > 0)
         }
     })
 }
