@@ -163,6 +163,7 @@ export function useParents(search = '') {
                 .from('people')
                 .select(`
                     *,
+                    own_enrollment:educare_enrollment(id),
                     relationships!relationships_person_id_fkey (
                         relationship_type,
                         student:people!relationships_related_person_id_fkey (
@@ -191,6 +192,7 @@ export function useParents(search = '') {
             if (error) throw error
 
             return data
+                .filter(person => !(person.own_enrollment?.length > 0)) // exclude students
                 .filter(person => person.relationships && person.relationships.length > 0)
                 .map(person => {
                     const educareChildren = person.relationships
