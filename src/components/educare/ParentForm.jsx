@@ -67,6 +67,10 @@ export function ParentForm({ onSuccess, onCancel }) {
 
     const onSubmit = async (data) => {
         setError('')
+        if (linkedStudents.length === 0) {
+            setError('Please link at least one child before registering this parent.')
+            return
+        }
         try {
             // 1. Create the person record for the parent
             const parent = await createPerson.mutateAsync(data)
@@ -298,8 +302,9 @@ export function ParentForm({ onSuccess, onCancel }) {
                                 </div>
                             ))
                         ) : (
-                            <div className="text-sm text-center py-12 text-muted-foreground border border-dashed rounded-lg">
-                                No children linked. Search above to link students.
+                            <div className="text-sm text-center py-12 text-muted-foreground border border-dashed border-red-200 rounded-lg bg-red-50/40">
+                                <p className="font-medium text-red-600">At least one child must be linked.</p>
+                                <p className="mt-1 text-muted-foreground">Search above to find and link a student.</p>
                             </div>
                         )}
                     </div>
@@ -310,7 +315,7 @@ export function ParentForm({ onSuccess, onCancel }) {
                 <Button type="button" variant="outline" onClick={onCancel} disabled={createPerson.isPending}>
                     Cancel
                 </Button>
-                <Button type="submit" disabled={createPerson.isPending}>
+                <Button type="submit" disabled={createPerson.isPending || linkedStudents.length === 0}>
                     {createPerson.isPending ? (
                         <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
