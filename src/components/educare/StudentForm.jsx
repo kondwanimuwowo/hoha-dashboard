@@ -251,10 +251,6 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
         setGuardianError('')
 
         const filledGuardians = guardians.filter(g => g.first_name?.trim())
-        if (filledGuardians.length === 0) {
-            setGuardianError('At least one guardian with a name is required.')
-            return
-        }
         const invalidGuardians = filledGuardians.filter(g => !g.phone_number?.trim())
         if (invalidGuardians.length > 0) {
             setGuardianError(`Guardian "${invalidGuardians[0].first_name}" is missing a phone number.`)
@@ -476,6 +472,9 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                 </div>
                 {guardianError && (
                     <p className="text-sm text-red-600">{guardianError}</p>
+                )}
+                {!guardianError && guardians.filter(g => g.first_name?.trim()).length === 0 && (
+                    <p className="text-sm text-amber-600">No guardian added. You can add one now or link a parent later from the Parents tab.</p>
                 )}
 
                 {guardians.map((guardian, index) => (
