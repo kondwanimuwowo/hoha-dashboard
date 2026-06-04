@@ -26,6 +26,8 @@ const EXPENSE_TYPES = ['Medical Bills', 'Rent', 'School Fees', 'Food', 'Other']
 
 export function OutreachForm({ onSuccess, onCancel }) {
     const [error, setError] = useState('')
+    const [submitAttempted, setSubmitAttempted] = useState(false)
+    const [expenseErrors, setExpenseErrors] = useState({})
     const [participants, setParticipants] = useState([])
     const [expenses, setExpenses] = useState([])
     const [useExistingPerson, setUseExistingPerson] = useState(true)
@@ -116,11 +118,28 @@ export function OutreachForm({ onSuccess, onCancel }) {
 
     const onSubmit = async (data) => {
         setError('')
+        setSubmitAttempted(true)
 
         if (participants.length === 0) {
-            setError('Please add at least one participant')
+            setError('Please add at least one participant before saving.')
             return
         }
+
+        // Validate expense rows
+        const eErrors = {}
+        for (const exp of expenses) {
+            const rowErrors = {}
+            if (!exp.expense_type) rowErrors.expense_type = 'Select a type'
+            const amt = parseFloat(exp.amount)
+            if (isNaN(amt) || amt <= 0) rowErrors.amount = 'Enter an amount greater than 0'
+            if (Object.keys(rowErrors).length > 0) eErrors[exp.id] = rowErrors
+        }
+        if (Object.keys(eErrors).length > 0) {
+            setExpenseErrors(eErrors)
+            setError('Please fix the errors in the expenses section below.')
+            return
+        }
+        setExpenseErrors({})
 
         try {
             await createOutreach.mutateAsync({
@@ -340,6 +359,10 @@ export function OutreachForm({ onSuccess, onCancel }) {
                         </div>
                     )}
 
+                    {submitAttempted && participants.length === 0 && (
+                        <p className="text-sm text-red-600 mt-2">At least one participant is required.</p>
+                    )}
+
                     {/* Participants List */}
                     {participants.length > 0 && (
                         <div className="space-y-2 mt-4">
@@ -399,9 +422,9 @@ export function OutreachForm({ onSuccess, onCancel }) {
                                         <Label className="text-xs">Type</Label>
                                         <Select
                                             value={expense.expense_type}
-                                            onValueChange={(value) => handleUpdateExpense(expense.id, 'expense_type', value)}
+                                            onValueChange={(value) => { handleUpdateExpense(expense.id, 'expense_type', value); setExpenseErrors(p => ({ ...p, [expense.id]: { ...p[expense.id], expense_type: undefined } })) }}
                                         >
-                                            <SelectTrigger>
+                                            <SelectTrigger className={expenseErrors[expense.id]?.expense_type ? 'border-red-400' : ''}>
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -412,6 +435,7 @@ export function OutreachForm({ onSuccess, onCancel }) {
                                                 ))}
                                             </SelectContent>
                                         </Select>
+                                        {expenseErrors[expense.id]?.expense_type && <p className="text-xs text-red-600 mt-1">{expenseErrors[expense.id].expense_type}</p>}
                                     </div>
                                     <div className="col-span-2">
                                         <Label className="text-xs">Amount (ZMW)</Label>
@@ -419,8 +443,10 @@ export function OutreachForm({ onSuccess, onCancel }) {
                                             type="number"
                                             step="0.01"
                                             value={expense.amount}
-                                            onChange={(e) => handleUpdateExpense(expense.id, 'amount', e.target.value)}
+                                            onChange={(e) => { handleUpdateExpense(expense.id, 'amount', e.target.value); setExpenseErrors(p => ({ ...p, [expense.id]: { ...p[expense.id], amount: undefined } })) }}
+                                            className={expenseErrors[expense.id]?.amount ? 'border-red-400' : ''}
                                         />
+                                        {expenseErrors[expense.id]?.amount && <p className="text-xs text-red-600 mt-1">{expenseErrors[expense.id].amount}</p>}
                                     </div>
                                     <div className="col-span-6">
                                         <Label className="text-xs">Description</Label>

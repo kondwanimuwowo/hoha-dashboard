@@ -16,6 +16,7 @@ export function DewormingRecordSheet({ records, event, onSave, isSaving }) {
     const [searchQuery, setSearchQuery] = useState('')
     const [isAutoSaving, setIsAutoSaving] = useState(false)
     const [lastSavedAt, setLastSavedAt] = useState(null)
+    const [rangeErrors, setRangeErrors] = useState({})
 
     // Initialize local state from fetched records
     useEffect(() => {
@@ -88,6 +89,24 @@ export function DewormingRecordSheet({ records, event, onSave, isSaving }) {
     }, [onSave])
 
     const handleSave = async () => {
+        const errors = {}
+        for (const r of Object.values(localRecords)) {
+            const rowErrors = {}
+            if (r.weight_kg !== '' && r.weight_kg != null) {
+                const w = Number(r.weight_kg)
+                if (isNaN(w) || w < 0 || w > 150) rowErrors.weight_kg = 'Weight must be between 0 and 150 kg'
+            }
+            if (r.height_cm !== '' && r.height_cm != null) {
+                const h = Number(r.height_cm)
+                if (isNaN(h) || h < 0 || h > 250) rowErrors.height_cm = 'Height must be between 0 and 250 cm'
+            }
+            if (Object.keys(rowErrors).length > 0) errors[r.child_id] = rowErrors
+        }
+        if (Object.keys(errors).length > 0) {
+            setRangeErrors(errors)
+            return
+        }
+        setRangeErrors({})
         await persistRecords(localRecords, { auto: false })
     }
 
@@ -223,11 +242,14 @@ export function DewormingRecordSheet({ records, event, onSave, isSaving }) {
                                             <Input
                                                 type="number"
                                                 step="0.1"
+                                                min="0"
+                                                max="150"
                                                 placeholder="kg"
                                                 value={record.weight_kg}
-                                                onChange={(e) => updateRecord(record.child_id, 'weight_kg', e.target.value)}
-                                                className="h-9"
+                                                onChange={(e) => { updateRecord(record.child_id, 'weight_kg', e.target.value); setRangeErrors(p => ({ ...p, [record.child_id]: { ...p[record.child_id], weight_kg: undefined } })) }}
+                                                className={cn('h-9', rangeErrors[record.child_id]?.weight_kg && 'border-red-400')}
                                             />
+                                            {rangeErrors[record.child_id]?.weight_kg && <p className="text-xs text-red-600 mt-1">{rangeErrors[record.child_id].weight_kg}</p>}
                                         </div>
 
                                         {/* Height */}
@@ -236,11 +258,14 @@ export function DewormingRecordSheet({ records, event, onSave, isSaving }) {
                                             <Input
                                                 type="number"
                                                 step="0.1"
+                                                min="0"
+                                                max="250"
                                                 placeholder="cm"
                                                 value={record.height_cm}
-                                                onChange={(e) => updateRecord(record.child_id, 'height_cm', e.target.value)}
-                                                className="h-9"
+                                                onChange={(e) => { updateRecord(record.child_id, 'height_cm', e.target.value); setRangeErrors(p => ({ ...p, [record.child_id]: { ...p[record.child_id], height_cm: undefined } })) }}
+                                                className={cn('h-9', rangeErrors[record.child_id]?.height_cm && 'border-red-400')}
                                             />
+                                            {rangeErrors[record.child_id]?.height_cm && <p className="text-xs text-red-600 mt-1">{rangeErrors[record.child_id].height_cm}</p>}
                                         </div>
 
                                         {/* Administered checkbox */}

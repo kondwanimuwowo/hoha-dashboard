@@ -308,12 +308,15 @@ export function AttendanceSheet({ students, date, gradeLabel, existingAttendance
                                         </div>
 
                                         {status === ATTENDANCE_STATUS.EXCUSED && (
-                                            <div className="mt-3 max-w-md">
+                                            <div className="mt-3 max-w-md space-y-1">
                                                 <Input
                                                     value={record.note || ''}
                                                     onChange={(e) => setExcusedNote(personId, e.target.value)}
                                                     placeholder="Reason for excused absence..."
                                                 />
+                                                {!record.note?.trim() && (
+                                                    <p className="text-xs text-amber-600">Add a reason for the excusal.</p>
+                                                )}
                                             </div>
                                         )}
                                     </motion.div>

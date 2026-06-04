@@ -13,12 +13,13 @@ import { Loader2, Search, X } from 'lucide-react'
 
 const distributionSchema = z.object({
     distribution_date: z.string().min(1, 'Distribution date is required'),
-    reason: z.string().min(1, 'Reason is required'),
+    reason: z.string().min(3, 'Please describe the reason (at least 3 characters)'),
     notes: z.string().optional(),
 })
 
 export function EmergencyDistributionForm({ onSuccess, onCancel }) {
     const [error, setError] = useState('')
+    const [submitAttempted, setSubmitAttempted] = useState(false)
     const [recipients, setRecipients] = useState([])
     const [searchQuery, setSearchQuery] = useState('')
 
@@ -58,9 +59,10 @@ export function EmergencyDistributionForm({ onSuccess, onCancel }) {
 
     const onSubmit = async (data) => {
         setError('')
+        setSubmitAttempted(true)
 
         if (recipients.length === 0) {
-            setError('Please add at least one recipient family')
+            setError('Please add at least one recipient family.')
             return
         }
 
@@ -175,6 +177,10 @@ export function EmergencyDistributionForm({ onSuccess, onCancel }) {
                     )}
                 </div>
 
+                {submitAttempted && recipients.length === 0 && (
+                    <p className="text-sm text-red-600">At least one recipient family is required.</p>
+                )}
+
                 {recipients.length > 0 && (
                     <div className="space-y-2">
                         <Label>Selected Recipients ({recipients.length})</Label>
@@ -209,6 +215,9 @@ export function EmergencyDistributionForm({ onSuccess, onCancel }) {
                                             value={recipient.items_provided}
                                             onChange={(e) => updateRecipientItems(recipient.id, e.target.value)}
                                         />
+                                        {!recipient.items_provided?.trim() && (
+                                            <p className="text-xs text-amber-600">No items listed — add what was provided to this family.</p>
+                                        )}
                                     </div>
                                 </div>
                             ))}

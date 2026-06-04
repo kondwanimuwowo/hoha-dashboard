@@ -24,19 +24,23 @@ const visitSchema = z.object({
     diagnosis: z.string().optional().nullable(),
     treatment_provided: z.string().optional().nullable(),
     cost_amount: z.any().optional(),
-    medical_fees: z.any().optional(),
-    transport_costs: z.any().optional(),
-    other_fees: z.any().optional(),
+    medical_fees: z.preprocess(v => (v === '' || v == null ? null : Number(v)), z.number().min(0, 'Must be 0 or more').nullable().optional()),
+    transport_costs: z.preprocess(v => (v === '' || v == null ? null : Number(v)), z.number().min(0, 'Must be 0 or more').nullable().optional()),
+    other_fees: z.preprocess(v => (v === '' || v == null ? null : Number(v)), z.number().min(0, 'Must be 0 or more').nullable().optional()),
     is_emergency: z.boolean().default(false),
     emergency_comment: z.string().optional().nullable(),
     transport_provided: z.boolean().default(false),
-    transport_cost: z.any().optional(),
+    transport_cost: z.preprocess(v => (v === '' || v == null ? null : Number(v)), z.number().min(0, 'Must be 0 or more').nullable().optional()),
     transport_comment: z.string().optional().nullable(),
     follow_up_required: z.boolean().default(false),
     follow_up_date: emptyToNull,
     followup_comment: z.string().optional().nullable(),
     in_hoha_program: z.boolean().default(true),
     notes: z.string().optional().nullable(),
+}).superRefine((val, ctx) => {
+    if (val.follow_up_required && !val.follow_up_date) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Follow-up date is required when follow-up is enabled', path: ['follow_up_date'] })
+    }
 })
 
 export function VisitForm({ initialData, onSuccess, onCancel }) {
@@ -298,6 +302,7 @@ export function VisitForm({ initialData, onSuccess, onCancel }) {
                             {...register('medical_fees')}
                             placeholder="0.00"
                         />
+                        {errors.medical_fees && <p className="text-sm text-red-600">{errors.medical_fees.message}</p>}
                     </div>
 
                     <div className="space-y-2">
@@ -309,6 +314,7 @@ export function VisitForm({ initialData, onSuccess, onCancel }) {
                             {...register('transport_costs')}
                             placeholder="0.00"
                         />
+                        {errors.transport_costs && <p className="text-sm text-red-600">{errors.transport_costs.message}</p>}
                     </div>
                 </div>
 
@@ -322,6 +328,7 @@ export function VisitForm({ initialData, onSuccess, onCancel }) {
                             {...register('other_fees')}
                             placeholder="0.00"
                         />
+                        {errors.other_fees && <p className="text-sm text-red-600">{errors.other_fees.message}</p>}
                         <p className="text-xs text-muted-foreground">Lab tests, X-rays, etc.</p>
                     </div>
 
@@ -418,7 +425,11 @@ export function VisitForm({ initialData, onSuccess, onCancel }) {
                                 id="follow_up_date"
                                 type="date"
                                 {...register('follow_up_date')}
+                                className={errors.follow_up_date ? 'border-red-400' : ''}
                             />
+                            {errors.follow_up_date && (
+                                <p className="text-sm text-red-600">{errors.follow_up_date.message}</p>
+                            )}
 
                             <Label htmlFor="followup_comment" className="mt-2">Follow-up Notes</Label>
                             <Textarea

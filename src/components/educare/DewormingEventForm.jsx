@@ -16,9 +16,9 @@ import {
 
 const schema = z.object({
     event_date: z.string().min(1, 'Date is required'),
-    medication_name: z.string().min(1, 'Medication name is required'),
-    dosage_amount: z.coerce.number().positive('Dosage must be positive'),
-    dosage_unit: z.string().min(1),
+    medication_name: z.string().min(2, 'Medication name is required'),
+    dosage_amount: z.coerce.number().positive('Dosage must be a positive number'),
+    dosage_unit: z.string().min(1, 'Please select a dosage unit'),
     notes: z.string().optional(),
 })
 
@@ -118,6 +118,9 @@ export function DewormingEventForm({ open, onOpenChange, onSubmit, isSubmitting 
                                     <SelectItem value="tablet">tablet</SelectItem>
                                 </SelectContent>
                             </Select>
+                            {errors.dosage_unit && (
+                                <p className="text-sm text-red-600">{errors.dosage_unit.message}</p>
+                            )}
                         </div>
                     </div>
 

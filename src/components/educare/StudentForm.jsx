@@ -78,6 +78,7 @@ function getInitialGuardians(initialData) {
 
 export function StudentForm({ onSuccess, onCancel, initialData }) {
     const [error, setError] = useState('')
+    const [guardianError, setGuardianError] = useState('')
     const [guardians, setGuardians] = useState(() => getInitialGuardians(initialData))
     const [searchTerm, setSearchTerm] = useState('')
     const [showSuggestions, setShowSuggestions] = useState(false)
@@ -247,6 +248,19 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
 
     const onSubmit = async (data) => {
         setError('')
+        setGuardianError('')
+
+        const filledGuardians = guardians.filter(g => g.first_name?.trim())
+        if (filledGuardians.length === 0) {
+            setGuardianError('At least one guardian with a name is required.')
+            return
+        }
+        const invalidGuardians = filledGuardians.filter(g => !g.phone_number?.trim())
+        if (invalidGuardians.length > 0) {
+            setGuardianError(`Guardian "${invalidGuardians[0].first_name}" is missing a phone number.`)
+            return
+        }
+
         // Sanitize health fields: NaN → null
         const weight_kg = (data.weight_kg != null && !isNaN(data.weight_kg)) ? data.weight_kg : null
         const height_cm = (data.height_cm != null && !isNaN(data.height_cm)) ? data.height_cm : null
@@ -460,6 +474,9 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                 <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold">Parent/Guardian Information</h3>
                 </div>
+                {guardianError && (
+                    <p className="text-sm text-red-600">{guardianError}</p>
+                )}
 
                 {guardians.map((guardian, index) => (
                     <div key={index} className="border rounded-lg p-4 space-y-3 bg-muted/30">
@@ -552,12 +569,18 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                         )}
 
                         <div className="grid grid-cols-2 gap-3">
-                            <Input
-                                placeholder="First Name"
-                                value={guardian.first_name}
-                                onChange={(e) => updateGuardian(index, 'first_name', e.target.value)}
-                                disabled={!!guardian.linked_person_id && !guardian.is_editing}
-                            />
+                            <div>
+                                <Input
+                                    placeholder="First Name *"
+                                    value={guardian.first_name}
+                                    onChange={(e) => { updateGuardian(index, 'first_name', e.target.value); setGuardianError('') }}
+                                    disabled={!!guardian.linked_person_id && !guardian.is_editing}
+                                    className={guardianError && !guardian.first_name?.trim() ? 'border-red-400' : ''}
+                                />
+                                {guardianError && !guardian.first_name?.trim() && (
+                                    <p className="text-xs text-red-600 mt-1">Name required</p>
+                                )}
+                            </div>
                             <Input
                                 placeholder="Last Name"
                                 value={guardian.last_name}
@@ -567,12 +590,18 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
-                            <Input
-                                placeholder="Phone Number"
-                                value={guardian.phone_number}
-                                onChange={(e) => updateGuardian(index, 'phone_number', e.target.value)}
-                                disabled={!!guardian.linked_person_id && !guardian.is_editing}
-                            />
+                            <div>
+                                <Input
+                                    placeholder="Phone Number *"
+                                    value={guardian.phone_number}
+                                    onChange={(e) => { updateGuardian(index, 'phone_number', e.target.value); setGuardianError('') }}
+                                    disabled={!!guardian.linked_person_id && !guardian.is_editing}
+                                    className={guardianError && guardian.first_name?.trim() && !guardian.phone_number?.trim() ? 'border-red-400' : ''}
+                                />
+                                {guardianError && guardian.first_name?.trim() && !guardian.phone_number?.trim() && (
+                                    <p className="text-xs text-red-600 mt-1">Phone required</p>
+                                )}
+                            </div>
                             <div className="flex items-center space-x-2">
                                 <Checkbox
                                     id={`is_emergency_${index}`}

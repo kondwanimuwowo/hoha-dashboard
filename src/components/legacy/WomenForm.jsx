@@ -40,6 +40,15 @@ const womanSchema = z.object({
     enrollment_date: emptyToNull,
     status: z.string().default('Active'),
     notes: z.string().nullable().optional(),
+}).superRefine((val, ctx) => {
+    if (!val.woman_id) {
+        if (!val.first_name?.trim()) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'First name is required', path: ['first_name'] })
+        }
+        if (!val.last_name?.trim()) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Last name is required', path: ['last_name'] })
+        }
+    }
 })
 
 export function WomenForm({ onSuccess, onCancel, initialData }) {
