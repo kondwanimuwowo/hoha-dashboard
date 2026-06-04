@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useStudent, useDeleteStudent } from '@/hooks/useStudents'
 import { useAttendanceSummary } from '@/hooks/useAttendance'
 import { useStudentGuardians } from '@/hooks/useRelationships'
-import { useStudentDocuments } from '@/hooks/useRecords'
+import { useStudentDocuments, useCaseNotes } from '@/hooks/useRecords'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -88,7 +88,10 @@ export function StudentProfile() {
     const { data: attendanceData } = useAttendanceSummary(student?.id)
 
     const { data: documents } = useStudentDocuments(id)
+    const { data: caseNotes } = useCaseNotes(student?.id)
     const reportCardsCount = documents?.filter(d => d.document_type === 'Report Card').length ?? 0
+    const documentsCount = documents?.length ?? 0
+    const caseNotesCount = caseNotes?.length ?? 0
 
     const [isDeleting, setIsDeleting] = useState(false)
     const [selectedParentForDetail, setSelectedParentForDetail] = useState(null)
@@ -241,8 +244,18 @@ export function StudentProfile() {
             <Tabs defaultValue="overview" className="w-full">
                 <TabsList className="grid w-full grid-cols-3 mb-6">
                     <TabsTrigger value="overview">Overview</TabsTrigger>
-                    <TabsTrigger value="case-notes">Case Notes</TabsTrigger>
-                    <TabsTrigger value="documents">Documents</TabsTrigger>
+                    <TabsTrigger value="case-notes" className="gap-2">
+                        Case Notes
+                        {caseNotesCount > 0 && (
+                            <span className="ml-1 rounded-full bg-muted px-1.5 py-0.5 text-xs font-medium">{caseNotesCount}</span>
+                        )}
+                    </TabsTrigger>
+                    <TabsTrigger value="documents" className="gap-2">
+                        Documents
+                        {documentsCount > 0 && (
+                            <span className="ml-1 rounded-full bg-muted px-1.5 py-0.5 text-xs font-medium">{documentsCount}</span>
+                        )}
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="space-y-6">

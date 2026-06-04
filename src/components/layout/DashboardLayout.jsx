@@ -24,7 +24,7 @@ export function DashboardLayout() {
                 <Header onMenuClick={() => setMobileOpen(!mobileOpen)} />
 
                 {/* Page Content */}
-                <main className="flex-1 overflow-y-auto">
+                <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950">
                     <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
                         <Outlet />
                     </div>

@@ -9,11 +9,11 @@ export function PageHeader({ title, description, action, actionLabel, actionIcon
             transition={{ duration: 0.3 }}
             className="mb-6"
         >
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between pb-4 border-b border-border">
                 <div>
-                    <h1 className="text-3xl font-bold text-foreground">{title}</h1>
+                    <h1 className="text-2xl font-bold text-foreground">{title}</h1>
                     {description && (
-                        <p className="mt-2 text-muted-foreground">{description}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
                     )}
                 </div>
                 {action && actionLabel && (
@@ -28,4 +28,3 @@ export function PageHeader({ title, description, action, actionLabel, actionIcon
         </motion.div>
     )
 }
-

@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CaseNotes } from '@/components/records/CaseNotes'
 import { PersonDocuments } from '@/components/records/PersonDocuments'
+import { useCaseNotes, usePersonDocuments } from '@/hooks/useRecords'
 
 function InfoRow({ icon: Icon, label, value, iconClass }) {
     return (
@@ -47,6 +48,10 @@ export function WomanProfile() {
         dateFrom ? dateFrom : undefined,
         dateTo ? dateTo : undefined
     )
+    const { data: caseNotes } = useCaseNotes(id)
+    const { data: personDocuments } = usePersonDocuments(id)
+    const caseNotesCount = caseNotes?.length ?? 0
+    const documentsCount = personDocuments?.length ?? 0
 
     if (isLoading) return <LoadingSpinner />
     if (!womanData) return <div>Participant not found</div>
@@ -153,8 +158,18 @@ export function WomanProfile() {
             <Tabs defaultValue="overview" className="w-full">
                 <TabsList className="grid w-full grid-cols-3 mb-6">
                     <TabsTrigger value="overview">Overview</TabsTrigger>
-                    <TabsTrigger value="case-notes">Case Notes</TabsTrigger>
-                    <TabsTrigger value="documents">Documents</TabsTrigger>
+                    <TabsTrigger value="case-notes">
+                        Case Notes
+                        {caseNotesCount > 0 && (
+                            <span className="ml-1 rounded-full bg-muted px-1.5 py-0.5 text-xs font-medium">{caseNotesCount}</span>
+                        )}
+                    </TabsTrigger>
+                    <TabsTrigger value="documents">
+                        Documents
+                        {documentsCount > 0 && (
+                            <span className="ml-1 rounded-full bg-muted px-1.5 py-0.5 text-xs font-medium">{documentsCount}</span>
+                        )}
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="space-y-6">
