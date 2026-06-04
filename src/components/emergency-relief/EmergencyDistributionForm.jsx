@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Search, X } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Loader2, Search, X, UserCheck, UserPlus } from 'lucide-react'
 
 const distributionSchema = z.object({
     distribution_date: z.string().min(1, 'Distribution date is required'),
@@ -22,6 +23,9 @@ export function EmergencyDistributionForm({ onSuccess, onCancel }) {
     const [submitAttempted, setSubmitAttempted] = useState(false)
     const [recipients, setRecipients] = useState([])
     const [searchQuery, setSearchQuery] = useState('')
+    const [addMode, setAddMode] = useState('registered') // 'registered' | 'non-registered'
+    const [adHocName, setAdHocName] = useState('')
+    const [adHocNameError, setAdHocNameError] = useState('')
 
     const createDistribution = useCreateEmergencyDistribution()
     const { data: people } = usePeople(searchQuery)
@@ -37,24 +41,44 @@ export function EmergencyDistributionForm({ onSuccess, onCancel }) {
         },
     })
 
-    const addRecipient = (person) => {
+    const addRegisteredRecipient = (person) => {
         if (!recipients.find(r => r.id === person.id)) {
             setRecipients([...recipients, {
-                ...person,
+                id: person.id,
+                family_head_id: person.id,
+                ad_hoc_name: null,
+                display_name: `${person.first_name} ${person.last_name}`,
+                compound_area: person.compound_area,
+                is_registered: true,
                 items_provided: '',
             }])
         }
         setSearchQuery('')
     }
 
-    const removeRecipient = (personId) => {
-        setRecipients(recipients.filter(r => r.id !== personId))
+    const addAdHocRecipient = () => {
+        const name = adHocName.trim()
+        if (!name) { setAdHocNameError('Please enter a name'); return }
+        if (name.length < 2) { setAdHocNameError('Name must be at least 2 characters'); return }
+        setAdHocNameError('')
+        setRecipients([...recipients, {
+            id: `adhoc-${Date.now()}`,
+            family_head_id: null,
+            ad_hoc_name: name,
+            display_name: name,
+            compound_area: null,
+            is_registered: false,
+            items_provided: '',
+        }])
+        setAdHocName('')
     }
 
-    const updateRecipientItems = (personId, items) => {
-        setRecipients(recipients.map(r =>
-            r.id === personId ? { ...r, items_provided: items } : r
-        ))
+    const removeRecipient = (id) => {
+        setRecipients(recipients.filter(r => r.id !== id))
+    }
+
+    const updateRecipientItems = (id, items) => {
+        setRecipients(recipients.map(r => r.id === id ? { ...r, items_provided: items } : r))
     }
 
     const onSubmit = async (data) => {
@@ -70,7 +94,8 @@ export function EmergencyDistributionForm({ onSuccess, onCancel }) {
             await createDistribution.mutateAsync({
                 ...data,
                 recipients: recipients.map(r => ({
-                    family_head_id: r.id,
+                    family_head_id: r.family_head_id,
+                    ad_hoc_name: r.ad_hoc_name,
                     items_provided: r.items_provided,
                 })),
             })
@@ -146,36 +171,79 @@ export function EmergencyDistributionForm({ onSuccess, onCancel }) {
             <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Recipients</h3>
 
-                <div className="space-y-2">
-                    <Label>Search for family head</Label>
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Search by name..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-9"
-                        />
-                    </div>
-
-                    {people && people.length > 0 && searchQuery && (
-                        <div className="max-h-48 overflow-y-auto border rounded-lg">
-                            {people.map((person) => (
-                                <button
-                                    key={person.id}
-                                    type="button"
-                                    onClick={() => addRecipient(person)}
-                                    className="w-full text-left p-3 hover:bg-muted transition-colors border-b last:border-b-0"
-                                >
-                                    <div className="font-medium">{person.first_name} {person.last_name}</div>
-                                    <div className="text-sm text-muted-foreground">
-                                        {person.compound_area || 'No area specified'}
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    )}
+                {/* Mode toggle */}
+                <div className="flex gap-2">
+                    <button
+                        type="button"
+                        onClick={() => { setAddMode('registered'); setSearchQuery(''); setAdHocName(''); setAdHocNameError('') }}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${addMode === 'registered' ? 'border-primary bg-primary/5 text-primary' : 'border-muted-foreground/20 text-muted-foreground hover:border-muted-foreground/40'}`}
+                    >
+                        <UserCheck className="h-4 w-4" />
+                        HOHA Registered
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => { setAddMode('non-registered'); setSearchQuery(''); setAdHocNameError('') }}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${addMode === 'non-registered' ? 'border-primary bg-primary/5 text-primary' : 'border-muted-foreground/20 text-muted-foreground hover:border-muted-foreground/40'}`}
+                    >
+                        <UserPlus className="h-4 w-4" />
+                        Non-Registered
+                    </button>
                 </div>
+
+                {/* Registered: search existing people */}
+                {addMode === 'registered' && (
+                    <div className="space-y-2">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search registered member by name..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-9"
+                            />
+                        </div>
+                        {people && people.length > 0 && searchQuery && (
+                            <div className="max-h-48 overflow-y-auto border rounded-lg">
+                                {people.map((person) => (
+                                    <button
+                                        key={person.id}
+                                        type="button"
+                                        onClick={() => addRegisteredRecipient(person)}
+                                        className="w-full text-left p-3 hover:bg-muted transition-colors border-b last:border-b-0"
+                                    >
+                                        <div className="font-medium">{person.first_name} {person.last_name}</div>
+                                        <div className="text-sm text-muted-foreground">
+                                            {person.compound_area || 'No area specified'}
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Non-registered: enter name only */}
+                {addMode === 'non-registered' && (
+                    <div className="space-y-2">
+                        <div className="flex gap-2">
+                            <div className="flex-1 space-y-1">
+                                <Input
+                                    placeholder="Full name of recipient..."
+                                    value={adHocName}
+                                    onChange={(e) => { setAdHocName(e.target.value); setAdHocNameError('') }}
+                                    className={adHocNameError ? 'border-red-400' : ''}
+                                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addAdHocRecipient())}
+                                />
+                                {adHocNameError && <p className="text-xs text-red-600">{adHocNameError}</p>}
+                            </div>
+                            <Button type="button" variant="outline" onClick={addAdHocRecipient}>
+                                Add
+                            </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Name only — no record will be created in the system.</p>
+                    </div>
+                )}
 
                 {submitAttempted && recipients.length === 0 && (
                     <p className="text-sm text-red-600">At least one recipient family is required.</p>
@@ -186,25 +254,20 @@ export function EmergencyDistributionForm({ onSuccess, onCancel }) {
                         <Label>Selected Recipients ({recipients.length})</Label>
                         <div className="space-y-3">
                             {recipients.map((recipient) => (
-                                <div
-                                    key={recipient.id}
-                                    className="border rounded-lg p-3 space-y-2"
-                                >
+                                <div key={recipient.id} className="border rounded-lg p-3 space-y-2">
                                     <div className="flex items-start justify-between">
                                         <div>
-                                            <div className="font-medium">
-                                                {recipient.first_name} {recipient.last_name}
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-medium">{recipient.display_name}</span>
+                                                <Badge variant={recipient.is_registered ? 'default' : 'secondary'} className="text-[10px] px-1.5 py-0">
+                                                    {recipient.is_registered ? 'Registered' : 'Non-Registered'}
+                                                </Badge>
                                             </div>
-                                            <div className="text-sm text-muted-foreground">
-                                                {recipient.compound_area || 'No area specified'}
-                                            </div>
+                                            {recipient.compound_area && (
+                                                <div className="text-sm text-muted-foreground">{recipient.compound_area}</div>
+                                            )}
                                         </div>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => removeRecipient(recipient.id)}
-                                        >
+                                        <Button type="button" variant="ghost" size="sm" onClick={() => removeRecipient(recipient.id)}>
                                             <X className="h-4 w-4" />
                                         </Button>
                                     </div>
@@ -228,12 +291,7 @@ export function EmergencyDistributionForm({ onSuccess, onCancel }) {
 
             {/* Actions */}
             <div className="flex justify-end space-x-3">
-                <Button
-                    type="button"
-                    variant="outline"
-                    onClick={onCancel}
-                    disabled={createDistribution.isPending}
-                >
+                <Button type="button" variant="outline" onClick={onCancel} disabled={createDistribution.isPending}>
                     Cancel
                 </Button>
                 <Button type="submit" disabled={createDistribution.isPending}>

@@ -354,6 +354,7 @@ function NewPersonForm({ distributionId, onSuccess }) {
         compound_area: '',
         special_needs: '',
     })
+    const [fieldErrors, setFieldErrors] = useState({})
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState('')
     const [success, setSuccess] = useState('')
@@ -361,42 +362,48 @@ function NewPersonForm({ distributionId, onSuccess }) {
     const addRecipient = useAddRecipient()
     const createPerson = useCreatePerson()
 
+    const validate = () => {
+        const errs = {}
+        if (!formData.first_name.trim()) errs.first_name = 'First name is required'
+        else if (formData.first_name.trim().length < 2) errs.first_name = 'First name must be at least 2 characters'
+        if (!formData.last_name.trim()) errs.last_name = 'Last name is required'
+        else if (formData.last_name.trim().length < 2) errs.last_name = 'Last name must be at least 2 characters'
+        if (formData.phone_number && formData.phone_number.trim().length < 7) errs.phone_number = 'Phone number seems too short'
+        return errs
+    }
+
     const handleSubmit = async (e) => {
         e.preventDefault()
-        setIsSubmitting(true)
         setError('')
         setSuccess('')
+        const errs = validate()
+        if (Object.keys(errs).length > 0) { setFieldErrors(errs); return }
+        setFieldErrors({})
+        setIsSubmitting(true)
 
         try {
-            // 1. Create Person
-            const personData = {
-                first_name: formData.first_name,
-                last_name: formData.last_name,
-                phone_number: formData.phone_number,
-                compound_area: formData.compound_area,
+            const newPerson = await createPerson.mutateAsync({
+                first_name: formData.first_name.trim(),
+                last_name: formData.last_name.trim(),
+                phone_number: formData.phone_number || null,
+                compound_area: formData.compound_area || null,
                 is_active: true
-            }
+            })
 
-            const newPerson = await createPerson.mutateAsync(personData)
-
-            // 2. Add to Distribution
             await addRecipient.mutateAsync({
                 distribution_id: distributionId,
                 family_head_id: newPerson.id,
                 special_needs: formData.special_needs,
-                // family_group_id is null for now
             })
 
-            setSuccess('Person registered and recorded successfully!')
-
-            // Wait a moment before closing
-            setTimeout(() => {
-                onSuccess()
-            }, 1000)
-
+            setSuccess('Person registered and added to distribution!')
+            setTimeout(() => onSuccess(), 1000)
         } catch (err) {
-            console.error(err)
-            setError(err.message || 'Failed to create person and record distribution')
+            const raw = err.message || ''
+            let msg = 'Something went wrong. Please try again.'
+            if (raw.includes('duplicate key') || raw.includes('unique constraint')) msg = 'A person with these details already exists.'
+            else if (raw) msg = raw
+            setError(msg)
             setIsSubmitting(false)
         }
     }
@@ -417,38 +424,42 @@ function NewPersonForm({ distributionId, onSuccess }) {
             )}
 
             <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
+                <div className="space-y-1">
                     <Label htmlFor="firstName">First Name *</Label>
                     <Input
                         id="firstName"
                         value={formData.first_name}
-                        onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                        required
+                        onChange={(e) => { setFormData({ ...formData, first_name: e.target.value }); setFieldErrors(p => ({ ...p, first_name: undefined })) }}
+                        className={fieldErrors.first_name ? 'border-red-400' : ''}
                         disabled={isSubmitting}
                     />
+                    {fieldErrors.first_name && <p className="text-xs text-red-600">{fieldErrors.first_name}</p>}
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1">
                     <Label htmlFor="lastName">Last Name *</Label>
                     <Input
                         id="lastName"
                         value={formData.last_name}
-                        onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                        required
+                        onChange={(e) => { setFormData({ ...formData, last_name: e.target.value }); setFieldErrors(p => ({ ...p, last_name: undefined })) }}
+                        className={fieldErrors.last_name ? 'border-red-400' : ''}
                         disabled={isSubmitting}
                     />
+                    {fieldErrors.last_name && <p className="text-xs text-red-600">{fieldErrors.last_name}</p>}
                 </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
                 <Label htmlFor="phone">Phone Number</Label>
                 <Input
                     id="phone"
                     type="tel"
                     value={formData.phone_number}
-                    onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                    onChange={(e) => { setFormData({ ...formData, phone_number: e.target.value }); setFieldErrors(p => ({ ...p, phone_number: undefined })) }}
                     placeholder="+260..."
+                    className={fieldErrors.phone_number ? 'border-red-400' : ''}
                     disabled={isSubmitting}
                 />
+                {fieldErrors.phone_number && <p className="text-xs text-red-600">{fieldErrors.phone_number}</p>}
             </div>
 
             <div className="space-y-2">

@@ -49,6 +49,8 @@ export function VisitForm({ initialData, onSuccess, onCancel }) {
         initialData?.patient ? `${initialData.patient.first_name} ${initialData.patient.last_name}` : ''
     )
     const [showNewPatient, setShowNewPatient] = useState(false)
+    const [newPatient, setNewPatient] = useState({ first_name: '', last_name: '', phone_number: '' })
+    const [newPatientErrors, setNewPatientErrors] = useState({})
 
     const createVisit = useCreateVisit()
     const updateVisit = useUpdateVisit()
@@ -207,20 +209,43 @@ export function VisitForm({ initialData, onSuccess, onCancel }) {
                     {showNewPatient && (
                         <div className="border rounded-lg p-4 space-y-3 bg-neutral-50">
                             <div className="grid grid-cols-2 gap-3">
-                                <Input placeholder="First Name" id="new-first" />
-                                <Input placeholder="Last Name" id="new-last" />
+                                <div className="space-y-1">
+                                    <Input
+                                        placeholder="First Name *"
+                                        value={newPatient.first_name}
+                                        onChange={e => { setNewPatient(p => ({ ...p, first_name: e.target.value })); setNewPatientErrors(p => ({ ...p, first_name: undefined })) }}
+                                        className={newPatientErrors.first_name ? 'border-red-400' : ''}
+                                    />
+                                    {newPatientErrors.first_name && <p className="text-xs text-red-600">{newPatientErrors.first_name}</p>}
+                                </div>
+                                <div className="space-y-1">
+                                    <Input
+                                        placeholder="Last Name *"
+                                        value={newPatient.last_name}
+                                        onChange={e => { setNewPatient(p => ({ ...p, last_name: e.target.value })); setNewPatientErrors(p => ({ ...p, last_name: undefined })) }}
+                                        className={newPatientErrors.last_name ? 'border-red-400' : ''}
+                                    />
+                                    {newPatientErrors.last_name && <p className="text-xs text-red-600">{newPatientErrors.last_name}</p>}
+                                </div>
                             </div>
-                            <Input placeholder="Phone Number" id="new-phone" />
+                            <Input
+                                placeholder="Phone Number"
+                                value={newPatient.phone_number}
+                                onChange={e => setNewPatient(p => ({ ...p, phone_number: e.target.value }))}
+                            />
                             <Button
                                 type="button"
                                 size="sm"
                                 onClick={() => {
-                                    const first = document.getElementById('new-first').value
-                                    const last = document.getElementById('new-last').value
-                                    const phone = document.getElementById('new-phone').value
-                                    if (first && last) {
-                                        handleCreatePatient({ first_name: first, last_name: last, phone_number: phone })
-                                    }
+                                    const errs = {}
+                                    if (!newPatient.first_name.trim()) errs.first_name = 'First name is required'
+                                    else if (newPatient.first_name.trim().length < 2) errs.first_name = 'First name must be at least 2 characters'
+                                    if (!newPatient.last_name.trim()) errs.last_name = 'Last name is required'
+                                    else if (newPatient.last_name.trim().length < 2) errs.last_name = 'Last name must be at least 2 characters'
+                                    if (Object.keys(errs).length > 0) { setNewPatientErrors(errs); return }
+                                    handleCreatePatient(newPatient)
+                                    setNewPatient({ first_name: '', last_name: '', phone_number: '' })
+                                    setNewPatientErrors({})
                                 }}
                             >
                                 Create Patient

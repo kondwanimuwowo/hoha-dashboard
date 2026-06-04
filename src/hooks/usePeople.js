@@ -193,9 +193,7 @@ export function useParents(search = '') {
 
             return data
                 .filter(person => !(person.own_enrollment?.length > 0)) // exclude students
-                // When searching, show all non-students so orphaned parents can be found.
-                // When browsing (no search), only show people who have relationship entries.
-                .filter(person => search || (person.relationships && person.relationships.length > 0))
+                .filter(person => person.relationships && person.relationships.length > 0)
                 .map(person => {
                     const educareChildren = person.relationships
                         .filter(rel => rel.student)
