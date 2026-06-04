@@ -14,7 +14,6 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
-import { WomenForm } from '@/components/legacy/WomenForm'
 import { toast } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CaseNotes } from '@/components/records/CaseNotes'
@@ -39,7 +38,6 @@ export function WomanProfile() {
     const navigate = useNavigate()
     const { data: womanData, isLoading } = useWoman(id)
     const deleteWoman = useDeleteWoman()
-    const [isEditing, setIsEditing] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
     const [dateFrom, setDateFrom] = useState('')
     const [dateTo, setDateTo] = useState('')
@@ -119,7 +117,7 @@ export function WomanProfile() {
                                 </div>
                             </div>
                             <div className="flex gap-2 no-print shrink-0">
-                                <Button onClick={() => setIsEditing(true)}>
+                                <Button onClick={() => navigate(`/legacy/participants/${id}/edit`)}>
                                     <Edit className="mr-2 h-4 w-4" />
                                     Edit
                                 </Button>
@@ -150,24 +148,7 @@ export function WomanProfile() {
                 </DialogContent>
             </Dialog>
 
-            {/* Edit Dialog */}
-            <Dialog open={isEditing} onOpenChange={setIsEditing}>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle>Edit Participant</DialogTitle>
-                        <DialogDescription>
-                            Update information for {woman.first_name} {woman.last_name}.
-                        </DialogDescription>
-                    </DialogHeader>
-                    {womanData && (
-                        <WomenForm
-                            initialData={womanData}
-                            onSuccess={() => setIsEditing(false)}
-                            onCancel={() => setIsEditing(false)}
-                        />
-                    )}
-                </DialogContent>
-            </Dialog>
+
 
             <Tabs defaultValue="overview" className="w-full">
                 <TabsList className="grid w-full grid-cols-3 mb-6">

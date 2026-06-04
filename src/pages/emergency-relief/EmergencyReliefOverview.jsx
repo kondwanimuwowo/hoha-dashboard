@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Package, Users, Calendar, Plus, History, Search, Printer } from 'lucide-react'
 import { useEmergencyDistributions } from '@/hooks/useEmergencyRelief'
 import { usePeople } from '@/hooks/usePeople'
-import { EmergencyDistributionForm } from '@/components/emergency-relief/EmergencyDistributionForm'
 import { RegistrationFilter } from '@/components/shared/RegistrationFilter'
 import { RecipientHistory } from '@/components/emergency-relief/RecipientHistory'
 import { PersonAvatar } from '@/components/shared/PersonAvatar'
@@ -21,7 +20,6 @@ import {
 
 export default function EmergencyReliefOverview() {
     const navigate = useNavigate()
-    const [showCreateDialog, setShowCreateDialog] = useState(false)
     const [showHistorySearch, setShowHistorySearch] = useState(false)
     const [selectedRecipient, setSelectedRecipient] = useState(null)
     const [registrationFilter, setRegistrationFilter] = useState('all')
@@ -102,7 +100,7 @@ export default function EmergencyReliefOverview() {
                             <History className="mr-2 h-4 w-4" />
                             History
                         </Button>
-                        <Button onClick={() => setShowCreateDialog(true)}>
+                        <Button onClick={() => navigate('/emergency-relief/new')}>
                             <Plus className="mr-2 h-4 w-4" />
                             New
                         </Button>
@@ -190,19 +188,6 @@ export default function EmergencyReliefOverview() {
                     )}
                 </CardContent>
             </Card>
-
-            {/* Create Distribution Dialog */}
-            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle>Create Emergency Distribution</DialogTitle>
-                    </DialogHeader>
-                    <EmergencyDistributionForm
-                        onSuccess={() => setShowCreateDialog(false)}
-                        onCancel={() => setShowCreateDialog(false)}
-                    />
-                </DialogContent>
-            </Dialog>
 
             {/* History Search Dialog */}
             <RecipientSearchDialog

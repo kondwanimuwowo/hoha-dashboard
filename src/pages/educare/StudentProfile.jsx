@@ -16,7 +16,6 @@ import {
 import { formatDate, calculateAge } from '@/lib/utils'
 import { PersonAvatar } from '@/components/shared/PersonAvatar'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
-import { StudentForm } from '@/components/educare/StudentForm'
 import { ParentDetailCard } from '@/components/educare/ParentDetailCard'
 import { useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -91,7 +90,6 @@ export function StudentProfile() {
     const { data: documents } = useStudentDocuments(id)
     const reportCardsCount = documents?.filter(d => d.document_type === 'Report Card').length ?? 0
 
-    const [isEditing, setIsEditing] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
     const [selectedParentForDetail, setSelectedParentForDetail] = useState(null)
     const [dateFrom, setDateFrom] = useState('')
@@ -209,7 +207,7 @@ export function StudentProfile() {
                                 </div>
                             </div>
                             <div className="flex gap-2 no-print shrink-0">
-                                <Button onClick={() => setIsEditing(true)}>
+                                <Button onClick={() => navigate(`/educare/students/${id}/edit`)}>
                                     <Edit className="mr-2 h-4 w-4" />
                                     Edit
                                 </Button>
@@ -237,25 +235,6 @@ export function StudentProfile() {
                             {deleteStudent.isPending ? 'Deleting...' : 'Confirm Delete'}
                         </Button>
                     </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            {/* Edit Dialog */}
-            <Dialog open={isEditing} onOpenChange={setIsEditing}>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle>Edit Student</DialogTitle>
-                        <DialogDescription>
-                            Update the student's personal and enrollment information.
-                        </DialogDescription>
-                    </DialogHeader>
-                    {student && (
-                        <StudentForm
-                            initialData={{ ...student, relationships }}
-                            onSuccess={() => setIsEditing(false)}
-                            onCancel={() => setIsEditing(false)}
-                        />
-                    )}
                 </DialogContent>
             </Dialog>
 

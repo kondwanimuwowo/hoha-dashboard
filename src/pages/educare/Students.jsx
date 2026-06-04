@@ -7,9 +7,7 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { StudentTable } from '@/components/educare/StudentTable'
-import { StudentForm } from '@/components/educare/StudentForm'
 import { ParentTable } from '@/components/educare/ParentTable'
-import { ParentForm } from '@/components/educare/ParentForm'
 import { ParentDetailCard } from '@/components/educare/ParentDetailCard'
 import { UserPlus, Users, GraduationCap, Home, Settings2, Trash2, Loader2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -37,8 +35,6 @@ export function Students() {
     const [searchInput, setSearchInput] = useState(searchParams.get('search') ?? '')
     const [debouncedSearch, setDebouncedSearch] = useState(searchParams.get('search') ?? '')
 
-    const [showAddStudent, setShowAddStudent] = useState(false)
-    const [showAddParent, setShowAddParent] = useState(false)
     const [sorting, setSorting] = useState([{ id: 'first_name', desc: false }])
     const [selectedParent, setSelectedParent] = useState(null)
     const [showManageSchools, setShowManageSchools] = useState(false)
@@ -100,9 +96,9 @@ export function Students() {
 
     const handleHeaderAction = () => {
         if (activeTab === 'students') {
-            setShowAddStudent(true)
+            navigate('/educare/students/new')
         } else {
-            setShowAddParent(true)
+            navigate('/educare/parents/new')
         }
     }
 
@@ -227,7 +223,7 @@ export function Students() {
                             icon={Users}
                             title="No students found"
                             description="Get started by registering your first student"
-                            action={() => setShowAddStudent(true)}
+                            action={() => navigate('/educare/students/new')}
                             actionLabel="Register Student"
                         />
                     )}
@@ -246,48 +242,12 @@ export function Students() {
                             icon={Home}
                             title="No parent records found"
                             description="Register students with their parents to see them here"
-                            action={() => setShowAddParent(true)}
+                            action={() => navigate('/educare/parents/new')}
                             actionLabel="Register Parent"
                         />
                     )}
                 </TabsContent>
             </Tabs>
-
-            {/* Add Student Dialog */}
-            <Dialog open={showAddStudent} onOpenChange={setShowAddStudent}>
-                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle>Register New Student</DialogTitle>
-                        <DialogDescription>
-                            Create a new student record and link guardian/emergency details.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <StudentForm
-                        onSuccess={() => {
-                            setShowAddStudent(false)
-                        }}
-                        onCancel={() => setShowAddStudent(false)}
-                    />
-                </DialogContent>
-            </Dialog>
-
-            {/* Add Parent Dialog */}
-            <Dialog open={showAddParent} onOpenChange={setShowAddParent}>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle>Register New Parent</DialogTitle>
-                        <DialogDescription>
-                            Create a parent or guardian profile and link children.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <ParentForm
-                        onSuccess={() => {
-                            setShowAddParent(false)
-                        }}
-                        onCancel={() => setShowAddParent(false)}
-                    />
-                </DialogContent>
-            </Dialog>
 
             {/* Parent Details Card */}
             <ParentDetailCard

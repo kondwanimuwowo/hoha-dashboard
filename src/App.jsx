@@ -12,6 +12,9 @@ const Dashboard = lazy(() => import('@/pages/Dashboard').then((m) => ({ default:
 const EducareOverview = lazy(() => import('@/pages/educare/EducareOverview').then((m) => ({ default: m.EducareOverview })))
 const Students = lazy(() => import('@/pages/educare/Students').then((m) => ({ default: m.Students })))
 const StudentProfile = lazy(() => import('@/pages/educare/StudentProfile').then((m) => ({ default: m.StudentProfile })))
+const RegisterStudentPage = lazy(() => import('@/pages/educare/RegisterStudentPage').then((m) => ({ default: m.RegisterStudentPage })))
+const EditStudentPage = lazy(() => import('@/pages/educare/EditStudentPage').then((m) => ({ default: m.EditStudentPage })))
+const RegisterParentPage = lazy(() => import('@/pages/educare/RegisterParentPage').then((m) => ({ default: m.RegisterParentPage })))
 const Attendance = lazy(() => import('@/pages/educare/Attendance').then((m) => ({ default: m.Attendance })))
 const SchoolAwards = lazy(() => import('@/pages/educare/SchoolAwards').then((m) => ({ default: m.SchoolAwards })))
 const Health = lazy(() => import('@/pages/educare/Health').then((m) => ({ default: m.Health })))
@@ -19,10 +22,13 @@ const Health = lazy(() => import('@/pages/educare/Health').then((m) => ({ defaul
 const LegacyOverview = lazy(() => import('@/pages/legacy/LegacyOverview').then((m) => ({ default: m.LegacyOverview })))
 const Participants = lazy(() => import('@/pages/legacy/Participants').then((m) => ({ default: m.Participants })))
 const WomanProfile = lazy(() => import('@/pages/legacy/WomanProfile').then((m) => ({ default: m.WomanProfile })))
+const RegisterParticipantPage = lazy(() => import('@/pages/legacy/RegisterParticipantPage').then((m) => ({ default: m.RegisterParticipantPage })))
+const EditParticipantPage = lazy(() => import('@/pages/legacy/EditParticipantPage').then((m) => ({ default: m.EditParticipantPage })))
 const LegacyAttendance = lazy(() => import('@/pages/legacy/LegacyAttendance').then((m) => ({ default: m.LegacyAttendance })))
 
 const ClinicareOverview = lazy(() => import('@/pages/clinicare/ClinicareOverview').then((m) => ({ default: m.ClinicareOverview })))
 const Visits = lazy(() => import('@/pages/clinicare/Visits').then((m) => ({ default: m.Visits })))
+const NewVisitPage = lazy(() => import('@/pages/clinicare/NewVisitPage').then((m) => ({ default: m.NewVisitPage })))
 const PatientHistory = lazy(() => import('@/pages/clinicare/PatientHistory').then((m) => ({ default: m.PatientHistory })))
 const Facilities = lazy(() => import('@/pages/clinicare/Facilities').then((m) => ({ default: m.Facilities })))
 
@@ -34,9 +40,11 @@ const FoodHistory = lazy(() => import('@/pages/food/FoodHistory').then((m) => ({
 const EmergencyReliefOverview = lazy(() => import('@/pages/emergency-relief/EmergencyReliefOverview'))
 const EmergencyReliefDetail = lazy(() => import('@/pages/emergency-relief/EmergencyReliefDetail').then((m) => ({ default: m.EmergencyReliefDetail })))
 const ReliefHistory = lazy(() => import('@/pages/emergency-relief/ReliefHistory').then((m) => ({ default: m.ReliefHistory })))
+const NewEmergencyPage = lazy(() => import('@/pages/emergency-relief/NewEmergencyPage').then((m) => ({ default: m.NewEmergencyPage })))
 
 const CommunityOutreachOverview = lazy(() => import('@/pages/community-outreach/CommunityOutreachOverview').then((m) => ({ default: m.CommunityOutreachOverview })))
 const OutreachDetail = lazy(() => import('@/pages/community-outreach/OutreachDetail').then((m) => ({ default: m.OutreachDetail })))
+const NewOutreachPage = lazy(() => import('@/pages/community-outreach/NewOutreachPage').then((m) => ({ default: m.NewOutreachPage })))
 
 const FamilyProfile = lazy(() => import('@/pages/families/FamilyProfile').then((m) => ({ default: m.FamilyProfile })))
 const Settings = lazy(() => import('@/pages/Settings').then((m) => ({ default: m.Settings })))
@@ -134,7 +142,10 @@ function App() {
             <Route path="educare">
               <Route index element={<EducareOverview />} />
               <Route path="students" element={<Students />} />
+              <Route path="students/new" element={<RegisterStudentPage />} />
               <Route path="students/:id" element={<StudentProfile />} />
+              <Route path="students/:id/edit" element={<EditStudentPage />} />
+              <Route path="parents/new" element={<RegisterParentPage />} />
               <Route path="attendance" element={<Attendance />} />
               <Route path="awards" element={<SchoolAwards />} />
               <Route path="health" element={<Health />} />
@@ -143,13 +154,16 @@ function App() {
             <Route path="legacy">
               <Route index element={<LegacyOverview />} />
               <Route path="participants" element={<Participants />} />
+              <Route path="participants/new" element={<RegisterParticipantPage />} />
               <Route path="participants/:id" element={<WomanProfile />} />
+              <Route path="participants/:id/edit" element={<EditParticipantPage />} />
               <Route path="attendance" element={<LegacyAttendance />} />
             </Route>
 
             <Route path="clinicare">
               <Route index element={<ClinicareOverview />} />
               <Route path="visits" element={<Visits />} />
+              <Route path="visits/new" element={<NewVisitPage />} />
               <Route path="patients/:id" element={<PatientHistory />} />
               <Route path="facilities" element={<Facilities />} />
             </Route>
@@ -163,12 +177,14 @@ function App() {
 
             <Route path="emergency-relief">
               <Route index element={<EmergencyReliefOverview />} />
+              <Route path="new" element={<NewEmergencyPage />} />
               <Route path=":id" element={<EmergencyReliefDetail />} />
               <Route path="history" element={<ReliefHistory />} />
             </Route>
 
             <Route path="community-outreach">
               <Route index element={<CommunityOutreachOverview />} />
+              <Route path="new" element={<NewOutreachPage />} />
               <Route path=":id" element={<OutreachDetail />} />
             </Route>
 

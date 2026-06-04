@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Plus, X, Search, Check, Phone, MapPin, Calendar, School, Users as UsersIcon, Trash2, ShieldQuestion } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Loader2, Plus, X, Search, Check, Phone, MapPin, Calendar, School, Users as UsersIcon, Trash2, ShieldQuestion, UserPlus } from 'lucide-react'
 import { GRADE_LEVELS, RELATIONSHIP_TYPES } from '@/lib/constants'
 import { PhotoUpload } from '@/components/shared/PhotoUpload'
 import { SchoolDropdown } from '@/components/shared/SchoolDropdown'
@@ -80,6 +81,10 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
     const [error, setError] = useState('')
     const [guardianError, setGuardianError] = useState('')
     const [guardians, setGuardians] = useState(() => getInitialGuardians(initialData))
+    const [showQuickAddParent, setShowQuickAddParent] = useState(false)
+    const [quickParent, setQuickParent] = useState({ first_name: '', last_name: '', phone_number: '' })
+    const [quickParentErrors, setQuickParentErrors] = useState({})
+    const [quickParentSaving, setQuickParentSaving] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [showSuggestions, setShowSuggestions] = useState(false)
     const [activeGuardianIndex, setActiveGuardianIndex] = useState(0)
@@ -222,6 +227,30 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
         updated[index][field] = value
         setGuardians(updated)
 
+    }
+
+    const handleQuickAddParent = async () => {
+        const errs = {}
+        if (!quickParent.first_name.trim()) errs.first_name = 'First name is required'
+        if (!quickParent.last_name.trim()) errs.last_name = 'Last name is required'
+        if (Object.keys(errs).length > 0) { setQuickParentErrors(errs); return }
+        setQuickParentErrors({})
+        setQuickParentSaving(true)
+        try {
+            const newPerson = await createPerson.mutateAsync({
+                first_name: quickParent.first_name.trim(),
+                last_name: quickParent.last_name.trim(),
+                phone_number: quickParent.phone_number || null,
+            })
+            linkGuardian(newPerson)
+            setShowQuickAddParent(false)
+            setQuickParent({ first_name: '', last_name: '', phone_number: '' })
+            toast.success(`${newPerson.first_name} ${newPerson.last_name} added as guardian.`)
+        } catch (err) {
+            setQuickParentErrors({ submit: err.message || 'Failed to create parent' })
+        } finally {
+            setQuickParentSaving(false)
+        }
     }
 
     const handleEmergencyContactSelection = (index, isChecked) => {
@@ -634,7 +663,16 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                     </div>
                 ))}
 
-                <div className="flex justify-end">
+                <div className="flex justify-between">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowQuickAddParent(true)}
+                    >
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Register New Parent
+                    </Button>
                     <Button
                         type="button"
                         variant="outline"
@@ -645,6 +683,57 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                         Add Another Guardian
                     </Button>
                 </div>
+
+                {/* Quick Add Parent Dialog */}
+                <Dialog open={showQuickAddParent} onOpenChange={setShowQuickAddParent}>
+                    <DialogContent className="max-w-sm">
+                        <DialogHeader>
+                            <DialogTitle>Register New Parent</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-3">
+                            {quickParentErrors.submit && (
+                                <p className="text-sm text-red-600">{quickParentErrors.submit}</p>
+                            )}
+                            <div className="space-y-1">
+                                <Label>First Name *</Label>
+                                <Input
+                                    value={quickParent.first_name}
+                                    onChange={e => { setQuickParent(p => ({ ...p, first_name: e.target.value })); setQuickParentErrors(p => ({ ...p, first_name: undefined })) }}
+                                    className={quickParentErrors.first_name ? 'border-red-400' : ''}
+                                    placeholder="First name"
+                                />
+                                {quickParentErrors.first_name && <p className="text-xs text-red-600">{quickParentErrors.first_name}</p>}
+                            </div>
+                            <div className="space-y-1">
+                                <Label>Last Name *</Label>
+                                <Input
+                                    value={quickParent.last_name}
+                                    onChange={e => { setQuickParent(p => ({ ...p, last_name: e.target.value })); setQuickParentErrors(p => ({ ...p, last_name: undefined })) }}
+                                    className={quickParentErrors.last_name ? 'border-red-400' : ''}
+                                    placeholder="Last name"
+                                />
+                                {quickParentErrors.last_name && <p className="text-xs text-red-600">{quickParentErrors.last_name}</p>}
+                            </div>
+                            <div className="space-y-1">
+                                <Label>Phone Number</Label>
+                                <Input
+                                    value={quickParent.phone_number}
+                                    onChange={e => setQuickParent(p => ({ ...p, phone_number: e.target.value }))}
+                                    placeholder="+260..."
+                                />
+                            </div>
+                            <div className="flex justify-end gap-2 pt-2">
+                                <Button type="button" variant="outline" onClick={() => setShowQuickAddParent(false)}>
+                                    Cancel
+                                </Button>
+                                <Button type="button" onClick={handleQuickAddParent} disabled={quickParentSaving}>
+                                    {quickParentSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                    Save & Select
+                                </Button>
+                            </div>
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </div>
 
             {/* Emergency Contact */}

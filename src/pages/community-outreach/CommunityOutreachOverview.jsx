@@ -10,11 +10,8 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Heart, DollarSign, MapPin, Users, Plus, Printer } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { OutreachForm } from '@/components/community-outreach/OutreachForm'
-
 export function CommunityOutreachOverview() {
     const navigate = useNavigate()
-    const [showCreate, setShowCreate] = useState(false)
 
     // Get current year stats
     const startOfYear = new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0]
@@ -97,7 +94,7 @@ export function CommunityOutreachOverview() {
             <div className="flex gap-4">
                 <Button
                     className="w-full md:w-auto"
-                    onClick={() => setShowCreate(true)}
+                    onClick={() => navigate('/community-outreach/new')}
                 >
                     <Plus className="mr-2 h-4 w-4" />
                     Record Outreach
@@ -157,21 +154,6 @@ export function CommunityOutreachOverview() {
                 </CardContent>
             </Card>
 
-            {/* Create Outreach Dialog */}
-            <Dialog open={showCreate} onOpenChange={setShowCreate}>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle>Record Community Outreach</DialogTitle>
-                        <DialogDescription>
-                            Document the outreach event including location, people helped, and expenses
-                        </DialogDescription>
-                    </DialogHeader>
-                    <OutreachForm
-                        onSuccess={() => setShowCreate(false)}
-                        onCancel={() => setShowCreate(false)}
-                    />
-                </DialogContent>
-            </Dialog>
         </div>
     )
 }

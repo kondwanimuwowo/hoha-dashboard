@@ -1,11 +1,11 @@
 import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useVisits } from '@/hooks/useVisits'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { VisitsTable } from '@/components/clinicare/VisitsTable'
-import { VisitForm } from '@/components/clinicare/VisitForm'
 import { Heart, Plus, Filter, Search, Printer } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -16,8 +16,8 @@ import { RegistrationFilter } from '@/components/shared/RegistrationFilter'
 import { formatDate } from '@/lib/utils'
 
 export function Visits() {
+    const navigate = useNavigate()
     const [searchParams, setSearchParams] = useSearchParams()
-    const [showAddVisit, setShowAddVisit] = useState(false)
 
     // Persist all filter state in URL params
     const emergencyFilter = searchParams.get('type') ?? 'all'
@@ -104,7 +104,7 @@ export function Visits() {
                 <PageHeader
                     title="Medical Visits"
                     description={`${visits?.length || 0} total visits recorded`}
-                    action={() => setShowAddVisit(true)}
+                    action={() => navigate('/clinicare/visits/new')}
                     actionLabel="Record Visit"
                     actionIcon={Plus}
                 />
@@ -190,23 +190,11 @@ export function Visits() {
                     icon={Heart}
                     title="No visits found"
                     description="Record your first medical visit"
-                    action={() => setShowAddVisit(true)}
+                    action={() => navigate('/clinicare/visits/new')}
                     actionLabel="Record Visit"
                 />
             )}
 
-            {/* Add Visit Dialog */}
-            <Dialog open={showAddVisit} onOpenChange={setShowAddVisit}>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle>Record Medical Visit</DialogTitle>
-                    </DialogHeader>
-                    <VisitForm
-                        onSuccess={() => setShowAddVisit(false)}
-                        onCancel={() => setShowAddVisit(false)}
-                    />
-                </DialogContent>
-            </Dialog>
         </div>
     )
 }
