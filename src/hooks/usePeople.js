@@ -148,6 +148,8 @@ export function useDeletePerson() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['people'] })
             queryClient.invalidateQueries({ queryKey: ['parents'] })
+            queryClient.invalidateQueries({ queryKey: ['student-guardians'] })
+            queryClient.invalidateQueries({ queryKey: ['relationships'] })
         },
     })
 }

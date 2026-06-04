@@ -14,7 +14,8 @@ export function useRelationships(personId) {
                 .eq('person_id', personId)
 
             if (error) throw error
-            return data
+            // Exclude relationships whose linked person has been soft-deleted
+            return (data || []).filter(r => r.related_person && !r.related_person.deleted_at)
         },
         enabled: !!personId,
     })
@@ -57,7 +58,8 @@ export function useStudentGuardians(studentId) {
                 .eq('related_person_id', studentId)
 
             if (error) throw error
-            return data
+            // Exclude relationships whose linked guardian has been soft-deleted
+            return (data || []).filter(r => r.person && !r.person.deleted_at)
         },
         enabled: !!studentId,
     })
