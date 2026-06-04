@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useReportStats, useDistributionTrends, useAttendanceTrends } from '@/hooks/useReports'
 import { PageHeader } from '@/components/shared/PageHeader'
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { OverviewSkeleton } from '@/components/shared/skeletons'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
@@ -36,7 +36,7 @@ export function Reports() {
     const { data: trends } = useDistributionTrends()
     const { data: attendanceTrends } = useAttendanceTrends()
 
-    if (isLoading) return <LoadingSpinner />
+    if (isLoading) return <OverviewSkeleton />
 
     const genderData = stats?.genderStats ? Object.entries(stats.genderStats).map(([name, value]) => ({
         name,

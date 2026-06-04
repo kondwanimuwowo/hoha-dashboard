@@ -9,6 +9,7 @@ import { PersonAvatar } from '@/components/shared/PersonAvatar'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
+import { TableSkeleton } from '@/components/shared/skeletons'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { Search, Filter, Edit, Shield, CheckCircle, XCircle, Plus, Loader2 } from 'lucide-react'
@@ -81,7 +82,13 @@ export function UserManagement() {
         )
     }
 
-    if (isLoading) return <LoadingSpinner />
+    if (isLoading) return (
+        <div className="space-y-4">
+            <div className="h-7 w-40 rounded-md bg-muted animate-pulse" />
+            <div className="h-4 w-64 rounded-md bg-muted animate-pulse" />
+            <TableSkeleton rows={6} columns={4} />
+        </div>
+    )
 
     const filteredUsers = users?.filter(user => {
         const matchesSearch =

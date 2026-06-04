@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { useDashboardStats } from '@/hooks/useStats'
 import { StatsCard } from '@/components/shared/StatsCard'
-import { StatCardsSkeleton, CardSkeleton } from '@/components/shared/skeletons'
+import { OverviewSkeleton } from '@/components/shared/skeletons'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { GraduationCap, Users, Heart, Calendar, UserPlus, ClipboardList, Plus } from 'lucide-react'
@@ -26,16 +26,7 @@ export function Dashboard() {
     const [showCreateDist, setShowCreateDist] = useState(false)
     const { data: stats, isLoading } = useDashboardStats()
 
-    if (isLoading) return (
-        <div className="space-y-6">
-            <div className="h-10 w-48 rounded-md bg-muted animate-pulse" />
-            <StatCardsSkeleton count={4} />
-            <div className="grid gap-6 lg:grid-cols-2">
-                <CardSkeleton lines={5} />
-                <CardSkeleton lines={5} />
-            </div>
-        </div>
-    )
+    if (isLoading) return <OverviewSkeleton />
 
     return (
         <div className="space-y-6">

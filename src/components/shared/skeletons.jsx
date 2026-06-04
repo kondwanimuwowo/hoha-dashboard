@@ -66,6 +66,24 @@ export function CardSkeleton({ lines = 4, title = true }) {
     )
 }
 
+export function OverviewSkeleton() {
+    return (
+        <div className="space-y-6">
+            <div className="pb-4 border-b border-border">
+                <div className="h-7 w-48 rounded-md bg-muted animate-pulse" />
+                <div className="h-4 w-72 rounded-md bg-muted animate-pulse mt-2" />
+            </div>
+            <StatCardsSkeleton count={4} />
+            <div className="grid gap-4 grid-cols-2 lg:grid-cols-5">
+                {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="h-20 rounded-xl bg-muted animate-pulse" />
+                ))}
+            </div>
+            <CardSkeleton lines={6} />
+        </div>
+    )
+}
+
 export function FilterBarSkeleton({ filters = 3 }) {
     return (
         <div className="flex flex-wrap gap-3 mb-4">

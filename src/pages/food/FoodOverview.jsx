@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useDistributions } from '@/hooks/useFoodDistribution'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatsCard } from '@/components/shared/StatsCard'
-import { StatCardsSkeleton, CardSkeleton } from '@/components/shared/skeletons'
+import { OverviewSkeleton } from '@/components/shared/skeletons'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Package, Calendar, Users, Plus, History } from 'lucide-react'
@@ -22,13 +22,7 @@ export function FoodOverview() {
     const [showCreate, setShowCreate] = useState(false)
     const { data: distributions, isLoading } = useDistributions()
 
-    if (isLoading) return (
-        <div className="space-y-6">
-            <div className="h-10 w-48 rounded-md bg-muted animate-pulse" />
-            <StatCardsSkeleton count={4} />
-            <CardSkeleton lines={5} />
-        </div>
-    )
+    if (isLoading) return <OverviewSkeleton />
 
     const currentYear = new Date().getFullYear()
     const thisYearDistributions = distributions?.filter(d =>
