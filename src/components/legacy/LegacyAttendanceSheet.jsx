@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useBeforeUnload, useBlocker } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { PersonAvatar } from '@/components/shared/PersonAvatar'
@@ -39,31 +38,15 @@ export function LegacyAttendanceSheet({ women, date, sessionType, stage, existin
 
     const isPersisting = isSaving || isAutoSaving
 
-    useBeforeUnload((event) => {
-        if (!hasUnsavedChanges || isPersisting) return
-        event.preventDefault()
-        event.returnValue = 'You have unsaved attendance changes.'
-    })
-
-    const blocker = useBlocker(({ currentLocation, nextLocation }) => {
-        return hasUnsavedChanges
-            && !isPersisting
-            && currentLocation.pathname !== nextLocation.pathname
-    })
-
     useEffect(() => {
-        if (blocker.state !== 'blocked') return
-
-        const shouldLeave = window.confirm(
-            'You have unsaved attendance changes. Leave this page and lose those changes?'
-        )
-
-        if (shouldLeave) {
-            blocker.proceed()
-        } else {
-            blocker.reset()
+        const handler = (e) => {
+            if (!hasUnsavedChanges || isPersisting) return
+            e.preventDefault()
+            e.returnValue = 'You have unsaved attendance changes.'
         }
-    }, [blocker])
+        window.addEventListener('beforeunload', handler)
+        return () => window.removeEventListener('beforeunload', handler)
+    }, [hasUnsavedChanges, isPersisting])
 
     const markStatus = (womanId, status) => {
         setAttendanceRecords((prev) => {

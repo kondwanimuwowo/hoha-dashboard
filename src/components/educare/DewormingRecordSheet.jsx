@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useBeforeUnload } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -44,11 +43,15 @@ export function DewormingRecordSheet({ records, event, onSave, isSaving }) {
 
     const isPersisting = isSaving || isAutoSaving
 
-    useBeforeUnload((e) => {
-        if (!hasUnsavedChanges || isPersisting) return
-        e.preventDefault()
-        e.returnValue = 'You have unsaved deworming records.'
-    })
+    useEffect(() => {
+        const handler = (e) => {
+            if (!hasUnsavedChanges || isPersisting) return
+            e.preventDefault()
+            e.returnValue = 'You have unsaved deworming records.'
+        }
+        window.addEventListener('beforeunload', handler)
+        return () => window.removeEventListener('beforeunload', handler)
+    }, [hasUnsavedChanges, isPersisting])
 
     const updateRecord = (childId, field, value) => {
         setLocalRecords((prev) => ({

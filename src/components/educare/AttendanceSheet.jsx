@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useBeforeUnload } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { PersonAvatar } from '@/components/shared/PersonAvatar'
@@ -40,11 +39,15 @@ export function AttendanceSheet({ students, date, gradeLabel, existingAttendance
 
     const isPersisting = isSaving || isAutoSaving
 
-    useBeforeUnload((event) => {
-        if (!hasUnsavedChanges || isPersisting) return
-        event.preventDefault()
-        event.returnValue = 'You have unsaved attendance changes.'
-    })
+    useEffect(() => {
+        const handler = (e) => {
+            if (!hasUnsavedChanges || isPersisting) return
+            e.preventDefault()
+            e.returnValue = 'You have unsaved attendance changes.'
+        }
+        window.addEventListener('beforeunload', handler)
+        return () => window.removeEventListener('beforeunload', handler)
+    }, [hasUnsavedChanges, isPersisting])
 
     const markStatus = (studentId, status) => {
         setAttendanceRecords((prev) => {
