@@ -128,7 +128,7 @@ function EditableRow({ row, onSave, onValuesChange, isSaving, schools, parentOpt
     return (
         <tr className={cn(
             "border-b transition-colors",
-            hasChanges ? "bg-red-50/50 border-red-100" : "bg-amber-50/50 border-amber-100"
+            hasChanges ? "bg-red-50/50 dark:bg-red-950/30 border-red-100 dark:border-red-900/50" : "bg-amber-50/50 dark:bg-amber-950/30 border-amber-100 dark:border-amber-900/50"
         )}>
             <td className="px-4 py-2">
                 <PersonAvatar
@@ -553,7 +553,7 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
                     </button>
                 ),
                 cell: ({ row }) => (
-                    <div className="font-medium text-neutral-900">{row.original.first_name}</div>
+                    <div className="font-medium text-neutral-900 dark:text-neutral-100">{row.original.first_name}</div>
                 ),
             },
             {
@@ -568,7 +568,7 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
                     </button>
                 ),
                 cell: ({ row }) => (
-                    <div className="text-neutral-600">{row.original.last_name}</div>
+                    <div className="text-neutral-600 dark:text-neutral-300">{row.original.last_name}</div>
                 ),
             },
             {
@@ -576,7 +576,7 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
                 header: 'Gender',
                 size: 80,
                 cell: ({ row }) => (
-                    <div className="text-neutral-600">{row.original.gender}</div>
+                    <div className="text-neutral-600 dark:text-neutral-300">{row.original.gender}</div>
                 ),
             },
             {
@@ -585,7 +585,7 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
                 size: 80,
                 cell: ({ row }) => {
                     const age = calculateAge(row.original.date_of_birth)
-                    return <div className="text-neutral-600">{age ? `${age} yrs` : '-'}</div>
+                    return <div className="text-neutral-600 dark:text-neutral-300">{age ? `${age} yrs` : '-'}</div>
                 },
             },
             {
@@ -617,7 +617,7 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
                     </button>
                 ),
                 cell: ({ row }) => (
-                    <div className="text-sm text-neutral-600 max-w-[200px] truncate">
+                    <div className="text-sm text-neutral-600 dark:text-neutral-300 max-w-[200px] truncate">
                         {row.original.government_school || 'On Site'}
                     </div>
                 ),
@@ -627,7 +627,7 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
                 header: 'Parent/Guardian',
                 size: 180,
                 cell: ({ row }) => (
-                    <div className="text-sm text-neutral-600">
+                    <div className="text-sm text-neutral-600 dark:text-neutral-300">
                         {row.original.parent_name || '-'}
                     </div>
                 ),
@@ -637,7 +637,7 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
                 header: 'Phone',
                 size: 140,
                 cell: ({ row }) => (
-                    <div className="text-sm text-neutral-600">
+                    <div className="text-sm text-neutral-600 dark:text-neutral-300">
                         {row.original.parent_phone || '-'}
                     </div>
                 ),
@@ -852,14 +852,14 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
 
             {/* Table Container */}
             <div className={cn(
-                "rounded-lg border bg-white overflow-hidden shadow-sm",
-                isQuickEdit ? "border-amber-300" : "border-neutral-200"
+                "rounded-lg border bg-white dark:bg-card overflow-hidden shadow-sm",
+                isQuickEdit ? "border-amber-300 dark:border-amber-800" : "border-neutral-200 dark:border-neutral-700"
             )}>
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead className={cn(
                             "border-b",
-                            isQuickEdit ? "bg-amber-50 border-amber-200" : "bg-neutral-50 border-neutral-200"
+                            isQuickEdit ? "bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800" : "bg-neutral-50 dark:bg-neutral-800/50 border-neutral-200 dark:border-neutral-700"
                         )}>
                             {table.getHeaderGroups().map((headerGroup) => (
                                 <tr key={headerGroup.id}>
@@ -867,18 +867,18 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
                                         <th
                                             key={header.id}
                                             style={{ width: header.getSize() }}
-                                            className="px-4 py-3 text-left text-sm font-semibold text-neutral-700"
+                                            className="px-4 py-3 text-left text-sm font-semibold text-neutral-700 dark:text-neutral-300"
                                         >
                                             {header.isPlaceholder
                                                 ? null
                                                 : flexRender(header.column.columnDef.header, header.getContext())}
                                         </th>
                                     ))}
-                                    {isQuickEdit && <th className="px-4 py-3 text-left text-sm font-semibold text-neutral-700">Actions</th>}
+                                    {isQuickEdit && <th className="px-4 py-3 text-left text-sm font-semibold text-neutral-700 dark:text-neutral-300">Actions</th>}
                                 </tr>
                             ))}
                         </thead>
-                        <tbody className="divide-y divide-neutral-100">
+                        <tbody className="divide-y divide-neutral-100 dark:divide-neutral-700/60">
                             {isQuickEdit ? (
                                 // Render editable rows when Quick Edit is ON
                                 table.getRowModel().rows.map((row) => (
@@ -901,7 +901,7 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
                                         animate={{ opacity: 1 }}
                                         transition={{ duration: 0.2, delay: index * 0.02 }}
                                         onClick={() => onRowClick?.(row.original)}
-                                        className="cursor-pointer hover:bg-neutral-50 transition-colors"
+                                        className="cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors"
                                     >
                                         {row.getVisibleCells().map((cell) => (
                                             <td key={cell.id} className="px-4 py-3 text-sm">
@@ -918,7 +918,7 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
 
             {/* Pagination */}
             <div className="flex items-center justify-between">
-                <div className="text-sm text-neutral-600">
+                <div className="text-sm text-neutral-600 dark:text-neutral-400">
                     Showing {table.getRowModel().rows.length} of {data?.length || 0} students
                 </div>
                 <div className="flex items-center space-x-2">
@@ -938,7 +938,7 @@ export function StudentTable({ data, onRowClick, sorting, onSortingChange }) {
                     >
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <span className="text-sm text-neutral-600">
+                    <span className="text-sm text-neutral-600 dark:text-neutral-400">
                         Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
                     </span>
                     <Button

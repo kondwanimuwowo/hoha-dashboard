@@ -133,7 +133,7 @@ export function ParentTable({ data, onRowClick, sorting, onSortingChange }) {
                     </button>
                 ),
                 cell: ({ row }) => (
-                    <div className="font-medium text-neutral-900">{row.original.first_name}</div>
+                    <div className="font-medium text-neutral-900 dark:text-neutral-100">{row.original.first_name}</div>
                 ),
             },
             {
@@ -148,7 +148,7 @@ export function ParentTable({ data, onRowClick, sorting, onSortingChange }) {
                     </button>
                 ),
                 cell: ({ row }) => (
-                    <div className="text-neutral-600">{row.original.last_name}</div>
+                    <div className="text-neutral-600 dark:text-neutral-300">{row.original.last_name}</div>
                 ),
             },
             {
@@ -156,7 +156,7 @@ export function ParentTable({ data, onRowClick, sorting, onSortingChange }) {
                 header: 'Phone Number',
                 size: 150,
                 cell: ({ row }) => (
-                    <div className="flex items-center text-sm text-neutral-600">
+                    <div className="flex items-center text-sm text-neutral-600 dark:text-neutral-300">
                         <Phone className="h-3 w-3 mr-2 opacity-50" />
                         {row.original.phone_number || '-'}
                     </div>
@@ -223,17 +223,17 @@ export function ParentTable({ data, onRowClick, sorting, onSortingChange }) {
                     Print Table
                 </Button>
             </div>
-            <div className="rounded-lg border bg-white overflow-hidden shadow-sm border-neutral-200">
+            <div className="rounded-lg border bg-white dark:bg-card overflow-hidden shadow-sm border-neutral-200 dark:border-neutral-700">
                 <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead className="bg-neutral-50 border-b border-neutral-200">
+                        <thead className="bg-neutral-50 dark:bg-neutral-800/50 border-b border-neutral-200 dark:border-neutral-700">
                             {table.getHeaderGroups().map((headerGroup) => (
                                 <tr key={headerGroup.id}>
                                     {headerGroup.headers.map((header) => (
                                         <th
                                             key={header.id}
                                             style={{ width: header.getSize() }}
-                                            className="px-4 py-3 text-left text-sm font-semibold text-neutral-700"
+                                            className="px-4 py-3 text-left text-sm font-semibold text-neutral-700 dark:text-neutral-300"
                                         >
                                             {header.isPlaceholder
                                                 ? null
@@ -243,7 +243,7 @@ export function ParentTable({ data, onRowClick, sorting, onSortingChange }) {
                                 </tr>
                             ))}
                         </thead>
-                        <tbody className="divide-y divide-neutral-100">
+                        <tbody className="divide-y divide-neutral-100 dark:divide-neutral-700/60">
                             {table.getRowModel().rows.map((row, index) => (
                                 <motion.tr
                                     key={row.id}
@@ -251,7 +251,7 @@ export function ParentTable({ data, onRowClick, sorting, onSortingChange }) {
                                     animate={{ opacity: 1 }}
                                     transition={{ duration: 0.2, delay: index * 0.02 }}
                                     onClick={() => onRowClick?.(row.original)}
-                                    className="cursor-pointer hover:bg-neutral-50 transition-colors"
+                                    className="cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors"
                                 >
                                     {row.getVisibleCells().map((cell) => (
                                         <td key={cell.id} className="px-4 py-3 text-sm">
@@ -267,7 +267,7 @@ export function ParentTable({ data, onRowClick, sorting, onSortingChange }) {
 
             {/* Pagination */}
             <div className="flex items-center justify-between">
-                <div className="text-sm text-neutral-600">
+                <div className="text-sm text-neutral-600 dark:text-neutral-400">
                     Showing {table.getRowModel().rows.length} of {data?.length || 0} parents
                 </div>
                 <div className="flex items-center space-x-2">
@@ -287,7 +287,7 @@ export function ParentTable({ data, onRowClick, sorting, onSortingChange }) {
                     >
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <span className="text-sm text-neutral-600">
+                    <span className="text-sm text-neutral-600 dark:text-neutral-400">
                         Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount() || 1}
                     </span>
                     <Button

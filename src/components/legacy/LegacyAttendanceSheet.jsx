@@ -138,32 +138,32 @@ export function LegacyAttendanceSheet({ women, date, sessionType, stage, existin
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div className="flex flex-wrap items-center gap-4 text-sm">
                             <div className="flex items-center space-x-2">
-                                <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
-                                    <Check className="h-4 w-4 text-green-600" />
+                                <div className="h-8 w-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                                    <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
                                 </div>
-                                <span className="font-semibold text-green-600">{present}</span>
-                                <span className="text-neutral-600">Present</span>
+                                <span className="font-semibold text-green-600 dark:text-green-400">{present}</span>
+                                <span className="text-neutral-600 dark:text-neutral-400">Present</span>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <div className="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center">
-                                    <X className="h-4 w-4 text-red-600" />
+                                <div className="h-8 w-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                                    <X className="h-4 w-4 text-red-600 dark:text-red-400" />
                                 </div>
-                                <span className="font-semibold text-red-600">{absent}</span>
-                                <span className="text-neutral-600">Absent</span>
+                                <span className="font-semibold text-red-600 dark:text-red-400">{absent}</span>
+                                <span className="text-neutral-600 dark:text-neutral-400">Absent</span>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center">
-                                    <Clock className="h-4 w-4 text-orange-600" />
+                                <div className="h-8 w-8 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                                    <Clock className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                                 </div>
-                                <span className="font-semibold text-orange-600">{late}</span>
-                                <span className="text-neutral-600">Late</span>
+                                <span className="font-semibold text-orange-600 dark:text-orange-400">{late}</span>
+                                <span className="text-neutral-600 dark:text-neutral-400">Late</span>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                                    <AlertCircle className="h-4 w-4 text-blue-600" />
+                                <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                                    <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                                 </div>
-                                <span className="font-semibold text-blue-600">{excused}</span>
-                                <span className="text-neutral-600">Excused</span>
+                                <span className="font-semibold text-blue-600 dark:text-blue-400">{excused}</span>
+                                <span className="text-neutral-600 dark:text-neutral-400">Excused</span>
                             </div>
                             {unmarked > 0 && (
                                 <div className="flex items-center space-x-2">
@@ -183,7 +183,7 @@ export function LegacyAttendanceSheet({ women, date, sessionType, stage, existin
                         </div>
                     </div>
                     {(hasUnsavedChanges || isAutoSaving || lastSavedAt) && (
-                        <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                        <div className="mt-3 rounded-md border border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/30 px-3 py-2 text-sm text-amber-800 dark:text-amber-300">
                             {isAutoSaving
                                 ? 'Autosaving attendance...'
                                 : hasUnsavedChanges
@@ -230,7 +230,7 @@ export function LegacyAttendanceSheet({ women, date, sessionType, stage, existin
                                         animate={{ opacity: 1, x: 0 }}
                                         exit={{ opacity: 0, x: -20 }}
                                         transition={{ duration: 0.2, delay: index * 0.02 }}
-                                        className="p-4 hover:bg-neutral-50 transition-colors"
+                                        className="p-4 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors"
                                     >
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center space-x-4 flex-1">
@@ -243,10 +243,10 @@ export function LegacyAttendanceSheet({ women, date, sessionType, stage, existin
                                                 />
 
                                                 <div className="flex-1">
-                                                    <div className="font-semibold text-neutral-900">
+                                                    <div className="font-semibold text-neutral-900 dark:text-neutral-100">
                                                         {woman?.first_name} {woman?.last_name}
                                                     </div>
-                                                    <div className="text-sm text-neutral-600 flex items-center space-x-2">
+                                                    <div className="text-sm text-neutral-600 dark:text-neutral-400 flex items-center space-x-2">
                                                         <span>{enrollment.stage}</span>
                                                         {age && (
                                                             <>
@@ -270,7 +270,7 @@ export function LegacyAttendanceSheet({ women, date, sessionType, stage, existin
                                                     size="sm"
                                                     onClick={() => markStatus(enrollment.woman_id, ATTENDANCE_STATUS.PRESENT)}
                                                     className={cn(
-                                                        status === ATTENDANCE_STATUS.PRESENT && 'bg-green-600 hover:bg-green-700'
+                                                        status === ATTENDANCE_STATUS.PRESENT && 'bg-green-600 hover:bg-green-700 text-white border-transparent'
                                                     )}
                                                 >
                                                     <Check className="h-4 w-4 mr-1" />
@@ -282,7 +282,7 @@ export function LegacyAttendanceSheet({ women, date, sessionType, stage, existin
                                                     size="sm"
                                                     onClick={() => markStatus(enrollment.woman_id, ATTENDANCE_STATUS.ABSENT)}
                                                     className={cn(
-                                                        status === ATTENDANCE_STATUS.ABSENT && 'bg-red-600 hover:bg-red-700'
+                                                        status === ATTENDANCE_STATUS.ABSENT && 'bg-red-600 hover:bg-red-700 text-white border-transparent'
                                                     )}
                                                 >
                                                     <X className="h-4 w-4 mr-1" />
@@ -294,7 +294,7 @@ export function LegacyAttendanceSheet({ women, date, sessionType, stage, existin
                                                     size="sm"
                                                     onClick={() => markStatus(enrollment.woman_id, ATTENDANCE_STATUS.LATE)}
                                                     className={cn(
-                                                        status === ATTENDANCE_STATUS.LATE && 'bg-orange-600 hover:bg-orange-700'
+                                                        status === ATTENDANCE_STATUS.LATE && 'bg-orange-600 hover:bg-orange-700 text-white border-transparent'
                                                     )}
                                                 >
                                                     <Clock className="h-4 w-4 mr-1" />
@@ -306,7 +306,7 @@ export function LegacyAttendanceSheet({ women, date, sessionType, stage, existin
                                                     size="sm"
                                                     onClick={() => markStatus(enrollment.woman_id, ATTENDANCE_STATUS.EXCUSED)}
                                                     className={cn(
-                                                        status === ATTENDANCE_STATUS.EXCUSED && 'bg-blue-600 hover:bg-blue-700'
+                                                        status === ATTENDANCE_STATUS.EXCUSED && 'bg-blue-600 hover:bg-blue-700 text-white border-transparent'
                                                     )}
                                                 >
                                                     <AlertCircle className="h-4 w-4 mr-1" />

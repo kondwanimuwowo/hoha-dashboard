@@ -44,7 +44,7 @@ export function WomenTable({ data, onRowClick, sorting, onSortingChange }) {
                     </button>
                 ),
                 cell: ({ row }) => (
-                    <div className="font-medium text-neutral-900">{row.original.woman?.first_name}</div>
+                    <div className="font-medium text-neutral-900 dark:text-neutral-100">{row.original.woman?.first_name}</div>
                 ),
             },
             {
@@ -59,7 +59,7 @@ export function WomenTable({ data, onRowClick, sorting, onSortingChange }) {
                     </button>
                 ),
                 cell: ({ row }) => (
-                    <div className="font-medium text-neutral-900">{row.original.woman?.last_name}</div>
+                    <div className="font-medium text-neutral-900 dark:text-neutral-100">{row.original.woman?.last_name}</div>
                 ),
             },
             {
@@ -68,7 +68,7 @@ export function WomenTable({ data, onRowClick, sorting, onSortingChange }) {
                 size: 80,
                 cell: ({ row }) => {
                     const age = calculateAge(row.original.woman?.date_of_birth)
-                    return <div className="text-neutral-600">{age ? `${age} yrs` : '-'}</div>
+                    return <div className="text-neutral-600 dark:text-neutral-300">{age ? `${age} yrs` : '-'}</div>
                 },
             },
             {
@@ -83,7 +83,7 @@ export function WomenTable({ data, onRowClick, sorting, onSortingChange }) {
                     </button>
                 ),
                 cell: ({ row }) => (
-                    <Badge variant="secondary" className="font-medium bg-purple-50 text-purple-700">
+                    <Badge variant="secondary" className="font-medium bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300">
                         {row.original.stage}
                     </Badge>
                 ),
@@ -101,7 +101,7 @@ export function WomenTable({ data, onRowClick, sorting, onSortingChange }) {
                 ),
                 size: 120,
                 cell: ({ row }) => (
-                    <div className="text-sm text-neutral-600">
+                    <div className="text-sm text-neutral-600 dark:text-neutral-300">
                         {formatDate(row.original.enrollment_date)}
                     </div>
                 ),
@@ -111,7 +111,7 @@ export function WomenTable({ data, onRowClick, sorting, onSortingChange }) {
                 header: 'Phone',
                 size: 140,
                 cell: ({ row }) => (
-                    <div className="text-sm text-neutral-600">
+                    <div className="text-sm text-neutral-600 dark:text-neutral-300">
                         {row.original.woman?.phone_number || '-'}
                     </div>
                 ),
@@ -160,17 +160,17 @@ export function WomenTable({ data, onRowClick, sorting, onSortingChange }) {
     return (
         <div className="space-y-4">
             {/* Table Container */}
-            <div className="rounded-lg border border-neutral-200 bg-white overflow-hidden">
+            <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-card overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead className="bg-neutral-50 border-b border-neutral-200">
+                        <thead className="bg-neutral-50 dark:bg-neutral-800/50 border-b border-neutral-200 dark:border-neutral-700">
                             {table.getHeaderGroups().map((headerGroup) => (
                                 <tr key={headerGroup.id}>
                                     {headerGroup.headers.map((header) => (
                                         <th
                                             key={header.id}
                                             style={{ width: header.getSize() }}
-                                            className="px-4 py-3 text-left text-sm font-semibold text-neutral-700"
+                                            className="px-4 py-3 text-left text-sm font-semibold text-neutral-700 dark:text-neutral-300"
                                         >
                                             {header.isPlaceholder
                                                 ? null
@@ -180,7 +180,7 @@ export function WomenTable({ data, onRowClick, sorting, onSortingChange }) {
                                 </tr>
                             ))}
                         </thead>
-                        <tbody className="divide-y divide-neutral-100">
+                        <tbody className="divide-y divide-neutral-100 dark:divide-neutral-700/60">
                             {table.getRowModel().rows.map((row, index) => (
                                 <motion.tr
                                     key={row.id}
@@ -188,7 +188,7 @@ export function WomenTable({ data, onRowClick, sorting, onSortingChange }) {
                                     animate={{ opacity: 1 }}
                                     transition={{ duration: 0.2, delay: index * 0.02 }}
                                     onClick={() => onRowClick?.(row.original)}
-                                    className="cursor-pointer hover:bg-neutral-50 transition-colors"
+                                    className="cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors"
                                 >
                                     {row.getVisibleCells().map((cell) => (
                                         <td key={cell.id} className="px-4 py-3 text-sm">
@@ -204,7 +204,7 @@ export function WomenTable({ data, onRowClick, sorting, onSortingChange }) {
 
             {/* Pagination */}
             <div className="flex items-center justify-between">
-                <div className="text-sm text-neutral-600">
+                <div className="text-sm text-neutral-600 dark:text-neutral-400">
                     Showing {table.getRowModel().rows.length} of {data?.length || 0} participants
                 </div>
                 <div className="flex items-center space-x-2">
@@ -224,7 +224,7 @@ export function WomenTable({ data, onRowClick, sorting, onSortingChange }) {
                     >
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <span className="text-sm text-neutral-600">
+                    <span className="text-sm text-neutral-600 dark:text-neutral-400">
                         Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
                     </span>
                     <Button

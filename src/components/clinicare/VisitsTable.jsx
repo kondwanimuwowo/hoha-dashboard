@@ -34,7 +34,7 @@ export function VisitsTable({ data }) {
                     </button>
                 ),
                 cell: ({ row }) => (
-                    <div className="font-medium text-neutral-900">
+                    <div className="font-medium text-neutral-900 dark:text-neutral-100">
                         {formatDate(row.original.visit_date)}
                     </div>
                 ),
@@ -46,7 +46,7 @@ export function VisitsTable({ data }) {
                     <div>
                         <Link
                             to={`/clinicare/patients/${row.original.patient_id}`}
-                            className="font-medium text-neutral-900 hover:text-blue-600 hover:underline"
+                            className="font-medium text-neutral-900 dark:text-neutral-100 hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
                         >
                             {row.original.patient?.first_name} {row.original.patient?.last_name}
                         </Link>
@@ -60,7 +60,7 @@ export function VisitsTable({ data }) {
                 accessorKey: 'facility_name',
                 header: 'Facility',
                 cell: ({ row }) => (
-                    <div className="text-sm text-neutral-600 max-w-[200px] truncate">
+                    <div className="text-sm text-neutral-600 dark:text-neutral-300 max-w-[200px] truncate">
                         {row.original.facility?.facility_name || row.original.facility_name || '-'}
                     </div>
                 ),
@@ -69,7 +69,7 @@ export function VisitsTable({ data }) {
                 accessorKey: 'diagnosis',
                 header: 'Diagnosis',
                 cell: ({ row }) => (
-                    <div className="text-sm text-neutral-600 max-w-[200px] truncate">
+                    <div className="text-sm text-neutral-600 dark:text-neutral-300 max-w-[200px] truncate">
                         {row.original.diagnosis || row.original.reason_for_visit || '-'}
                     </div>
                 ),
@@ -78,7 +78,7 @@ export function VisitsTable({ data }) {
                 accessorKey: 'cost_amount',
                 header: 'Cost',
                 cell: ({ row }) => (
-                    <div className="font-medium text-neutral-900">
+                    <div className="font-medium text-neutral-900 dark:text-neutral-100">
                         {formatCurrency(row.original.cost_amount || 0)}
                     </div>
                 ),
@@ -87,7 +87,7 @@ export function VisitsTable({ data }) {
                 accessorKey: 'medical_fees',
                 header: 'Medical Fees',
                 cell: ({ row }) => (
-                    <div className="font-medium text-red-600">
+                    <div className="font-medium text-red-600 dark:text-red-400">
                         {formatCurrency(row.original.medical_fees || 0)}
                     </div>
                 ),
@@ -96,7 +96,7 @@ export function VisitsTable({ data }) {
                 accessorKey: 'transport_costs',
                 header: 'Transport',
                 cell: ({ row }) => (
-                    <div className="font-medium text-orange-600">
+                    <div className="font-medium text-orange-600 dark:text-orange-400">
                         {formatCurrency(row.original.transport_costs || 0)}
                     </div>
                 ),
