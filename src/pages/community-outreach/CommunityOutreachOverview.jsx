@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useOutreachEvents, useOutreachStats } from '@/hooks/useOutreach'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatsCard } from '@/components/shared/StatsCard'
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { StatCardsSkeleton, CardSkeleton } from '@/components/shared/skeletons'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
@@ -49,7 +49,13 @@ export function CommunityOutreachOverview() {
         win.print()
     }
 
-    if (eventsLoading || statsLoading) return <LoadingSpinner />
+    if (eventsLoading || statsLoading) return (
+        <div className="space-y-6">
+            <div className="h-10 w-48 rounded-md bg-muted animate-pulse" />
+            <StatCardsSkeleton count={4} />
+            <CardSkeleton lines={5} />
+        </div>
+    )
 
     return (
         <div className="space-y-6">

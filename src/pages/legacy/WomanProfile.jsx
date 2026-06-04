@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useWoman, useDeleteWoman } from '@/hooks/useWomen'
 import { useLegacyAttendanceSummary } from '@/hooks/useLegacyAttendance'
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { ProfileHeroSkeleton, CardSkeleton, TabsSkeleton } from '@/components/shared/skeletons'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatDate, calculateAge, cn } from '@/lib/utils'
@@ -53,7 +53,23 @@ export function WomanProfile() {
     const caseNotesCount = caseNotes?.length ?? 0
     const documentsCount = personDocuments?.length ?? 0
 
-    if (isLoading) return <LoadingSpinner />
+    if (isLoading) return (
+        <div className="space-y-6">
+            <div className="h-9 w-36 rounded-md bg-muted animate-pulse" />
+            <ProfileHeroSkeleton />
+            <TabsSkeleton tabs={3} />
+            <div className="grid gap-6 lg:grid-cols-2">
+                <div className="space-y-6">
+                    <CardSkeleton lines={4} />
+                    <CardSkeleton lines={3} />
+                </div>
+                <div className="space-y-6">
+                    <CardSkeleton lines={5} />
+                    <CardSkeleton lines={4} />
+                </div>
+            </div>
+        </div>
+    )
     if (!womanData) return <div>Participant not found</div>
 
     const woman = womanData.woman

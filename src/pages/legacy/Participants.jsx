@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useWomen } from '@/hooks/useWomen'
 import { PageHeader } from '@/components/shared/PageHeader'
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { TableSkeleton, FilterBarSkeleton } from '@/components/shared/skeletons'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { WomenTable } from '@/components/legacy/WomenTable'
 import { UserPlus, Users, Printer } from 'lucide-react'
@@ -87,7 +87,13 @@ export function Participants() {
         win.print()
     }
 
-    if (isLoading) return <LoadingSpinner />
+    if (isLoading) return (
+        <div className="space-y-4">
+            <div className="h-10 w-48 rounded-md bg-muted animate-pulse" />
+            <FilterBarSkeleton filters={3} />
+            <TableSkeleton rows={8} columns={5} />
+        </div>
+    )
 
     return (
         <div className="space-y-6">

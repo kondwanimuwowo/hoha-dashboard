@@ -9,7 +9,8 @@ import { usePeople } from '@/hooks/usePeople'
 import { RegistrationFilter } from '@/components/shared/RegistrationFilter'
 import { RecipientHistory } from '@/components/emergency-relief/RecipientHistory'
 import { PersonAvatar } from '@/components/shared/PersonAvatar'
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { StatCardsSkeleton, TableSkeleton } from '@/components/shared/skeletons'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Input } from '@/components/ui/input'
 import {
     Dialog,
@@ -157,7 +158,7 @@ export default function EmergencyReliefOverview() {
                 </CardHeader>
                 <CardContent>
                     {isLoading ? (
-                        <p className="text-muted-foreground">Loading...</p>
+                        <div className="space-y-3">{Array.from({length:4}).map((_,i)=><Skeleton key={i} className="h-14 w-full rounded-lg"/>)}</div>
                     ) : recentDistributions.length === 0 ? (
                         <p className="text-muted-foreground">No distributions found matching criteria</p>
                     ) : (
@@ -243,9 +244,7 @@ function RecipientSearchDialog({ open, onOpenChange, onSelect }) {
 
                     <div className="h-[300px] overflow-y-auto border rounded-md p-2 space-y-1">
                         {isLoading ? (
-                            <div className="flex justify-center py-8">
-                                <LoadingSpinner />
-                            </div>
+                            <div className="space-y-2 p-2">{Array.from({length:5}).map((_,i)=><Skeleton key={i} className="h-12 w-full rounded-md"/>)}</div>
                         ) : people?.length > 0 ? (
                             people.map(person => (
                                 <div

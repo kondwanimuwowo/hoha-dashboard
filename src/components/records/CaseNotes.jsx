@@ -80,9 +80,20 @@ export function CaseNotes({ personId }) {
 
     const NOTE_TYPES = ['General', 'Medical', 'Academic', 'Family', 'Behavioral', 'Emergency']
 
-    if (isLoading) return <div className="space-y-4">
-        {[1, 2, 3].map(i => <div key={i} className="h-24 bg-muted animate-pulse rounded-lg" />)}
-    </div>
+    if (isLoading) return (
+        <div className="space-y-4">
+            {[1, 2, 3].map(i => (
+                <div key={i} className="rounded-xl border bg-white dark:bg-card p-4 space-y-2 shadow-sm">
+                    <div className="flex justify-between">
+                        <div className="h-4 w-24 rounded-md bg-muted animate-pulse" />
+                        <div className="h-4 w-16 rounded-md bg-muted animate-pulse" />
+                    </div>
+                    <div className="h-4 w-full rounded-md bg-muted animate-pulse" />
+                    <div className="h-4 w-3/4 rounded-md bg-muted animate-pulse" />
+                </div>
+            ))}
+        </div>
+    )
 
     return (
         <div className="space-y-6">

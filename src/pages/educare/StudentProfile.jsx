@@ -4,7 +4,7 @@ import { useStudent, useDeleteStudent } from '@/hooks/useStudents'
 import { useAttendanceSummary } from '@/hooks/useAttendance'
 import { useStudentGuardians } from '@/hooks/useRelationships'
 import { useStudentDocuments, useCaseNotes } from '@/hooks/useRecords'
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { ProfileHeroSkeleton, CardSkeleton, TabsSkeleton } from '@/components/shared/skeletons'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -98,7 +98,24 @@ export function StudentProfile() {
     const [dateFrom, setDateFrom] = useState('')
     const [dateTo, setDateTo] = useState('')
 
-    if (isLoading) return <LoadingSpinner />
+    if (isLoading) return (
+        <div className="space-y-6">
+            <div className="h-9 w-36 rounded-md bg-muted animate-pulse" />
+            <ProfileHeroSkeleton />
+            <TabsSkeleton tabs={3} />
+            <CardSkeleton lines={3} title={false} />
+            <div className="grid gap-6 lg:grid-cols-2">
+                <div className="space-y-6">
+                    <CardSkeleton lines={4} />
+                    <CardSkeleton lines={4} />
+                </div>
+                <div className="space-y-6">
+                    <CardSkeleton lines={5} />
+                    <CardSkeleton lines={3} />
+                </div>
+            </div>
+        </div>
+    )
     if (isError || !student) return <div>Student not found</div>
 
     const enrollment = student.educare_enrollment?.[0]

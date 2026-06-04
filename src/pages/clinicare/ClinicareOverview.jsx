@@ -5,7 +5,7 @@ import { useClinicareStats } from '@/hooks/useClinicareStats'
 import { useFollowUps } from '@/hooks/useVisits'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatsCard } from '@/components/shared/StatsCard'
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { StatCardsSkeleton, CardSkeleton } from '@/components/shared/skeletons'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
@@ -27,7 +27,16 @@ export function ClinicareOverview() {
 
     const { data: followUps } = useFollowUps()
 
-    if (isLoading) return <LoadingSpinner />
+    if (isLoading) return (
+        <div className="space-y-6">
+            <div className="h-10 w-48 rounded-md bg-muted animate-pulse" />
+            <StatCardsSkeleton count={4} />
+            <div className="grid gap-6 lg:grid-cols-2">
+                <CardSkeleton lines={5} />
+                <CardSkeleton lines={5} />
+            </div>
+        </div>
+    )
 
     return (
         <div className="space-y-6">

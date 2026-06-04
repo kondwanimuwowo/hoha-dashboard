@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { useStudents } from '@/hooks/useStudents'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatsCard } from '@/components/shared/StatsCard'
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { StatCardsSkeleton, CardSkeleton } from '@/components/shared/skeletons'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Users, CheckCircle, Clock, UserPlus, ClipboardList, Trophy, HeartPulse } from 'lucide-react'
@@ -18,7 +18,16 @@ export function EducareOverview() {
     const [showAddStudent, setShowAddStudent] = useState(false)
     const { data: students, isLoading } = useStudents()
 
-    if (isLoading) return <LoadingSpinner />
+    if (isLoading) return (
+        <div className="space-y-6">
+            <div className="h-10 w-48 rounded-md bg-muted animate-pulse" />
+            <StatCardsSkeleton count={4} />
+            <div className="grid gap-4 grid-cols-2 lg:grid-cols-5">
+                {Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-20 rounded-xl bg-muted animate-pulse" />)}
+            </div>
+            <CardSkeleton lines={6} />
+        </div>
+    )
 
     // Calculate stats
     const totalStudents = students?.length || 0

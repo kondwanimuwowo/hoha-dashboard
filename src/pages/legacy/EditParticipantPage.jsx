@@ -4,14 +4,20 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { WomenForm } from '@/components/legacy/WomenForm'
 import { useWoman } from '@/hooks/useWomen'
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { CardSkeleton } from '@/components/shared/skeletons'
 
 export function EditParticipantPage() {
     const { id } = useParams()
     const navigate = useNavigate()
     const { data: womanData, isLoading, isError } = useWoman(id)
 
-    if (isLoading) return <LoadingSpinner />
+    if (isLoading) return (
+        <div className="space-y-4 max-w-4xl mx-auto">
+            <div className="h-9 w-36 rounded-md bg-muted animate-pulse" />
+            <div className="h-8 w-48 rounded-md bg-muted animate-pulse" />
+            <CardSkeleton lines={8} />
+        </div>
+    )
     if (isError || !womanData) return <div>Participant not found</div>
 
     const woman = womanData.woman

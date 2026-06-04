@@ -4,7 +4,7 @@ import { useStudents } from '@/hooks/useStudents'
 import { useParents } from '@/hooks/usePeople'
 import { useSchools, useDeleteSchool } from '@/hooks/useSchools'
 import { PageHeader } from '@/components/shared/PageHeader'
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { TableSkeleton, FilterBarSkeleton } from '@/components/shared/skeletons'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { StudentTable } from '@/components/educare/StudentTable'
 import { ParentTable } from '@/components/educare/ParentTable'
@@ -92,7 +92,13 @@ export function Students() {
 
     const isLoading = activeTab === 'students' ? isLoadingStudents : isLoadingParents
 
-    if (isLoading && !students && !parents) return <LoadingSpinner />
+    if (isLoading && !students && !parents) return (
+        <div className="space-y-4">
+            <div className="h-10 w-48 rounded-md bg-muted animate-pulse" />
+            <FilterBarSkeleton filters={4} />
+            <TableSkeleton rows={10} columns={6} />
+        </div>
+    )
 
     const handleHeaderAction = () => {
         if (activeTab === 'students') {

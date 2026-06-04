@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { StudentForm } from '@/components/educare/StudentForm'
 import { useStudent } from '@/hooks/useStudents'
 import { useStudentGuardians } from '@/hooks/useRelationships'
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { CardSkeleton } from '@/components/shared/skeletons'
 
 export function EditStudentPage() {
     const { id } = useParams()
@@ -13,7 +13,13 @@ export function EditStudentPage() {
     const { data: student, isLoading, isError } = useStudent(id)
     const { data: relationships } = useStudentGuardians(student?.id)
 
-    if (isLoading) return <LoadingSpinner />
+    if (isLoading) return (
+        <div className="space-y-4 max-w-4xl mx-auto">
+            <div className="h-9 w-36 rounded-md bg-muted animate-pulse" />
+            <div className="h-8 w-48 rounded-md bg-muted animate-pulse" />
+            <CardSkeleton lines={10} />
+        </div>
+    )
     if (isError || !student) return <div>Student not found</div>
 
     return (

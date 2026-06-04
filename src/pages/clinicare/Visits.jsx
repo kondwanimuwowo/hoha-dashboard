@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useVisits } from '@/hooks/useVisits'
 import { PageHeader } from '@/components/shared/PageHeader'
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { TableSkeleton, FilterBarSkeleton } from '@/components/shared/skeletons'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { VisitsTable } from '@/components/clinicare/VisitsTable'
 import { Heart, Plus, Filter, Search, Printer } from 'lucide-react'
@@ -96,7 +96,13 @@ export function Visits() {
         win.print()
     }
 
-    if (isLoading) return <LoadingSpinner />
+    if (isLoading) return (
+        <div className="space-y-4">
+            <div className="h-10 w-48 rounded-md bg-muted animate-pulse" />
+            <FilterBarSkeleton filters={3} />
+            <TableSkeleton rows={8} columns={5} />
+        </div>
+    )
 
     return (
         <div className="space-y-6">

@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { useWomen } from '@/hooks/useWomen'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatsCard } from '@/components/shared/StatsCard'
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { StatCardsSkeleton, CardSkeleton } from '@/components/shared/skeletons'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Users, CheckCircle, Award, UserPlus, ClipboardList } from 'lucide-react'
@@ -18,7 +18,16 @@ export function LegacyOverview() {
     const [showAddWoman, setShowAddWoman] = useState(false)
     const { data: women, isLoading } = useWomen()
 
-    if (isLoading) return <LoadingSpinner />
+    if (isLoading) return (
+        <div className="space-y-6">
+            <div className="h-10 w-48 rounded-md bg-muted animate-pulse" />
+            <StatCardsSkeleton count={4} />
+            <div className="grid gap-6 lg:grid-cols-2">
+                <CardSkeleton lines={4} />
+                <CardSkeleton lines={4} />
+            </div>
+        </div>
+    )
 
     // Calculate stats
     const totalWomen = women?.length || 0

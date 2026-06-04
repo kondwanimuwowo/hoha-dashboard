@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { Skeleton } from '@/components/ui/skeleton'
 import { usePersonDocuments, useCreatePersonDocument, useDeletePersonDocument } from '@/hooks/useRecords'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -102,7 +103,15 @@ export function PersonDocuments({ personId }) {
 
     if (isLoading) return (
         <div className="space-y-4">
-            {[1, 2].map(i => <div key={i} className="h-20 bg-muted animate-pulse rounded-lg" />)}
+            {[1, 2, 3].map(i => (
+                <div key={i} className="flex items-center gap-4 rounded-xl border bg-white dark:bg-card p-4 shadow-sm">
+                    <Skeleton className="h-12 w-12 rounded-lg shrink-0" />
+                    <div className="space-y-2 flex-1">
+                        <Skeleton className="h-4 w-48" />
+                        <Skeleton className="h-3 w-32" />
+                    </div>
+                </div>
+            ))}
         </div>
     )
 
