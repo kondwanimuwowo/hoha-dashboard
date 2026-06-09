@@ -126,8 +126,9 @@ export function useMonthlyAttendanceReport(month, year, gradeLevel) {
             // Get all students for the grade
             let studentsQuery = supabase
                 .from('educare_enrollment')
-                .select('*, person:people(id, first_name, last_name)')
+                .select('*, person:people!educare_enrollment_child_id_fkey(id, first_name, last_name)')
                 .eq('current_status', 'Active')
+                .is('deleted_at', null)
 
             const selectedGrades = Array.isArray(gradeLevel)
                 ? gradeLevel.filter(Boolean)
@@ -151,7 +152,7 @@ export function useMonthlyAttendanceReport(month, year, gradeLevel) {
 
             // Calculate stats for each student
             const studentStats = students.map(student => {
-                const studentAttendance = attendance.filter(a => a.child_id === student.person_id)
+                const studentAttendance = attendance.filter(a => a.child_id === student.child_id)
                 const total = studentAttendance.length
                 const present = studentAttendance.filter(a => a.status === 'Present').length
                 const absent = studentAttendance.filter(a => a.status === 'Absent').length
@@ -160,8 +161,8 @@ export function useMonthlyAttendanceReport(month, year, gradeLevel) {
                 const rate = total > 0 ? ((present + late) / total * 100).toFixed(1) : 0
 
                 return {
-                    student_id: student.person_id,
-                    name: `${student.person.first_name} ${student.person.last_name}`,
+                    student_id: student.child_id,
+                    name: `${student.person?.first_name ?? ''} ${student.person?.last_name ?? ''}`.trim(),
                     grade: student.grade_level,
                     total,
                     present,
@@ -170,7 +171,7 @@ export function useMonthlyAttendanceReport(month, year, gradeLevel) {
                     late,
                     rate: parseFloat(rate)
                 }
-            })
+            }).sort((a, b) => a.name.localeCompare(b.name))
 
             // Calculate overall stats
             const totalRecords = attendance.length
@@ -209,8 +210,9 @@ export function useTermlyAttendanceReport(term, year, gradeLevel) {
             // Get all students for the grade
             let studentsQuery = supabase
                 .from('educare_enrollment')
-                .select('*, person:people(id, first_name, last_name)')
+                .select('*, person:people!educare_enrollment_child_id_fkey(id, first_name, last_name)')
                 .eq('current_status', 'Active')
+                .is('deleted_at', null)
 
             const selectedGrades = Array.isArray(gradeLevel)
                 ? gradeLevel.filter(Boolean)
@@ -234,7 +236,7 @@ export function useTermlyAttendanceReport(term, year, gradeLevel) {
 
             // Calculate stats for each student
             const studentStats = students.map(student => {
-                const studentAttendance = attendance.filter(a => a.child_id === student.person_id)
+                const studentAttendance = attendance.filter(a => a.child_id === student.child_id)
                 const total = studentAttendance.length
                 const present = studentAttendance.filter(a => a.status === 'Present').length
                 const absent = studentAttendance.filter(a => a.status === 'Absent').length
@@ -243,8 +245,8 @@ export function useTermlyAttendanceReport(term, year, gradeLevel) {
                 const rate = total > 0 ? ((present + late) / total * 100).toFixed(1) : 0
 
                 return {
-                    student_id: student.person_id,
-                    name: `${student.person.first_name} ${student.person.last_name}`,
+                    student_id: student.child_id,
+                    name: `${student.person?.first_name ?? ''} ${student.person?.last_name ?? ''}`.trim(),
                     grade: student.grade_level,
                     total,
                     present,
@@ -253,7 +255,7 @@ export function useTermlyAttendanceReport(term, year, gradeLevel) {
                     late,
                     rate: parseFloat(rate)
                 }
-            })
+            }).sort((a, b) => a.name.localeCompare(b.name))
 
             // Calculate overall stats
             const totalRecords = attendance.length

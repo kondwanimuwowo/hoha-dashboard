@@ -73,6 +73,13 @@ export function useWomen(filters = {}) {
                     if (valA > valB) return isAsc ? 1 : -1
                     return 0
                 })
+            } else if (!filters.sortBy) {
+                // Default to alphabetical order by name
+                results.sort((a, b) => {
+                    const nameA = `${a.woman?.first_name ?? ''} ${a.woman?.last_name ?? ''}`.toLowerCase()
+                    const nameB = `${b.woman?.first_name ?? ''} ${b.woman?.last_name ?? ''}`.toLowerCase()
+                    return nameA.localeCompare(nameB)
+                })
             }
 
             return results
