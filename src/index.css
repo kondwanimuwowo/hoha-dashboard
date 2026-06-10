@@ -329,15 +329,39 @@
     display: none !important;
   }
 
+  /* Keep sortable column-header labels visible; drop just the sort arrows */
+  thead th button {
+    display: inline-flex !important;
+  }
+  thead th button svg {
+    display: none !important;
+  }
+
+  html,
   body {
+    height: auto !important;
+    overflow: visible !important;
     background: white !important;
     color: black !important;
+  }
+
+  /* Release every clipping/scroll container so content flows onto all pages.
+     The app shell uses h-screen + overflow-hidden, which otherwise limits
+     the printout to a single page. */
+  .h-screen {
+    height: auto !important;
+  }
+
+  main,
+  [class*="overflow"] {
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
   }
 
   main {
     padding: 0 !important;
     margin: 0 !important;
-    overflow: visible !important;
   }
 
   .container {
@@ -349,5 +373,16 @@
   .card, .border {
     border-color: #eee !important;
     box-shadow: none !important;
+  }
+
+  /* Proper multi-page table pagination */
+  table {
+    page-break-inside: auto;
+  }
+  thead {
+    display: table-header-group; /* repeat header row on each page */
+  }
+  tr {
+    page-break-inside: avoid;
   }
 }
