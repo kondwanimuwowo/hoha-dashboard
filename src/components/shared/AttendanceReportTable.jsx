@@ -78,7 +78,7 @@ export function AttendanceReportTable({ data, isLoading, type = 'students' }) {
     return (
         <div className="space-y-4">
             {/* Summary Cards */}
-            <div className="grid gap-4 md:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-4 no-print">
                 <Card>
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium text-muted-foreground">

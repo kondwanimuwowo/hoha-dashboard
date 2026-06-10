@@ -169,10 +169,12 @@ export function Attendance() {
 
     return (
         <div className="space-y-6">
-            <PageHeader
-                title="Educare Attendance"
-                description="Record and view attendance for students"
-            />
+            <div className="no-print">
+                <PageHeader
+                    title="Educare Attendance"
+                    description="Record and view attendance for students"
+                />
+            </div>
 
             {success && (
                 <motion.div
@@ -199,7 +201,7 @@ export function Attendance() {
             )}
 
             <Tabs value={viewMode} onValueChange={setViewMode} className="space-y-6">
-                <TabsList>
+                <TabsList className="no-print">
                     <TabsTrigger value="daily">Daily Attendance</TabsTrigger>
                     <TabsTrigger value="monthly">Monthly Report</TabsTrigger>
                     <TabsTrigger value="termly">Termly Report</TabsTrigger>
@@ -274,7 +276,7 @@ export function Attendance() {
                 {/* Monthly Report Tab */}
                 <TabsContent value="monthly" className="space-y-6">
                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 no-print">
                             <CardTitle>Monthly Attendance Report</CardTitle>
                             <Button
                                 variant="outline"
@@ -287,7 +289,7 @@ export function Attendance() {
                             </Button>
                         </CardHeader>
                         <CardContent>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 no-print">
                                 <div className="space-y-2">
                                     <Label>Month</Label>
                                     <Select value={selectedMonth} onValueChange={setSelectedMonth}>
@@ -338,7 +340,7 @@ export function Attendance() {
                 {/* Termly Report Tab */}
                 <TabsContent value="termly" className="space-y-6">
                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 no-print">
                             <CardTitle>Termly Attendance Report</CardTitle>
                             <Button
                                 variant="outline"
@@ -351,7 +353,7 @@ export function Attendance() {
                             </Button>
                         </CardHeader>
                         <CardContent>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 no-print">
                                 <div className="space-y-2">
                                     <Label>Term</Label>
                                     <Select value={selectedTerm} onValueChange={setSelectedTerm}>
