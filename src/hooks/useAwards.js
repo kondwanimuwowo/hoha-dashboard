@@ -209,7 +209,7 @@ export function useDeleteResourceType() {
     })
 }
 
-// Get student's awards
+// Get student's awards (including the resources given at each award event)
 export function useStudentAwards(personId) {
     return useQuery({
         queryKey: ['student-awards', personId],
@@ -218,13 +218,25 @@ export function useStudentAwards(personId) {
                 .from('award_recipients')
                 .select(`
                     *,
-                    award:school_awards(*)
+                    award:school_awards(
+                        *,
+                        resources:award_event_resources(
+                            resource:award_resource_types(id, name)
+                        )
+                    )
                 `)
                 .eq('person_id', personId)
                 .order('created_at', { ascending: false })
 
             if (error) throw error
-            return data
+
+            // Flatten the resource names for easy display
+            return (data || []).map((record) => ({
+                ...record,
+                resources: (record.award?.resources || [])
+                    .map((r) => r.resource?.name)
+                    .filter(Boolean),
+            }))
         },
         enabled: !!personId,
     })

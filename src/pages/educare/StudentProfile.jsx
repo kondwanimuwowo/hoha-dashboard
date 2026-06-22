@@ -23,6 +23,8 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { CaseNotes } from '@/components/records/CaseNotes'
 import { StudentDocuments } from '@/components/records/StudentDocuments'
+import { StudentAwards } from '@/components/educare/StudentAwards'
+import { useStudentAwards } from '@/hooks/useAwards'
 
 function InfoRow({ icon: Icon, label, value, iconClass }) {
     return (
@@ -90,8 +92,11 @@ export function StudentProfile() {
     const { data: documents } = useStudentDocuments(id)
     const { data: caseNotes } = useCaseNotes(student?.id)
     const reportCardsCount = documents?.filter(d => d.document_type === 'Report Card').length ?? 0
+    const { data: studentAwards } = useStudentAwards(id)
+
     const documentsCount = documents?.length ?? 0
     const caseNotesCount = caseNotes?.length ?? 0
+    const awardsCount = studentAwards?.length ?? 0
 
     const [isDeleting, setIsDeleting] = useState(false)
     const [selectedParentForDetail, setSelectedParentForDetail] = useState(null)
@@ -259,8 +264,14 @@ export function StudentProfile() {
             </Dialog>
 
             <Tabs defaultValue="overview" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-6">
+                <TabsList className="grid w-full grid-cols-4 mb-6">
                     <TabsTrigger value="overview">Overview</TabsTrigger>
+                    <TabsTrigger value="awards" className="gap-2">
+                        Awards
+                        {awardsCount > 0 && (
+                            <span className="ml-1 rounded-full bg-muted px-1.5 py-0.5 text-xs font-medium">{awardsCount}</span>
+                        )}
+                    </TabsTrigger>
                     <TabsTrigger value="case-notes" className="gap-2">
                         Case Notes
                         {caseNotesCount > 0 && (
@@ -601,6 +612,10 @@ export function StudentProfile() {
                             </Card>
                         </motion.div>
                     )}
+                </TabsContent>
+
+                <TabsContent value="awards">
+                    <StudentAwards personId={id} />
                 </TabsContent>
 
                 <TabsContent value="case-notes">
