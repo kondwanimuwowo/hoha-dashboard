@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useStudents } from '@/hooks/useStudents'
-import { useMarkAttendance, useAttendance, useMonthlyAttendanceReport, useTermlyAttendanceReport } from '@/hooks/useAttendance'
+import { useMarkAttendance, useAttendance, useMonthlyAttendanceReport, useTermlyAttendanceReport, useYearlyAttendanceReport, useAllTimeAttendanceReport } from '@/hooks/useAttendance'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { AttendanceSheet } from '@/components/educare/AttendanceSheet'
@@ -151,6 +151,15 @@ export function Attendance() {
         selectedGrades
     )
 
+    const { data: yearlyReport, isLoading: yearlyLoading } = useYearlyAttendanceReport(
+        selectedYear,
+        selectedGrades
+    )
+
+    const { data: allTimeReport, isLoading: allTimeLoading } = useAllTimeAttendanceReport(
+        selectedGrades
+    )
+
     const markAttendance = useMarkAttendance()
 
     const handleSaveAttendance = useCallback(async (attendanceData) => {
@@ -205,6 +214,8 @@ export function Attendance() {
                     <TabsTrigger value="daily">Daily Attendance</TabsTrigger>
                     <TabsTrigger value="monthly">Monthly Report</TabsTrigger>
                     <TabsTrigger value="termly">Termly Report</TabsTrigger>
+                    <TabsTrigger value="yearly">Yearly Report</TabsTrigger>
+                    <TabsTrigger value="alltime">All Time Report</TabsTrigger>
                 </TabsList>
 
                 {/* Daily Attendance Tab */}
@@ -395,6 +406,86 @@ export function Attendance() {
                             <AttendanceReportTable
                                 data={termlyReport}
                                 isLoading={termlyLoading}
+                                type="students"
+                            />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* Yearly Report Tab */}
+                <TabsContent value="yearly" className="space-y-6">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 no-print">
+                            <CardTitle>Yearly Attendance Report</CardTitle>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => window.print()}
+                                className="gap-2 no-print"
+                            >
+                                <Printer className="h-4 w-4" />
+                                Print Report
+                            </Button>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 no-print">
+                                <div className="space-y-2">
+                                    <Label>Year</Label>
+                                    <Select value={selectedYear} onValueChange={setSelectedYear}>
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {[currentYear, currentYear - 1, currentYear - 2].map((year) => (
+                                                <SelectItem key={year} value={year.toString()}>
+                                                    {year}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label>Grade Level</Label>
+                                    {renderGradeFilter('yearly-grade')}
+                                </div>
+                            </div>
+
+                            <AttendanceReportTable
+                                data={yearlyReport}
+                                isLoading={yearlyLoading}
+                                type="students"
+                            />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* All Time Report Tab */}
+                <TabsContent value="alltime" className="space-y-6">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 no-print">
+                            <CardTitle>All Time Attendance Report</CardTitle>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => window.print()}
+                                className="gap-2 no-print"
+                            >
+                                <Printer className="h-4 w-4" />
+                                Print Report
+                            </Button>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-1 gap-4 mb-6 no-print">
+                                <div className="space-y-2">
+                                    <Label>Grade Level</Label>
+                                    {renderGradeFilter('alltime-grade')}
+                                </div>
+                            </div>
+
+                            <AttendanceReportTable
+                                data={allTimeReport}
+                                isLoading={allTimeLoading}
                                 type="students"
                             />
                         </CardContent>

@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { useWomen } from '@/hooks/useWomen'
-import { useMarkLegacyAttendance, useLegacyAttendance, useMonthlyLegacyAttendanceReport, useTermlyLegacyAttendanceReport } from '@/hooks/useLegacyAttendance'
+import { useMarkLegacyAttendance, useLegacyAttendance, useMonthlyLegacyAttendanceReport, useTermlyLegacyAttendanceReport, useYearlyLegacyAttendanceReport, useAllTimeLegacyAttendanceReport } from '@/hooks/useLegacyAttendance'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { LegacyAttendanceSheet } from '@/components/legacy/LegacyAttendanceSheet'
@@ -94,6 +94,15 @@ export function LegacyAttendance() {
         normalizedStage
     )
 
+    const { data: yearlyReport, isLoading: yearlyLoading } = useYearlyLegacyAttendanceReport(
+        selectedYear,
+        normalizedStage
+    )
+
+    const { data: allTimeReport, isLoading: allTimeLoading } = useAllTimeLegacyAttendanceReport(
+        normalizedStage
+    )
+
     const markAttendance = useMarkLegacyAttendance()
 
     const handleSaveAttendance = async (attendanceData) => {
@@ -108,7 +117,7 @@ export function LegacyAttendance() {
         }
     }
 
-    const isLoading = womenLoading || attendanceLoading || monthlyLoading || termlyLoading
+    const isLoading = womenLoading || attendanceLoading || monthlyLoading || termlyLoading || yearlyLoading || allTimeLoading
 
     return (
         <div className="space-y-6">
@@ -146,6 +155,8 @@ export function LegacyAttendance() {
                     <TabsTrigger value="daily">Daily Attendance</TabsTrigger>
                     <TabsTrigger value="monthly">Monthly Report</TabsTrigger>
                     <TabsTrigger value="termly">Termly Report</TabsTrigger>
+                    <TabsTrigger value="yearly">Yearly Report</TabsTrigger>
+                    <TabsTrigger value="alltime">All Time Report</TabsTrigger>
                 </TabsList>
 
                 {/* Daily Attendance Tab */}
@@ -373,6 +384,92 @@ export function LegacyAttendance() {
                             <AttendanceReportTable
                                 data={termlyReport}
                                 isLoading={termlyLoading}
+                                type="women"
+                            />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* Yearly Report Tab */}
+                <TabsContent value="yearly" className="space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Yearly Attendance Report</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div className="space-y-2">
+                                    <Label>Year</Label>
+                                    <Select value={selectedYear} onValueChange={setSelectedYear}>
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {[currentYear, currentYear - 1, currentYear - 2].map((year) => (
+                                                <SelectItem key={year} value={year.toString()}>
+                                                    {year}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label>Stage</Label>
+                                    <Select value={selectedStage} onValueChange={setSelectedStage}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="All Stages" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">All Stages</SelectItem>
+                                            {LEGACY_STAGES.map((stage) => (
+                                                <SelectItem key={stage} value={stage}>
+                                                    {stage}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            <AttendanceReportTable
+                                data={yearlyReport}
+                                isLoading={yearlyLoading}
+                                type="women"
+                            />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* All Time Report Tab */}
+                <TabsContent value="alltime" className="space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>All Time Attendance Report</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-1 gap-4 mb-6">
+                                <div className="space-y-2">
+                                    <Label>Stage</Label>
+                                    <Select value={selectedStage} onValueChange={setSelectedStage}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="All Stages" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">All Stages</SelectItem>
+                                            {LEGACY_STAGES.map((stage) => (
+                                                <SelectItem key={stage} value={stage}>
+                                                    {stage}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            <AttendanceReportTable
+                                data={allTimeReport}
+                                isLoading={allTimeLoading}
                                 type="women"
                             />
                         </CardContent>

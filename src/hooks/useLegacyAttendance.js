@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { supabase } from '@/lib/supabase'
+import { supabase, fetchAllRows } from '@/lib/supabase'
 
 export function useLegacyAttendance(date, sessionType) {
     return useQuery({
@@ -104,74 +104,83 @@ export function useMarkLegacyAttendance() {
     })
 }
 
+async function fetchActiveWomen(stage) {
+    let womenQuery = supabase
+        .from('legacy_women_enrollment')
+        .select('*, person:people(id, first_name, last_name)')
+        .eq('status', 'Active')
+
+    if (stage && stage !== 'all') {
+        womenQuery = womenQuery.eq('stage', stage)
+    }
+
+    const { data: women, error } = await womenQuery
+    if (error) throw error
+    return women
+}
+
+async function fetchLegacyAttendanceInRange(startDate, endDate) {
+    return fetchAllRows((from, to) => {
+        let query = supabase.from('legacy_program_attendance').select('*')
+        if (startDate) query = query.gte('session_date', startDate)
+        if (endDate) query = query.lte('session_date', endDate)
+        return query
+            .order('session_date', { ascending: true })
+            .order('id', { ascending: true })
+            .range(from, to)
+    })
+}
+
+function buildLegacyAttendanceReport(women, attendance) {
+    const womenStats = women.map(woman => {
+        const womanAttendance = attendance.filter(a => a.woman_id === woman.person_id)
+        const total = womanAttendance.length
+        const present = womanAttendance.filter(a => a.status === 'Present').length
+        const absent = womanAttendance.filter(a => a.status === 'Absent').length
+        const excused = womanAttendance.filter(a => a.status === 'Excused').length
+        const rate = total > 0 ? ((present / total) * 100).toFixed(1) : 0
+
+        return {
+            woman_id: woman.person_id,
+            name: `${woman.person.first_name} ${woman.person.last_name}`,
+            stage: woman.stage,
+            total,
+            present,
+            absent,
+            excused,
+            rate: parseFloat(rate)
+        }
+    })
+
+    const totalRecords = attendance.length
+    const totalPresent = attendance.filter(a => a.status === 'Present').length
+    const totalAbsent = attendance.filter(a => a.status === 'Absent').length
+    const overallRate = totalRecords > 0 ? ((totalPresent / totalRecords) * 100).toFixed(1) : 0
+
+    return {
+        women: womenStats,
+        summary: {
+            totalWomen: women.length,
+            totalRecords,
+            totalPresent,
+            totalAbsent,
+            overallRate: parseFloat(overallRate)
+        }
+    }
+}
+
 export function useMonthlyLegacyAttendanceReport(month, year, stage) {
     return useQuery({
         queryKey: ['monthly-legacy-attendance', month, year, stage],
         queryFn: async () => {
-            // Calculate date range for the month
             const startDate = `${year}-${month}-01`
             const lastDay = new Date(year, parseInt(month), 0).getDate()
             const endDate = `${year}-${month}-${lastDay.toString().padStart(2, '0')}`
 
-            // Get all women for the stage
-            let womenQuery = supabase
-                .from('legacy_women_enrollment')
-                .select('*, person:people(id, first_name, last_name)')
-                .eq('status', 'Active')
+            const women = await fetchActiveWomen(stage)
+            const attendance = await fetchLegacyAttendanceInRange(startDate, endDate)
 
-            if (stage && stage !== 'all') {
-                womenQuery = womenQuery.eq('stage', stage)
-            }
-
-            const { data: women, error: womenError } = await womenQuery
-            if (womenError) throw womenError
-
-            // Get attendance records for the month
-            const { data: attendance, error: attendanceError } = await supabase
-                .from('legacy_program_attendance')
-                .select('*')
-                .gte('session_date', startDate)
-                .lte('session_date', endDate)
-
-            if (attendanceError) throw attendanceError
-
-            // Calculate stats for each woman
-            const womenStats = women.map(woman => {
-                const womanAttendance = attendance.filter(a => a.woman_id === woman.person_id)
-                const total = womanAttendance.length
-                const present = womanAttendance.filter(a => a.status === 'Present').length
-                const absent = womanAttendance.filter(a => a.status === 'Absent').length
-                const excused = womanAttendance.filter(a => a.status === 'Excused').length
-                const rate = total > 0 ? ((present / total) * 100).toFixed(1) : 0
-
-                return {
-                    woman_id: woman.person_id,
-                    name: `${woman.person.first_name} ${woman.person.last_name}`,
-                    stage: woman.stage,
-                    total,
-                    present,
-                    absent,
-                    excused,
-                    rate: parseFloat(rate)
-                }
-            })
-
-            // Calculate overall stats
-            const totalRecords = attendance.length
-            const totalPresent = attendance.filter(a => a.status === 'Present').length
-            const totalAbsent = attendance.filter(a => a.status === 'Absent').length
-            const overallRate = totalRecords > 0 ? ((totalPresent / totalRecords) * 100).toFixed(1) : 0
-
-            return {
-                women: womenStats,
-                summary: {
-                    totalWomen: women.length,
-                    totalRecords,
-                    totalPresent,
-                    totalAbsent,
-                    overallRate: parseFloat(overallRate)
-                }
-            }
+            return buildLegacyAttendanceReport(women, attendance)
         },
         enabled: !!month && !!year
     })
@@ -181,7 +190,6 @@ export function useTermlyLegacyAttendanceReport(term, year, stage) {
     return useQuery({
         queryKey: ['termly-legacy-attendance', term, year, stage],
         queryFn: async () => {
-            // Define term date ranges
             const termRanges = {
                 '1': { start: `${year}-01-01`, end: `${year}-04-30` },
                 '2': { start: `${year}-05-01`, end: `${year}-08-31` },
@@ -190,66 +198,39 @@ export function useTermlyLegacyAttendanceReport(term, year, stage) {
 
             const { start: startDate, end: endDate } = termRanges[term]
 
-            // Get all women for the stage
-            let womenQuery = supabase
-                .from('legacy_women_enrollment')
-                .select('*, person:people(id, first_name, last_name)')
-                .eq('status', 'Active')
+            const women = await fetchActiveWomen(stage)
+            const attendance = await fetchLegacyAttendanceInRange(startDate, endDate)
 
-            if (stage && stage !== 'all') {
-                womenQuery = womenQuery.eq('stage', stage)
-            }
-
-            const { data: women, error: womenError } = await womenQuery
-            if (womenError) throw womenError
-
-            // Get attendance records for the term
-            const { data: attendance, error: attendanceError } = await supabase
-                .from('legacy_program_attendance')
-                .select('*')
-                .gte('session_date', startDate)
-                .lte('session_date', endDate)
-
-            if (attendanceError) throw attendanceError
-
-            // Calculate stats for each woman
-            const womenStats = women.map(woman => {
-                const womanAttendance = attendance.filter(a => a.woman_id === woman.person_id)
-                const total = womanAttendance.length
-                const present = womanAttendance.filter(a => a.status === 'Present').length
-                const absent = womanAttendance.filter(a => a.status === 'Absent').length
-                const excused = womanAttendance.filter(a => a.status === 'Excused').length
-                const rate = total > 0 ? ((present / total) * 100).toFixed(1) : 0
-
-                return {
-                    woman_id: woman.person_id,
-                    name: `${woman.person.first_name} ${woman.person.last_name}`,
-                    stage: woman.stage,
-                    total,
-                    present,
-                    absent,
-                    excused,
-                    rate: parseFloat(rate)
-                }
-            })
-
-            // Calculate overall stats
-            const totalRecords = attendance.length
-            const totalPresent = attendance.filter(a => a.status === 'Present').length
-            const totalAbsent = attendance.filter(a => a.status === 'Absent').length
-            const overallRate = totalRecords > 0 ? ((totalPresent / totalRecords) * 100).toFixed(1) : 0
-
-            return {
-                women: womenStats,
-                summary: {
-                    totalWomen: women.length,
-                    totalRecords,
-                    totalPresent,
-                    totalAbsent,
-                    overallRate: parseFloat(overallRate)
-                }
-            }
+            return buildLegacyAttendanceReport(women, attendance)
         },
         enabled: !!term && !!year
+    })
+}
+
+export function useYearlyLegacyAttendanceReport(year, stage) {
+    return useQuery({
+        queryKey: ['yearly-legacy-attendance', year, stage],
+        queryFn: async () => {
+            const startDate = `${year}-01-01`
+            const endDate = `${year}-12-31`
+
+            const women = await fetchActiveWomen(stage)
+            const attendance = await fetchLegacyAttendanceInRange(startDate, endDate)
+
+            return buildLegacyAttendanceReport(women, attendance)
+        },
+        enabled: !!year
+    })
+}
+
+export function useAllTimeLegacyAttendanceReport(stage) {
+    return useQuery({
+        queryKey: ['alltime-legacy-attendance', stage],
+        queryFn: async () => {
+            const women = await fetchActiveWomen(stage)
+            const attendance = await fetchLegacyAttendanceInRange(null, null)
+
+            return buildLegacyAttendanceReport(women, attendance)
+        },
     })
 }
