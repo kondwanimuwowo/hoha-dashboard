@@ -91,7 +91,18 @@ export function useMarkAttendance() {
         mutationFn: async (attendanceRecords) => {
             const results = []
 
-            for (const record of attendanceRecords) {
+            // Records with an empty status mean "cleared" and must be deleted.
+            for (const record of attendanceRecords.filter((r) => !r.status)) {
+                const { error } = await supabase
+                    .from('tuition_attendance')
+                    .delete()
+                    .eq('child_id', record.child_id)
+                    .eq('attendance_date', record.attendance_date)
+
+                if (error) throw error
+            }
+
+            for (const record of attendanceRecords.filter((r) => r.status)) {
                 const { data, error } = await supabase.rpc('upsert_tuition_attendance', {
                     p_child_id: record.child_id,
                     p_attendance_date: record.attendance_date,

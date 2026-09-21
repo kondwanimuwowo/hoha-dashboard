@@ -83,13 +83,14 @@ export function AttendanceSheet({ students, date, gradeLabel, existingAttendance
         if (auto) setIsAutoSaving(true)
         else setIsSaving(true)
 
+        // Include previously saved records that were cleared so they get deleted.
         const attendanceData = Object.entries(recordsSnapshot)
-            .filter(([, record]) => record?.status)
+            .filter(([studentId, record]) => record?.status || initialRecords[studentId]?.status)
             .map(([studentId, record]) => ({
                 child_id: studentId,
                 attendance_date: date,
-                status: record.status,
-                notes: record.status === ATTENDANCE_STATUS.EXCUSED ? (record.note || null) : null,
+                status: record?.status || '',
+                notes: record?.status === ATTENDANCE_STATUS.EXCUSED ? (record.note || null) : null,
                 schedule_id: null,
             }))
 
@@ -101,7 +102,7 @@ export function AttendanceSheet({ students, date, gradeLabel, existingAttendance
             if (auto) setIsAutoSaving(false)
             else setIsSaving(false)
         }
-    }, [date, onSave])
+    }, [date, onSave, initialRecords])
 
     const handleSave = async () => {
         await persistAttendance(attendanceRecords, { auto: false })

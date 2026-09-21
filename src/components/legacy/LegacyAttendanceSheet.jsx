@@ -81,14 +81,15 @@ export function LegacyAttendanceSheet({ women, date, sessionType, stage, existin
         if (auto) setIsAutoSaving(true)
         else setIsSaving(true)
 
+        // Include previously saved records that were cleared so they get deleted.
         const attendanceData = Object.entries(recordsSnapshot)
-            .filter(([, record]) => record?.status)
+            .filter(([womanId, record]) => record?.status || initialRecords[womanId]?.status)
             .map(([womanId, record]) => ({
                 woman_id: womanId,
                 session_date: date,
                 session_type: sessionType,
-                status: record.status,
-                notes: record.status === ATTENDANCE_STATUS.EXCUSED ? (record.note || null) : null,
+                status: record?.status || '',
+                notes: record?.status === ATTENDANCE_STATUS.EXCUSED ? (record.note || null) : null,
             }))
 
         try {
@@ -99,7 +100,7 @@ export function LegacyAttendanceSheet({ women, date, sessionType, stage, existin
             if (auto) setIsAutoSaving(false)
             else setIsSaving(false)
         }
-    }, [date, onSave, sessionType])
+    }, [date, onSave, sessionType, initialRecords])
 
     const handleSave = async () => {
         await persistAttendance(attendanceRecords, { auto: false })

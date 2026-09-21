@@ -88,9 +88,24 @@ export function useMarkLegacyAttendance() {
 
     return useMutation({
         mutationFn: async (attendanceRecords) => {
+            // Records with an empty status mean "cleared" and must be deleted.
+            for (const record of attendanceRecords.filter((r) => !r.status)) {
+                const { error } = await supabase
+                    .from('legacy_program_attendance')
+                    .delete()
+                    .eq('woman_id', record.woman_id)
+                    .eq('session_date', record.session_date)
+                    .eq('session_type', record.session_type)
+
+                if (error) throw error
+            }
+
+            const toUpsert = attendanceRecords.filter((r) => r.status)
+            if (toUpsert.length === 0) return []
+
             const { data, error } = await supabase
                 .from('legacy_program_attendance')
-                .upsert(attendanceRecords, { onConflict: 'woman_id,session_date,session_type' })
+                .upsert(toUpsert, { onConflict: 'woman_id,session_date,session_type' })
                 .select()
 
             if (error) throw error
