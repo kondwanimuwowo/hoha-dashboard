@@ -86,7 +86,7 @@ export function useMarkEmergencyCollected() {
         mutationFn: async ({ recipientId, collected }) => {
             const { error } = await supabase
                 .from('emergency_relief_recipients')
-                .update({ collected, is_collected: collected })
+                .update({ collected })
                 .eq('id', recipientId)
 
             if (error) throw error
