@@ -79,6 +79,12 @@ export function useEmergencyDistribution(id) {
     })
 }
 
+function invalidateEmergencyQueries(queryClient) {
+    queryClient.invalidateQueries({ queryKey: ['emergency-distribution'] })
+    queryClient.invalidateQueries({ queryKey: ['emergency-distributions'] })
+    queryClient.invalidateQueries({ queryKey: ['relief-history'] })
+}
+
 export function useMarkEmergencyCollected() {
     const queryClient = useQueryClient()
 
@@ -91,10 +97,100 @@ export function useMarkEmergencyCollected() {
 
             if (error) throw error
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['emergency-distribution'] })
-            queryClient.invalidateQueries({ queryKey: ['emergency-distributions'] })
+        onSuccess: () => invalidateEmergencyQueries(queryClient),
+    })
+}
+
+export function useUpdateEmergencyDistribution() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, distribution_date, reason, notes }) => {
+            const { error } = await supabase
+                .from('emergency_relief_distributions')
+                .update({ distribution_date, reason, notes: notes || null })
+                .eq('id', id)
+
+            if (error) throw error
         },
+        onSuccess: () => invalidateEmergencyQueries(queryClient),
+    })
+}
+
+export function useDeleteEmergencyDistribution() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (id) => {
+            // Recipients are removed explicitly so this works even if the live
+            // foreign key was created without ON DELETE CASCADE.
+            const { error: recipientsError } = await supabase
+                .from('emergency_relief_recipients')
+                .delete()
+                .eq('distribution_id', id)
+
+            if (recipientsError) throw recipientsError
+
+            const { error } = await supabase
+                .from('emergency_relief_distributions')
+                .delete()
+                .eq('id', id)
+
+            if (error) throw error
+        },
+        onSuccess: () => invalidateEmergencyQueries(queryClient),
+    })
+}
+
+export function useAddEmergencyRecipient() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ distribution_id, family_head_id, ad_hoc_name, items_provided }) => {
+            const { error } = await supabase
+                .from('emergency_relief_recipients')
+                .insert([{
+                    distribution_id,
+                    family_head_id: family_head_id || null,
+                    ad_hoc_name: ad_hoc_name || null,
+                    items_provided: items_provided || '',
+                }])
+
+            if (error) throw error
+        },
+        onSuccess: () => invalidateEmergencyQueries(queryClient),
+    })
+}
+
+export function useUpdateEmergencyRecipient() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ recipientId, items_provided }) => {
+            const { error } = await supabase
+                .from('emergency_relief_recipients')
+                .update({ items_provided })
+                .eq('id', recipientId)
+
+            if (error) throw error
+        },
+        onSuccess: () => invalidateEmergencyQueries(queryClient),
+    })
+}
+
+export function useRemoveEmergencyRecipient() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (recipientId) => {
+            const { error } = await supabase
+                .from('emergency_relief_recipients')
+                .delete()
+                .eq('id', recipientId)
+
+            if (error) throw error
+        },
+        onSuccess: () => invalidateEmergencyQueries(queryClient),
     })
 }
 

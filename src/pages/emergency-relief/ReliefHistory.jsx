@@ -179,7 +179,9 @@ function DistributionCard({ distribution, isExpanded, onToggle }) {
                                         >
                                             <div className="flex-1">
                                                 <div className="font-medium text-neutral-900 dark:text-foreground">
-                                                    {recipient.family_head?.first_name} {recipient.family_head?.last_name}
+                                                    {recipient.family_head
+                                                        ? `${recipient.family_head.first_name} ${recipient.family_head.last_name}`
+                                                        : recipient.ad_hoc_name || 'Unknown'}
                                                 </div>
                                                 {recipient.items_provided && (
                                                     <div className="text-sm text-neutral-600 dark:text-muted-foreground mt-1">
