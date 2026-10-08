@@ -265,8 +265,14 @@ export function StudentProfile() {
             </Dialog>
 
             <Tabs defaultValue="overview" className="w-full">
-                <TabsList className="grid w-full grid-cols-4 mb-6">
+                <TabsList className="grid w-full grid-cols-5 mb-6">
                     <TabsTrigger value="overview">Overview</TabsTrigger>
+                    <TabsTrigger value="health" className="gap-2">
+                        Health &amp; Vitals
+                        {dewormingStatus.overdue && (
+                            <span className="h-2 w-2 rounded-full bg-amber-500" title="Deworming due" />
+                        )}
+                    </TabsTrigger>
                     <TabsTrigger value="awards" className="gap-2">
                         Awards
                         {awardsCount > 0 && (
@@ -287,8 +293,7 @@ export function StudentProfile() {
                     </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="overview" className="space-y-6">
-
+                <TabsContent value="health" className="space-y-6">
                     {/* ── Health & Vitals ── */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -368,7 +373,9 @@ export function StudentProfile() {
                             </CardContent>
                         </Card>
                     </motion.div>
+                </TabsContent>
 
+                <TabsContent value="overview" className="space-y-6">
                     {/* ── Two-column detail grid ── */}
                     <div className="grid gap-6 lg:grid-cols-2">
 

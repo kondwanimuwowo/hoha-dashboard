@@ -2,9 +2,12 @@ import { useState, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { PersonAvatar } from '@/components/shared/PersonAvatar'
-import { Search } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { motion } from 'framer-motion'
+
+const PAGE_SIZE = 20
 
 function getDewormingStatus(lastDewormingDate) {
     if (!lastDewormingDate) return { label: 'Never', variant: 'destructive' }
@@ -17,6 +20,7 @@ function getDewormingStatus(lastDewormingDate) {
 
 export function HealthTable({ students, onRowClick }) {
     const [searchQuery, setSearchQuery] = useState('')
+    const [pageIndex, setPageIndex] = useState(0)
 
     const filtered = useMemo(() => {
         if (!students) return []
@@ -27,6 +31,10 @@ export function HealthTable({ students, onRowClick }) {
         })
     }, [students, searchQuery])
 
+    const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+    const currentPage = Math.min(pageIndex, pageCount - 1)
+    const pageRows = filtered.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE)
+
     return (
         <div className="space-y-4">
             <div className="relative">
@@ -34,7 +42,10 @@ export function HealthTable({ students, onRowClick }) {
                 <Input
                     placeholder="Search students..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => {
+                        setSearchQuery(e.target.value)
+                        setPageIndex(0)
+                    }}
                     className="pl-9"
                 />
             </div>
@@ -57,7 +68,7 @@ export function HealthTable({ students, onRowClick }) {
                     </div>
 
                     <div className="divide-y divide-neutral-100">
-                        {filtered.map((student, index) => {
+                        {pageRows.map((student, index) => {
                             const status = getDewormingStatus(student.last_deworming_date)
 
                             return (
@@ -121,6 +132,31 @@ export function HealthTable({ students, onRowClick }) {
                     </div>
                 </CardContent>
             </Card>
+
+            {filtered.length > PAGE_SIZE && (
+                <div className="flex items-center justify-between">
+                    <div className="text-sm text-neutral-600 dark:text-neutral-400">
+                        Showing {pageRows.length} of {filtered.length} students
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <Button variant="outline" size="sm" onClick={() => setPageIndex(0)} disabled={currentPage === 0}>
+                            <ChevronsLeft className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setPageIndex(currentPage - 1)} disabled={currentPage === 0}>
+                            <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <span className="text-sm text-neutral-600 dark:text-neutral-400">
+                            Page {currentPage + 1} of {pageCount}
+                        </span>
+                        <Button variant="outline" size="sm" onClick={() => setPageIndex(currentPage + 1)} disabled={currentPage >= pageCount - 1}>
+                            <ChevronRight className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setPageIndex(pageCount - 1)} disabled={currentPage >= pageCount - 1}>
+                            <ChevronsRight className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

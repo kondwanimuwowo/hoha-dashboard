@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { useStudentDewormingHistory } from '@/hooks/useDeworming'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 
@@ -14,16 +16,24 @@ function Change({ current, previous, unit }) {
     )
 }
 
+const RECENT_COUNT = 5
+
 export function DewormingHistory({ childId }) {
-    const { data: history, isLoading } = useStudentDewormingHistory(childId)
+    const { data, isLoading } = useStudentDewormingHistory(childId)
+    const [showAll, setShowAll] = useState(false)
 
     if (isLoading) {
         return <p className="text-sm text-muted-foreground">Loading history...</p>
     }
 
-    if (!history || history.length === 0) {
-        return <p className="text-sm text-muted-foreground">No deworming events recorded for this student yet.</p>
+    // Every event creates a row for every active student; skip the ones where nothing was recorded.
+    const history = (data || []).filter((r) => r.administered || r.weight_kg != null || r.height_cm != null)
+
+    if (history.length === 0) {
+        return <p className="text-sm text-muted-foreground">No deworming or measurements recorded for this student yet.</p>
     }
+
+    const visible = showAll ? history : history.slice(0, RECENT_COUNT)
 
     // Records are newest first; compare each against the next older one that has a value.
     const previousValue = (index, field) => {
@@ -46,7 +56,7 @@ export function DewormingHistory({ childId }) {
                     </tr>
                 </thead>
                 <tbody>
-                    {history.map((record, index) => (
+                    {visible.map((record, index) => (
                         <tr key={record.id} className="border-b last:border-b-0">
                             <td className="p-2 whitespace-nowrap">{formatDate(record.event.event_date)}</td>
                             <td className="p-2">
@@ -72,6 +82,11 @@ export function DewormingHistory({ childId }) {
                     ))}
                 </tbody>
             </table>
+            {history.length > RECENT_COUNT && (
+                <Button variant="ghost" size="sm" className="mt-2" onClick={() => setShowAll((v) => !v)}>
+                    {showAll ? 'Show recent only' : `Show all ${history.length} records`}
+                </Button>
+            )}
         </div>
     )
 }
