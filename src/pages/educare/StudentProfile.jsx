@@ -25,6 +25,7 @@ import { CaseNotes } from '@/components/records/CaseNotes'
 import { StudentDocuments } from '@/components/records/StudentDocuments'
 import { StudentAwards } from '@/components/educare/StudentAwards'
 import { useStudentAwards } from '@/hooks/useAwards'
+import { DewormingHistory } from '@/components/educare/DewormingHistory'
 
 function InfoRow({ icon: Icon, label, value, iconClass }) {
     return (
@@ -358,6 +359,11 @@ export function StudentProfile() {
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+
+                                <div className="mt-6 border-t pt-4">
+                                    <h3 className="mb-2 text-sm font-semibold">Deworming &amp; Growth History</h3>
+                                    <DewormingHistory childId={student.id} />
                                 </div>
                             </CardContent>
                         </Card>

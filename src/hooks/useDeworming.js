@@ -87,6 +87,23 @@ export function useDewormingEvent(id) {
     })
 }
 
+export function useStudentDewormingHistory(childId) {
+    return useQuery({
+        queryKey: ['deworming-history', childId],
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from('deworming_records')
+                .select('id, weight_kg, height_cm, administered, notes, event:deworming_events!inner(id, event_date, medication_name, dosage_amount, dosage_unit)')
+                .eq('child_id', childId)
+
+            if (error) throw error
+
+            return (data || []).sort((a, b) => b.event.event_date.localeCompare(a.event.event_date))
+        },
+        enabled: !!childId,
+    })
+}
+
 export function useCreateDewormingEvent() {
     const queryClient = useQueryClient()
 
@@ -243,7 +260,9 @@ export function useSaveDewormingRecords() {
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['deworming-events'] })
             queryClient.invalidateQueries({ queryKey: ['deworming-event', data.eventId] })
+            queryClient.invalidateQueries({ queryKey: ['deworming-history'] })
             queryClient.invalidateQueries({ queryKey: ['students'] })
+            queryClient.invalidateQueries({ queryKey: ['student'] })
         },
     })
 }
