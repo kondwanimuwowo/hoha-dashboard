@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -22,8 +23,17 @@ const schema = z.object({
     notes: z.string().optional(),
 })
 
-export function DewormingEventForm({ open, onOpenChange, onSubmit, isSubmitting }) {
+export function DewormingEventForm({ open, onOpenChange, onSubmit, isSubmitting, initialData = null }) {
     const today = new Date().toISOString().split('T')[0]
+    const isEditing = !!initialData
+
+    const emptyValues = {
+        event_date: today,
+        medication_name: '',
+        dosage_amount: '',
+        dosage_unit: 'mg',
+        notes: '',
+    }
 
     const {
         register,
@@ -34,30 +44,39 @@ export function DewormingEventForm({ open, onOpenChange, onSubmit, isSubmitting 
         formState: { errors },
     } = useForm({
         resolver: zodResolver(schema),
-        defaultValues: {
-            event_date: today,
-            medication_name: '',
-            dosage_amount: '',
-            dosage_unit: 'mg',
-            notes: '',
-        },
+        defaultValues: emptyValues,
     })
+
+    useEffect(() => {
+        if (!open) return
+        reset(initialData
+            ? {
+                event_date: (initialData.event_date || '').split('T')[0],
+                medication_name: initialData.medication_name || '',
+                dosage_amount: initialData.dosage_amount ?? '',
+                dosage_unit: initialData.dosage_unit || 'mg',
+                notes: initialData.notes || '',
+            }
+            : emptyValues)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open, initialData?.id])
 
     const dosageUnit = watch('dosage_unit')
 
     const handleFormSubmit = async (data) => {
         await onSubmit(data)
-        reset()
     }
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Record Deworming Event</DialogTitle>
+                    <DialogTitle>{isEditing ? 'Edit Deworming Event' : 'Record Deworming Event'}</DialogTitle>
                     <div hidden>
                         <DialogDescription>
-                            Create a new deworming event for all active students
+                            {isEditing
+                                ? 'Update the date, medication, dosage or notes for this event'
+                                : 'Create a new deworming event for all active students'}
                         </DialogDescription>
                     </div>
                 </DialogHeader>
@@ -138,7 +157,9 @@ export function DewormingEventForm({ open, onOpenChange, onSubmit, isSubmitting 
                             Cancel
                         </Button>
                         <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting ? 'Creating...' : 'Create Event'}
+                            {isEditing
+                                ? (isSubmitting ? 'Saving...' : 'Save Changes')
+                                : (isSubmitting ? 'Creating...' : 'Create Event')}
                         </Button>
                     </div>
                 </form>

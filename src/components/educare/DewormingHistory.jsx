@@ -59,10 +59,16 @@ export function DewormingHistory({ childId }) {
                         <tr key={record.id} className="border-b last:border-b-0">
                             <td className="p-2 whitespace-nowrap">{formatDate(record.event.event_date)}</td>
                             <td className="p-2">
-                                {record.event.medication_name}
-                                <span className="ml-1 text-muted-foreground">
-                                    ({record.event.dosage_amount} {record.event.dosage_unit})
-                                </span>
+                                {record.event.is_backfilled ? (
+                                    <span className="text-muted-foreground">Earlier reading</span>
+                                ) : (
+                                    <>
+                                        {record.event.medication_name}
+                                        <span className="ml-1 text-muted-foreground">
+                                            ({record.event.dosage_amount} {record.event.dosage_unit})
+                                        </span>
+                                    </>
+                                )}
                             </td>
                             <td className="p-2 whitespace-nowrap">
                                 {record.weight_kg != null ? `${record.weight_kg} kg` : '—'}

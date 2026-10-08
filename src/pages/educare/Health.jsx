@@ -6,6 +6,7 @@ import {
     useDewormingEvents,
     useDewormingEvent,
     useCreateDewormingEvent,
+    useUpdateDewormingEvent,
     useDeleteDewormingEvent,
     useSaveDewormingRecords,
 } from '@/hooks/useDeworming'
@@ -19,7 +20,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { ArrowLeft, Plus, Pill, Calendar, CheckCircle, AlertCircle, Trash2 } from 'lucide-react'
+import { ArrowLeft, Plus, Pill, Calendar, CheckCircle, AlertCircle, Trash2, Pencil } from 'lucide-react'
 import { GRADE_LEVELS } from '@/lib/constants'
 import { toast } from 'sonner'
 
@@ -27,6 +28,7 @@ export function Health() {
     const navigate = useNavigate()
     const [selectedEventId, setSelectedEventId] = useState(null)
     const [showCreateForm, setShowCreateForm] = useState(false)
+    const [eventToEdit, setEventToEdit] = useState(null)
     const [gradeFilter, setGradeFilter] = useState('all')
 
     // Data
@@ -36,6 +38,7 @@ export function Health() {
 
     // Mutations
     const createEvent = useCreateDewormingEvent()
+    const updateEvent = useUpdateDewormingEvent()
     const deleteEvent = useDeleteDewormingEvent()
     const saveRecords = useSaveDewormingRecords()
 
@@ -47,6 +50,16 @@ export function Health() {
             toast.success('Deworming event created. All active students have been added.')
         } catch (err) {
             toast.error(err.message || 'Failed to create event')
+        }
+    }
+
+    const handleUpdateEvent = async (data) => {
+        try {
+            await updateEvent.mutateAsync({ id: eventToEdit.id, ...data })
+            setEventToEdit(null)
+            toast.success('Deworming event updated')
+        } catch (err) {
+            toast.error(err.message || 'Failed to update event')
         }
     }
 
@@ -73,6 +86,16 @@ export function Health() {
             toast.error(err.message || 'Failed to save records')
         }
     }, [saveRecords, selectedEventId, eventDetail?.event_date])
+
+    const editDialog = (
+        <DewormingEventForm
+            open={!!eventToEdit}
+            onOpenChange={(open) => !open && setEventToEdit(null)}
+            onSubmit={handleUpdateEvent}
+            isSubmitting={updateEvent.isPending}
+            initialData={eventToEdit}
+        />
+    )
 
     // Filter records by grade if in recording mode
     const filteredRecords = eventDetail?.records?.filter((r) => {
@@ -123,7 +146,11 @@ export function Health() {
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-end gap-3">
+                                        <Button variant="outline" size="sm" className="gap-2" onClick={() => setEventToEdit(eventDetail)}>
+                                            <Pencil className="h-3.5 w-3.5" />
+                                            Edit event
+                                        </Button>
                                         <div className="space-y-1">
                                             <Label className="text-xs">Filter by Grade</Label>
                                             <Select value={gradeFilter} onValueChange={setGradeFilter}>
@@ -155,6 +182,8 @@ export function Health() {
                     onSave={handleSaveRecords}
                     isSaving={saveRecords.isPending}
                 />
+
+                {editDialog}
             </div>
         )
     }
@@ -200,17 +229,32 @@ export function Health() {
                                                 <Pill className="h-4 w-4 text-primary-600" />
                                                 <span className="font-semibold">{event.medication_name}</span>
                                             </div>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-7 w-7 text-neutral-400 hover:text-red-600"
-                                                onClick={(e) => {
-                                                    e.stopPropagation()
-                                                    handleDeleteEvent(event.id)
-                                                }}
-                                            >
-                                                <Trash2 className="h-3.5 w-3.5" />
-                                            </Button>
+                                            <div className="flex items-center gap-1">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    title="Edit event"
+                                                    className="h-7 w-7 text-neutral-400 hover:text-primary-600"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        setEventToEdit(event)
+                                                    }}
+                                                >
+                                                    <Pencil className="h-3.5 w-3.5" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    title="Delete event"
+                                                    className="h-7 w-7 text-neutral-400 hover:text-red-600"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        handleDeleteEvent(event.id)
+                                                    }}
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                </Button>
+                                            </div>
                                         </div>
 
                                         <div className="text-sm text-muted-foreground space-y-1">
@@ -254,6 +298,8 @@ export function Health() {
                 onSubmit={handleCreateEvent}
                 isSubmitting={createEvent.isPending}
             />
+
+            {editDialog}
 
         </div>
     )

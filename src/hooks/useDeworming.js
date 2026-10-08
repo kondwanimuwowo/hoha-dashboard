@@ -11,6 +11,7 @@ export function useDewormingEvents() {
                     *,
                     records:deworming_records(count)
                 `)
+                .eq('is_backfilled', false)
                 .order('event_date', { ascending: false })
 
             if (error) throw error
@@ -94,7 +95,7 @@ const hasRecordedData = (r) => r.administered || r.weight_kg != null || r.height
 export async function fetchDewormingHistory(childId) {
     const { data, error } = await supabase
         .from('deworming_records')
-        .select('id, weight_kg, height_cm, administered, notes, created_at, event:deworming_events!inner(id, event_date, medication_name, dosage_amount, dosage_unit)')
+        .select('id, weight_kg, height_cm, administered, notes, created_at, event:deworming_events!inner(id, event_date, medication_name, dosage_amount, dosage_unit, is_backfilled)')
         .eq('child_id', childId)
 
     if (error) throw error
@@ -170,11 +171,23 @@ export function useUpdateDewormingEvent() {
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: async ({ id, ...updates }) => {
+        mutationFn: async ({ id, event_date, medication_name, dosage_amount, dosage_unit, notes }) => {
+            const { data: previous, error: prevError } = await supabase
+                .from('deworming_events')
+                .select('event_date')
+                .eq('id', id)
+                .single()
+
+            if (prevError) throw prevError
+
             const { data, error } = await supabase
                 .from('deworming_events')
                 .update({
-                    ...updates,
+                    event_date,
+                    medication_name,
+                    dosage_amount,
+                    dosage_unit,
+                    notes: notes || null,
                     updated_at: new Date().toISOString(),
                 })
                 .eq('id', id)
@@ -182,11 +195,38 @@ export function useUpdateDewormingEvent() {
                 .single()
 
             if (error) throw error
+
+            // Profiles store the date of the event that last dewormed the child; move it with the event.
+            if (previous.event_date !== event_date) {
+                const { data: given, error: givenError } = await supabase
+                    .from('deworming_records')
+                    .select('child_id')
+                    .eq('event_id', id)
+                    .eq('administered', true)
+
+                if (givenError) throw givenError
+
+                const childIds = (given || []).map((r) => r.child_id)
+                if (childIds.length > 0) {
+                    const { error: syncError } = await supabase
+                        .from('educare_enrollment')
+                        .update({ last_deworming_date: event_date })
+                        .in('child_id', childIds)
+                        .eq('last_deworming_date', previous.event_date)
+                        .is('deleted_at', null)
+
+                    if (syncError) throw syncError
+                }
+            }
+
             return data
         },
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['deworming-events'] })
             queryClient.invalidateQueries({ queryKey: ['deworming-event', data.id] })
+            queryClient.invalidateQueries({ queryKey: ['deworming-history'] })
+            queryClient.invalidateQueries({ queryKey: ['students'] })
+            queryClient.invalidateQueries({ queryKey: ['student'] })
         },
     })
 }
