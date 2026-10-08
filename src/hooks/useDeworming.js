@@ -87,19 +87,29 @@ export function useDewormingEvent(id) {
     })
 }
 
+// Every event creates a row for every active student; only rows with data count as history.
+const hasRecordedData = (r) => r.administered || r.weight_kg != null || r.height_cm != null
+
+// Newest first; rows with nothing recorded are dropped.
+export async function fetchDewormingHistory(childId) {
+    const { data, error } = await supabase
+        .from('deworming_records')
+        .select('id, weight_kg, height_cm, administered, notes, created_at, event:deworming_events!inner(id, event_date, medication_name, dosage_amount, dosage_unit)')
+        .eq('child_id', childId)
+
+    if (error) throw error
+
+    return (data || [])
+        .filter(hasRecordedData)
+        .sort((a, b) =>
+            b.event.event_date.localeCompare(a.event.event_date) ||
+            (b.created_at || '').localeCompare(a.created_at || ''))
+}
+
 export function useStudentDewormingHistory(childId) {
     return useQuery({
         queryKey: ['deworming-history', childId],
-        queryFn: async () => {
-            const { data, error } = await supabase
-                .from('deworming_records')
-                .select('id, weight_kg, height_cm, administered, notes, event:deworming_events!inner(id, event_date, medication_name, dosage_amount, dosage_unit)')
-                .eq('child_id', childId)
-
-            if (error) throw error
-
-            return (data || []).sort((a, b) => b.event.event_date.localeCompare(a.event.event_date))
-        },
+        queryFn: () => fetchDewormingHistory(childId),
         enabled: !!childId,
     })
 }

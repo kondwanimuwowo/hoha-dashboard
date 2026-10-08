@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { fetchDewormingHistory } from '@/hooks/useDeworming'
 
 export function useStudents(filters = {}) {
     return useQuery({
@@ -128,7 +129,8 @@ export function useUpdateStudent() {
                 'address', 'compound_area', 'photo_url', 'notes',
                 'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relationship',
             ]
-            const enrollmentFields = ['grade_level', 'government_school_id', 'enrollment_date', 'current_status', 'weight_kg', 'height_cm', 'last_deworming_date']
+            // last_deworming_date is only ever set by saving a deworming event.
+            const enrollmentFields = ['grade_level', 'government_school_id', 'enrollment_date', 'current_status', 'weight_kg', 'height_cm']
 
             const personUpdates = {}
             const enrollmentUpdates = {}
@@ -137,6 +139,32 @@ export function useUpdateStudent() {
                 if (personFields.includes(key)) personUpdates[key] = updates[key]
                 if (enrollmentFields.includes(key)) enrollmentUpdates[key] = updates[key]
             })
+
+            // A profile edit can only correct the newest history reading, never add one.
+            if ('weight_kg' in enrollmentUpdates || 'height_cm' in enrollmentUpdates) {
+                const [latest] = await fetchDewormingHistory(id)
+                const sameNumber = (a, b) => (a == null ? null : Number(a)) === (b == null ? null : Number(b))
+                const changed = latest && (
+                    !sameNumber(latest.weight_kg, enrollmentUpdates.weight_kg) ||
+                    !sameNumber(latest.height_cm, enrollmentUpdates.height_cm)
+                )
+
+                if (changed) {
+                    const { error } = await supabase
+                        .from('deworming_records')
+                        .update({
+                            weight_kg: enrollmentUpdates.weight_kg ?? null,
+                            height_cm: enrollmentUpdates.height_cm ?? null,
+                            updated_at: new Date().toISOString(),
+                        })
+                        .eq('id', latest.id)
+
+                    if (error) throw error
+                } else if (!latest) {
+                    delete enrollmentUpdates.weight_kg
+                    delete enrollmentUpdates.height_cm
+                }
+            }
 
             // Update person details
             if (Object.keys(personUpdates).length > 0) {
@@ -164,6 +192,7 @@ export function useUpdateStudent() {
             queryClient.invalidateQueries({ queryKey: ['students'] })
             queryClient.invalidateQueries({ queryKey: ['student', variables.id] })
             queryClient.invalidateQueries({ queryKey: ['parents'] })
+            queryClient.invalidateQueries({ queryKey: ['deworming-history', variables.id] })
         },
     })
 }

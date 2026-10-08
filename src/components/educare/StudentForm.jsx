@@ -4,6 +4,8 @@ import * as z from 'zod'
 import { useCreateStudent, useUpdateStudent } from '@/hooks/useStudents'
 import { useCreatePerson, usePeople, useUpdatePerson } from '@/hooks/usePeople'
 import { useCreateRelationship, useDeleteRelationship, useUpdateRelationship } from '@/hooks/useRelationships'
+import { useStudentDewormingHistory } from '@/hooks/useDeworming'
+import { formatDate } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -135,6 +137,19 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [initialData?.id, setValue])
+
+    // Weight and height on the profile correct the newest history reading; they can't add one.
+    const { data: dewormingHistory, isLoading: historyLoading } = useStudentDewormingHistory(initialData?.id)
+    const latestReading = dewormingHistory?.[0]
+    const healthLocked = !latestReading
+
+    useEffect(() => {
+        if (latestReading) {
+            setValue('weight_kg', latestReading.weight_kg != null ? Number(latestReading.weight_kg) : null)
+            setValue('height_cm', latestReading.height_cm != null ? Number(latestReading.height_cm) : null)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [latestReading?.id, setValue])
 
     const selectedGrade = useWatch({ control, name: 'grade_level' })
     const photoUrl = useWatch({ control, name: 'photo_url' })
@@ -833,8 +848,10 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                             id="weight_kg"
                             type="number"
                             step="0.01"
+                            readOnly={healthLocked}
+                            className={healthLocked ? 'bg-muted text-muted-foreground cursor-not-allowed' : undefined}
                             {...register('weight_kg', { valueAsNumber: true })}
-                            placeholder="e.g. 25.5"
+                            placeholder={healthLocked ? '' : 'e.g. 25.5'}
                         />
                     </div>
 
@@ -844,8 +861,10 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                             id="height_cm"
                             type="number"
                             step="0.1"
+                            readOnly={healthLocked}
+                            className={healthLocked ? 'bg-muted text-muted-foreground cursor-not-allowed' : undefined}
                             {...register('height_cm', { valueAsNumber: true })}
-                            placeholder="e.g. 120.5"
+                            placeholder={healthLocked ? '' : 'e.g. 120.5'}
                         />
                     </div>
 
@@ -854,10 +873,21 @@ export function StudentForm({ onSuccess, onCancel, initialData }) {
                         <Input
                             id="last_deworming_date"
                             type="date"
+                            readOnly
+                            tabIndex={-1}
+                            className="bg-muted text-muted-foreground cursor-not-allowed"
                             {...register('last_deworming_date')}
                         />
                     </div>
                 </div>
+
+                {!historyLoading && (
+                    <p className="text-xs text-muted-foreground">
+                        {latestReading
+                            ? `Changing weight or height corrects the reading from ${formatDate(latestReading.event.event_date)}. New readings and dates are recorded through a deworming event on the Health page.`
+                            : 'No readings yet. Weight, height and deworming dates are recorded through a deworming event on the Health page.'}
+                    </p>
+                )}
             </div>
 
             {/* Notes */}

@@ -26,8 +26,7 @@ export function DewormingHistory({ childId }) {
         return <p className="text-sm text-muted-foreground">Loading history...</p>
     }
 
-    // Every event creates a row for every active student; skip the ones where nothing was recorded.
-    const history = (data || []).filter((r) => r.administered || r.weight_kg != null || r.height_cm != null)
+    const history = data || []
 
     if (history.length === 0) {
         return <p className="text-sm text-muted-foreground">No deworming or measurements recorded for this student yet.</p>
